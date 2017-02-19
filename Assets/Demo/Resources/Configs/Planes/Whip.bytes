@@ -1,0 +1,22 @@
+Whip:
+    RotationRate: 200
+    Speed: 15
+    HitPoints: 10
+
+    AIRange: 10
+
+    Fuselage: [0, 0]
+    Wing: [0.2, -0.2]
+    Stabilizer:
+        Pos: [0, -1.2]
+        Size: [0.9, 0.9]
+    GunMounts:
+        - Name: MG1
+          Location: [0, 2.5]
+
+    LootTable:
+        - Weight: 1
+          Health: 5
+        - Weight: 1
+          CardName: Whip
+        - Weight: 5  # drop nothing

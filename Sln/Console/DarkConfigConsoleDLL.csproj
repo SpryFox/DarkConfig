@@ -1,0 +1,335 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{AEBD8E1D-00EF-41DA-A423-4DBCC2871D54}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>DarkConfig</RootNamespace>
+    <AssemblyName>DarkConfig</AssemblyName>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>..\DLL\Console\Debug\</OutputPath>
+    <DefineConstants>DEBUG;ASSERTS_ENABLED</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject />
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\Assets\DarkConfig\7zip\Compress\RangeCoder\RangeCoderBitTree.cs">
+      <Link>7zip\Compress\RangeCoder\RangeCoderBitTree.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\7zip\ICoder.cs">
+      <Link>7zip\ICoder.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\Attributes.cs">
+      <Link>Attributes.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\ComposedDocNode.cs">
+      <Link>ComposedDocNode.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\Config.cs">
+      <Link>Config.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\ConfigFileManager.cs">
+      <Link>ConfigFileManager.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\ConfigOptions.cs">
+      <Link>ConfigOptions.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\ConfigReifier.cs">
+      <Link>ConfigReifier.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\ConfigSource.cs">
+      <Link>ConfigSource.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\ConsolePlatform.cs">
+      <Link>ConsolePlatform.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\DocNode.cs">
+      <Link>DocNode.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\DocNodeExtensions.cs">
+      <Link>DocNodeExtensions.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\FileSource.cs">
+      <Link>FileSource.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\MurmurHash3.cs">
+      <Link>MurmurHash3.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\Platform.cs">
+      <Link>Platform.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\ReflectionCache.cs">
+      <Link>ReflectionCache.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDocNode.cs">
+      <Link>YamlDocNode.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\Core\AnchorNotFoundException.cs">
+      <Link>YamlDotNet\Core\AnchorNotFoundException.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\Core\CharacterAnalyzer.cs">
+      <Link>YamlDotNet\Core\CharacterAnalyzer.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\Core\Constants.cs">
+      <Link>YamlDotNet\Core\Constants.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\Core\Cursor.cs">
+      <Link>YamlDotNet\Core\Cursor.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\Core\DuplicateAnchorException.cs">
+      <Link>YamlDotNet\Core\DuplicateAnchorException.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\Core\Emitter.cs">
+      <Link>YamlDotNet\Core\Emitter.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\Core\EmitterState.cs">
+      <Link>YamlDotNet\Core\EmitterState.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\Core\EventReader.cs">
+      <Link>YamlDotNet\Core\EventReader.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\Core\Events\AnchorAlias.cs">
+      <Link>YamlDotNet\Core\Events\AnchorAlias.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\Core\Events\DocumentEnd.cs">
+      <Link>YamlDotNet\Core\Events\DocumentEnd.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\Core\Events\DocumentStart.cs">
+      <Link>YamlDotNet\Core\Events\DocumentStart.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\Core\Events\EventType.cs">
+      <Link>YamlDotNet\Core\Events\EventType.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\Core\Events\MappingEnd.cs">
+      <Link>YamlDotNet\Core\Events\MappingEnd.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\Core\Events\MappingStart.cs">
+      <Link>YamlDotNet\Core\Events\MappingStart.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\Core\Events\MappingStyle.cs">
+      <Link>YamlDotNet\Core\Events\MappingStyle.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\Core\Events\NodeEvent.cs">
+      <Link>YamlDotNet\Core\Events\NodeEvent.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\Core\Events\ParsingEvent.cs">
+      <Link>YamlDotNet\Core\Events\ParsingEvent.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\Core\Events\Scalar.cs">
+      <Link>YamlDotNet\Core\Events\Scalar.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\Core\Events\SequenceEnd.cs">
+      <Link>YamlDotNet\Core\Events\SequenceEnd.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\Core\Events\SequenceStart.cs">
+      <Link>YamlDotNet\Core\Events\SequenceStart.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\Core\Events\SequenceStyle.cs">
+      <Link>YamlDotNet\Core\Events\SequenceStyle.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\Core\Events\StreamEnd.cs">
+      <Link>YamlDotNet\Core\Events\StreamEnd.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\Core\Events\StreamStart.cs">
+      <Link>YamlDotNet\Core\Events\StreamStart.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\Core\FakeList.cs">
+      <Link>YamlDotNet\Core\FakeList.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\Core\ForwardAnchorNotSupportedException.cs">
+      <Link>YamlDotNet\Core\ForwardAnchorNotSupportedException.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\Core\IEmitter.cs">
+      <Link>YamlDotNet\Core\IEmitter.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\Core\ILookAheadBuffer.cs">
+      <Link>YamlDotNet\Core\ILookAheadBuffer.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\Core\InsertionQueue.cs">
+      <Link>YamlDotNet\Core\InsertionQueue.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\Core\IParser.cs">
+      <Link>YamlDotNet\Core\IParser.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\Core\IScanner.cs">
+      <Link>YamlDotNet\Core\IScanner.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\Core\LookAheadBuffer.cs">
+      <Link>YamlDotNet\Core\LookAheadBuffer.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\Core\Mark.cs">
+      <Link>YamlDotNet\Core\Mark.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\Core\Parser.cs">
+      <Link>YamlDotNet\Core\Parser.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\Core\ParserState.cs">
+      <Link>YamlDotNet\Core\ParserState.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\Core\ScalarStyle.cs">
+      <Link>YamlDotNet\Core\ScalarStyle.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\Core\Scanner.cs">
+      <Link>YamlDotNet\Core\Scanner.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\Core\SemanticErrorException.cs">
+      <Link>YamlDotNet\Core\SemanticErrorException.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\Core\SimpleKey.cs">
+      <Link>YamlDotNet\Core\SimpleKey.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\Core\StringLookAheadBuffer.cs">
+      <Link>YamlDotNet\Core\StringLookAheadBuffer.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\Core\SyntaxErrorException.cs">
+      <Link>YamlDotNet\Core\SyntaxErrorException.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\Core\TagDirectiveCollection.cs">
+      <Link>YamlDotNet\Core\TagDirectiveCollection.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\Core\Tokens\Anchor.cs">
+      <Link>YamlDotNet\Core\Tokens\Anchor.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\Core\Tokens\AnchorAlias.cs">
+      <Link>YamlDotNet\Core\Tokens\AnchorAlias.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\Core\Tokens\BlockEnd.cs">
+      <Link>YamlDotNet\Core\Tokens\BlockEnd.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\Core\Tokens\BlockEntry.cs">
+      <Link>YamlDotNet\Core\Tokens\BlockEntry.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\Core\Tokens\BlockMappingStart.cs">
+      <Link>YamlDotNet\Core\Tokens\BlockMappingStart.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\Core\Tokens\BlockSequenceStart.cs">
+      <Link>YamlDotNet\Core\Tokens\BlockSequenceStart.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\Core\Tokens\DocumentEnd.cs">
+      <Link>YamlDotNet\Core\Tokens\DocumentEnd.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\Core\Tokens\DocumentStart.cs">
+      <Link>YamlDotNet\Core\Tokens\DocumentStart.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\Core\Tokens\FlowEntry.cs">
+      <Link>YamlDotNet\Core\Tokens\FlowEntry.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\Core\Tokens\FlowMappingEnd.cs">
+      <Link>YamlDotNet\Core\Tokens\FlowMappingEnd.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\Core\Tokens\FlowMappingStart.cs">
+      <Link>YamlDotNet\Core\Tokens\FlowMappingStart.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\Core\Tokens\FlowSequenceEnd.cs">
+      <Link>YamlDotNet\Core\Tokens\FlowSequenceEnd.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\Core\Tokens\FlowSequenceStart.cs">
+      <Link>YamlDotNet\Core\Tokens\FlowSequenceStart.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\Core\Tokens\Key.cs">
+      <Link>YamlDotNet\Core\Tokens\Key.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\Core\Tokens\Scalar.cs">
+      <Link>YamlDotNet\Core\Tokens\Scalar.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\Core\Tokens\StreamEnd.cs">
+      <Link>YamlDotNet\Core\Tokens\StreamEnd.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\Core\Tokens\StreamStart.cs">
+      <Link>YamlDotNet\Core\Tokens\StreamStart.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\Core\Tokens\Tag.cs">
+      <Link>YamlDotNet\Core\Tokens\Tag.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\Core\Tokens\TagDirective.cs">
+      <Link>YamlDotNet\Core\Tokens\TagDirective.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\Core\Tokens\Token.cs">
+      <Link>YamlDotNet\Core\Tokens\Token.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\Core\Tokens\Value.cs">
+      <Link>YamlDotNet\Core\Tokens\Value.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\Core\Tokens\VersionDirective.cs">
+      <Link>YamlDotNet\Core\Tokens\VersionDirective.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\Core\Version.cs">
+      <Link>YamlDotNet\Core\Version.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\Core\YamlException.cs">
+      <Link>YamlDotNet\Core\YamlException.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\RepresentationModel\DocumentLoadingState.cs">
+      <Link>YamlDotNet\RepresentationModel\DocumentLoadingState.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\RepresentationModel\EmitterState.cs">
+      <Link>YamlDotNet\RepresentationModel\EmitterState.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\RepresentationModel\IYamlVisitor.cs">
+      <Link>YamlDotNet\RepresentationModel\IYamlVisitor.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\RepresentationModel\YamlAliasNode.cs">
+      <Link>YamlDotNet\RepresentationModel\YamlAliasNode.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\RepresentationModel\YamlDocument.cs">
+      <Link>YamlDotNet\RepresentationModel\YamlDocument.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\RepresentationModel\YamlMappingNode.cs">
+      <Link>YamlDotNet\RepresentationModel\YamlMappingNode.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\RepresentationModel\YamlNode.cs">
+      <Link>YamlDotNet\RepresentationModel\YamlNode.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\RepresentationModel\YamlNodeIdentityEqualityComparer.cs">
+      <Link>YamlDotNet\RepresentationModel\YamlNodeIdentityEqualityComparer.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\RepresentationModel\YamlScalarNode.cs">
+      <Link>YamlDotNet\RepresentationModel\YamlScalarNode.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\RepresentationModel\YamlSequenceNode.cs">
+      <Link>YamlDotNet\RepresentationModel\YamlSequenceNode.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\RepresentationModel\YamlStream.cs">
+      <Link>YamlDotNet\RepresentationModel\YamlStream.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\YamlDotNet\RepresentationModel\YamlVisitor.cs">
+      <Link>YamlDotNet\RepresentationModel\YamlVisitor.cs</Link>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

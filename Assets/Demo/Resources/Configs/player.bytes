@@ -1,0 +1,7 @@
+StartingCard: Whip
+Keyboard:
+    Left: LeftArrow
+    Right: RightArrow
+    Boost: UpArrow
+    Slow: DownArrow
+    Fire: Space

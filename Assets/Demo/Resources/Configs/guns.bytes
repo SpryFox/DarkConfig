@@ -1,0 +1,34 @@
+MG1:
+    BulletSize: [1, 1]
+    BulletDamage: 2
+    BulletSpeed: 20
+    BulletRange: 30
+    RPS: 6
+
+MG2:
+    BulletSize: [1, 1]
+    BulletDamage: 2
+    BulletSpeed: 25
+    BulletRange: 35
+    RPS: 8
+
+MG3:
+    BulletSize: [1, 1]
+    BulletDamage: 2
+    BulletSpeed: 30
+    BulletRange: 40
+    RPS: 10
+
+Long Gun:
+    BulletSize: [2, 1]
+    BulletDamage: 4
+    BulletSpeed: 10
+    BulletRange: 60
+    RPS: 1
+
+Piddler:
+    BulletSize: [0.5, 1]
+    BulletDamage: 1
+    BulletSpeed: 18
+    BulletRange: 40
+    RPS: 0.1

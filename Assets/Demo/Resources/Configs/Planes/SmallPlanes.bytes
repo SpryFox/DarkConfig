@@ -1,0 +1,78 @@
+Crackerjack:
+    RotationRate: 90
+    Speed: 10
+    HitPoints: 6
+
+    AIRange: 20
+
+    Fuselage: [0, 0]
+    Wing: 
+        Pos: [0.2, 0]
+        Size: [1.4, 1]
+    Stabilizer: [0, -1.2]
+    GunMounts:
+        - Name: Piddler
+          Location: [1, 1.5]
+        - Name: Piddler
+          Location: [-1, 1.5]
+        - Name: Piddler
+          Location: [2, 1.5]
+        - Name: Piddler
+          Location: [-2, 1.5]
+
+    LootTable:
+        - Weight: 2
+          Health: 5
+        - Weight: 1
+
+
+Swoop:
+    RotationRate: 50
+    Speed: 20
+    HitPoints: 4
+
+    AIRange: 30
+
+    Fuselage:
+        Pos: [0, 0]
+        Size: [1.4, 1]
+    Wing:
+        Pos: [0.2, 0.2]
+        Size: [0.6, 1]
+    Stabilizer: [0, -1.2]
+    GunMounts:
+        - Name: Long Gun
+          Location: [0, 3]
+
+    LootTable:
+        - Weight: 2
+          Health: 6
+        - Weight: 2
+
+
+Boomer:
+    RotationRate: 70
+    Speed: 6
+    HitPoints: 20
+
+    AIRange: 20
+
+    Fuselage:
+        Pos: [0, 0]
+        Size: [2, 2]
+    Wing:
+        Pos: [0.4, 0.2]
+        Size: [0.6, 2]
+    Stabilizer:
+        Pos: [0.2, -2.5]
+        Size: [1, 1]
+    GunMounts:
+        - Name: MG2
+          Location: [-0.25, 3.5]
+        - Name: MG2
+          Location: [0.25, 3.5]
+
+    LootTable:
+        - Weight: 2
+          Health: 10
+        - Weight: 6

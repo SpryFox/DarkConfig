@@ -1,0 +1,9 @@
+# automatically generated DarkConfig index file
+#
+---
+- enemy_spawning
+- guns
+- index
+- player
+- Planes/SmallPlanes
+- Planes/Whip

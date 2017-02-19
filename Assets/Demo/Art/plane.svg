@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="744.09448819"
+   height="1052.3622047"
+   id="svg2"
+   version="1.1"
+   inkscape:version="0.48.5 r10040"
+   sodipodi:docname="New document 1">
+  <defs
+     id="defs4" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.5"
+     inkscape:cx="531.93941"
+     inkscape:cy="1127"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     inkscape:window-width="1436"
+     inkscape:window-height="855"
+     inkscape:window-x="4"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1" />
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <g
+       id="g3772"
+       transform="translate(1572,-168)">
+      <path
+         sodipodi:nodetypes="cccccccccccccc"
+         inkscape:connector-curvature="0"
+         id="path2985"
+         d="m 377,111.36218 c -66.80739,4.56606 -75.34263,74.30219 -85,114 l -10,138 -421,58 -43.5,98.5 44.5,18.5 416,4 36,291 -162,29 -51,67 22,20 222,7 12,47.00002 18,4"
+         style="fill:none;stroke:#0606ff;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+      <use
+         height="1052.3622"
+         width="744.09448"
+         transform="matrix(-1,0,0,1,753,0)"
+         id="use2987"
+         xlink:href="#path2985"
+         y="0"
+         x="0" />
+    </g>
+    <g
+       id="g3765"
+       transform="translate(-58,-18)">
+      <path
+         sodipodi:nodetypes="csssc"
+         inkscape:connector-curvature="0"
+         id="path3757"
+         d="m 374,110.36218 c -11.1379,-0.15664 -31.04885,13.04007 -55.00737,122.61266 -23.63625,108.0987 -41.72959,254.23535 -34.83357,359.44625 10.00741,152.68074 70.71487,402.34267 73.18676,408.46261 2.44632,6.0566 10.84843,5.0487 16.65418,5.4785"
+         style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+         inkscape:export-filename="/Users/breath/Documents/DarkConfig/Assets/Demo/ARt/fuselage.png"
+         inkscape:export-xdpi="32.055485"
+         inkscape:export-ydpi="32.055485" />
+      <path
+         sodipodi:nodetypes="cssscc"
+         inkscape:connector-curvature="0"
+         id="path3759"
+         d="m 336,458.36218 c 0,0 -383.58731,123.81392 -392.9427,129.87676 -7.80605,5.05878 -43.20084,86.53743 -41.06595,92.95135 2.22992,6.69941 34.75774,18.69133 40.49438,20.17506 C -51.51313,702.91749 336,684.36218 336,684.36218 z"
+         style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         inkscape:export-filename="/Users/breath/Documents/DarkConfig/Assets/Demo/ARt/wing.png"
+         inkscape:export-xdpi="32.055485"
+         inkscape:export-ydpi="32.055485" />
+      <path
+         sodipodi:nodetypes="cssscc"
+         inkscape:connector-curvature="0"
+         id="path3761"
+         d="m 372,826.36218 c 0,0 -159.64423,30.46608 -171.58919,36.75676 -12.16516,6.40664 -47.4671,54.57774 -47.44865,65.79459 0.0171,10.41365 6.26686,13.28401 16.28108,18.34595 C 180.60832,953.00423 374,956.36218 374,956.36218 z"
+         style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         inkscape:export-filename="/Users/breath/Documents/DarkConfig/Assets/Demo/ARt/stabilizer.png"
+         inkscape:export-xdpi="32.055485"
+         inkscape:export-ydpi="32.055485" />
+      <path
+         inkscape:export-ydpi="32.055485"
+         inkscape:export-xdpi="32.055485"
+         inkscape:export-filename="/Users/breath/Documents/DarkConfig/Assets/Demo/ARt/fuselage.png"
+         style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+         d="m 374,110.36218 c -11.1379,-0.15664 -31.04885,13.04007 -55.00737,122.61266 -23.63625,108.0987 -41.72959,254.23535 -34.83357,359.44625 10.00741,152.68074 70.71487,402.34267 73.18676,408.46261 2.44632,6.0566 10.84843,5.0487 16.65418,5.4785"
+         id="path3776"
+         inkscape:connector-curvature="0"
+         sodipodi:nodetypes="csssc" />
+      <path
+         inkscape:export-ydpi="32.055485"
+         inkscape:export-xdpi="32.055485"
+         inkscape:export-filename="/Users/breath/Documents/DarkConfig/Assets/Demo/ARt/wing.png"
+         style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         d="m 336,458.36218 c 0,0 -383.58731,123.81392 -392.9427,129.87676 -7.80605,5.05878 -43.20084,86.53743 -41.06595,92.95135 2.22992,6.69941 34.75774,18.69133 40.49438,20.17506 C -51.51313,702.91749 336,684.36218 336,684.36218 z"
+         id="path3778"
+         inkscape:connector-curvature="0"
+         sodipodi:nodetypes="cssscc" />
+      <path
+         inkscape:export-ydpi="32.055485"
+         inkscape:export-xdpi="32.055485"
+         inkscape:export-filename="/Users/breath/Documents/DarkConfig/Assets/Demo/ARt/stabilizer.png"
+         style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         d="m 372,826.36218 c 0,0 -159.64423,30.46608 -171.58919,36.75676 -12.16516,6.40664 -47.4671,54.57774 -47.44865,65.79459 0.0171,10.41365 6.26686,13.28401 16.28108,18.34595 C 180.60832,953.00423 374,956.36218 374,956.36218 z"
+         id="path3780"
+         inkscape:connector-curvature="0"
+         sodipodi:nodetypes="cssscc" />
+      <path
+         sodipodi:nodetypes="cssscc"
+         inkscape:connector-curvature="0"
+         id="path3782"
+         d="m 336,458.36218 c 0,0 -383.58731,123.81392 -392.9427,129.87676 -7.80605,5.05878 -43.20084,86.53743 -41.06595,92.95135 2.22992,6.69941 34.75774,18.69133 40.49438,20.17506 C -51.51313,702.91749 336,684.36218 336,684.36218 z"
+         style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         inkscape:export-filename="/Users/breath/Documents/DarkConfig/Assets/Demo/ARt/wing.png"
+         inkscape:export-xdpi="32.055485"
+         inkscape:export-ydpi="32.055485" />
+    </g>
+    <use
+       x="0"
+       y="0"
+       xlink:href="#g3765"
+       id="use3770"
+       transform="matrix(-1,0,0,1,630.39871,0)"
+       width="744.09448"
+       height="1052.3622" />
+    <path
+       inkscape:export-ydpi="32.055485"
+       inkscape:export-xdpi="32.055485"
+       inkscape:export-filename="/Users/breath/Documents/DarkConfig/Assets/Demo/ARt/stabilizer.png"
+       style="fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 396,-255.63782 c 0,0 -159.64423,30.46608 -171.58919,36.75676 -12.16516,6.40664 -47.4671,54.57774 -47.44865,65.79459 0.0171,10.41365 6.26686,13.28401 16.28108,18.34595 11.36508,5.74475 204.75676,9.1027 204.75676,9.1027 z"
+       id="path3796"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="cssscc" />
+    <path
+       sodipodi:nodetypes="cssscc"
+       inkscape:connector-curvature="0"
+       id="path3798"
+       d="m 396,-623.63782 c 0,0 -383.58731,123.81392 -392.9427,129.87676 -7.80605,5.05878 -43.20084,86.53743 -41.06595,92.95135 2.22992,6.69941 34.75774,18.69133 40.49438,20.17506 C 8.48687,-379.08251 396,-397.63782 396,-397.63782 z"
+       style="fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       inkscape:export-filename="/Users/breath/Documents/DarkConfig/Assets/Demo/ARt/wing.png"
+       inkscape:export-xdpi="32.055485"
+       inkscape:export-ydpi="32.055485" />
+    <g
+       id="g3809"
+       style="fill:#ffffff;fill-opacity:1;stroke:none"
+       inkscape:export-filename="/Users/breath/Documents/DarkConfig/Assets/Demo/Art/fuselage.png"
+       inkscape:export-xdpi="32"
+       inkscape:export-ydpi="32">
+      <path
+         inkscape:export-ydpi="32.055485"
+         inkscape:export-xdpi="32.055485"
+         inkscape:export-filename="/Users/breath/Documents/DarkConfig/Assets/Demo/ARt/fuselage.png"
+         style="fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+         d="m 870,-749.63782 c -11.1379,-0.15664 -31.04885,13.04007 -55.00737,122.61266 -23.63625,108.0987 -41.72959,254.23535 -34.83357,359.44625 10.00741,152.68074 70.71487,402.34267 73.18676,408.46261 2.44632,6.0566 10.84843,5.0487 16.65418,5.4785"
+         id="path3786"
+         inkscape:connector-curvature="0"
+         sodipodi:nodetypes="csssc" />
+      <use
+         height="1052.3622"
+         width="744.09448"
+         transform="matrix(-1,0,0,1,1738.6761,0)"
+         id="use3807"
+         xlink:href="#path3786"
+         y="0"
+         x="0"
+         style="fill:#ffffff;fill-opacity:1;stroke:none" />
+    </g>
+  </g>
+</svg>
