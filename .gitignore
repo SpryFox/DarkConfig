@@ -25,5 +25,4 @@ DarkConfig-csharp.sln
 DarkConfig.sln
 players
 plainlog.txt
-DLL/Debug/Editor/Mono.*
-DLL/Debug/Editor/Unity*
+DLL

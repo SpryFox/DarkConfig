@@ -41,8 +41,6 @@ Removing friction.  Here's a few rough edges:
 - Preloading.  It fixed a number of race condition bugs when introduced, so it's definitely good.  But maybe it could be cleaner and less obtrusive.
 - PostDocs kinda suck in practice.  I'd love to wedge a tiny bit more magic into DarkConfig to make my day authoring configs a little easier.
 
-Improving the DLL building.  I like DLLs because they make installation easy and reduce compilation times in the target project.  The way we currently build these DLLs sucks.  The Unity DLL building uses hardcoded paths to files elsewhere on my computer.  They're not tested.  What's the right thing to do?  I don't know.  Let's find out!  It'd also be nice to have a single command to build all the DLLs.
-
 Compatibility improvements.  More Unity versions would be nice.  I'm also _pretty_ sure that DarkConfig works on iOS with the .Net 2.0 subset, but it's been a while since I've actually tested it.
 
 Security.  It would be nice if without doing a ton of work we were able to tighten up the security story for DarkConfig, making it suitable to load untrusted files.  This will mostly involve the YAML parser.
