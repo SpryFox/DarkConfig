@@ -51,13 +51,6 @@ public class PlaneCard {
         // loads all config files in the Planes directory
         Config.FileManager.RegisterCombinedFile(Config.FileManager.GetFilesByGlob("Planes/**"), "PlaneCards", Config.CombineDict);
         Config.Apply("PlaneCards", ref m_cards);
-
-        // this is just to demo OnHotloadFile
-        Config.FileManager.OnHotloadFile += (filename) => {
-            if(filename.StartsWith("Planes/")) {
-                Debug.Log("Hotloaded plane card " + filename);
-            }
-        };
     }
 
     public System.Func<PlaneCard, PlaneCard> PostDoc;
