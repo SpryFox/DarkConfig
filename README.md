@@ -150,7 +150,15 @@ Thus far, we've only deployed DarkConfig for loading configs we author, on playe
 
 We do not recommend using DarkConfig to be the seed of a user-generated-content engine, where players load files created by others.  That introduces the risk that a malicious file gets distributed to many computers and does something bad to them.  For similar reasons, we also don't recommend loading files authored by untrusted sources on computers that you own.  It would not be wise to implement a server modding engine using DarkConfig.
 
-More
--------
 
-Check out the Docs directory!
+A Note From The Spry Foxes
+------------
+
+When we were first discussing what license to use for DarkConfig, we initially leaned towards writing one of our own that would allow people to use DarkConfig for free, as they desired and without any limitation, with the sole exception that DarkConfig could not be used in any game that was substantially similar to an existing game (i.e. a clone). This is an issue that we feel strongly about; making financially successful, original video games is extremely difficult, and we want to help other developers do it without simultaneously giving a speed boost to the many predatory companies that already rip off other devs with depressingly great alacrity. However, we ultimately decided that such a license would cause too much confusion and uncertainty and would stop legitimate devs from using DarkConfig, so we gave up on the idea. 
+
+That is why we decided to use the simple 3 paragraph BSD open source license for the project; because it is short, easy to understand, and highly permissive. However, we also decided to add a single sentence to the license about crediting Spry Fox for our contribution to games that use DarkConfig. We had originally not planned to do this, but we can't resist making a statement (if not a statement in support of original game development, then perhaps another!) Our statement is simple: people deserve credit for their work, and that includes us. The game industry has a long and unfortunate history of individual contributors being excluded from the credits of games that they worked long and hard on. This issue is commonplace enough that the IGDA has for many years now maintained a "crediting standards" guide, in hopes of encouraging better behavior from studios and publishers. TLDR: we put a lot of work into DarkConfig and we don't think it's too much to ask for a polite nod in your credits page in return... and we hope you'll do the right thing and acknowledge every other contributor to your game there as well!
+
+That's probably more than enough preaching from us. Thanks for reading this far! We just want to sign off with this: if you're using DarkConfig to make an original game that hopefully brings a little more happiness into the world, please know that everyone at Spry Fox thinks you are wonderful and we wish you all the success and joy you could ever hope for. :-)  
+
+Love,
+All the Spry Foxes
