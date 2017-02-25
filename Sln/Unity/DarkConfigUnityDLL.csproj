@@ -129,6 +129,7 @@
     <Compile Include="..\..\Assets\DarkConfig\DocNodeExtensions.cs" />
     <Compile Include="..\..\Assets\DarkConfig\ComposedDocNode.cs" />
     <Compile Include="..\..\Assets\DarkConfig\MurmurHash3.cs" />
+    <Compile Include="..\..\Assets\DarkConfig\LoadUtils.cs" />
     <Compile Include="..\..\Assets\DarkConfig\Attributes.cs" />
     <Compile Include="..\..\Assets\DarkConfig\ConfigOptions.cs" />
     <Compile Include="..\..\Assets\DarkConfig\ReflectionCache.cs" />
