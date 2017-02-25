@@ -144,7 +144,7 @@ Use the hot reloading to your advantage.  Being able to see the results of your 
 Security
 ---------
 
-Whenever you're reading files, there's a chance that they could be maliciously constructed.  In the past people have (devised exploits)[https://www.sitepoint.com/anatomy-of-an-exploit-an-in-depth-look-at-the-rails-yaml-vulnerability/] that use a malicious YAML file to execute code within the process that is reading the file.  While we're not aware of any such exploits affecting DarkConfig, neither have we done the work necessary to demonstrate that it's resistant to them.
+Whenever you're reading files, there's a chance that they could be maliciously constructed.  In the past people have [devised exploits](https://www.sitepoint.com/anatomy-of-an-exploit-an-in-depth-look-at-the-rails-yaml-vulnerability/) that use a malicious YAML file to execute code within the process that is reading the file.  While we're not aware of any such exploits affecting DarkConfig, neither have we done the work necessary to demonstrate that it's resistant to them.
 
 Thus far, we've only deployed DarkConfig for loading configs we author, on player computers/phones.  In these situations, the worst case of file tampering means that the player gets control over a local process which they already had complete access to, so in our opinion the risk of a malicious YAML file does not increase the overall security risk.
 
