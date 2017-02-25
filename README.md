@@ -1,7 +1,7 @@
 DarkConfig
 ===========
 
-DarkConfig is a fast-iteration configuration system for games.  The configuration files are easy to edit and simple to integrate with game code.
+DarkConfig is a configuration library for games which supports fast and expressive iteration.
 
 Here's how DarkConfig supports fast iteration:
 * It hotloads files into the running game when they're changed, allowing you to see the results of tweaks in moments.
@@ -10,7 +10,7 @@ Here's how DarkConfig supports fast iteration:
 * When there are syntax errors in the YAML files, it reports line and column numbers, so you can find the problem quickly.
 * It works on iOS, with .Net 2.0 subset, stripped bytecode, and "fast but no exceptions" execution model.  On Android it supports the micro mscorlib.
 
-DarkConfig supports Unity 5.2-5.5.
+DarkConfig supports .Net 3.5 or later, and has special support for Unity 5.2-5.5.
 
 Concept
 --------
