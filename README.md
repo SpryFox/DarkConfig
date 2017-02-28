@@ -12,7 +12,7 @@ Here's how DarkConfig supports fast iteration:
 
 DarkConfig supports .Net 3.5 or later, and has special support for Unity 5.2-5.5.
 
-![DarkConfig Logo](docs/DarkConfig.png)
+[[https://github.com/SpryFox/DarkConfig/blob/master/Docs/DarkConfig.png]]
 
 Concept
 --------
