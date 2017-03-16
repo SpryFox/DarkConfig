@@ -64,7 +64,7 @@ DarkConfig by default expects its config files in the `Assets/Resources/Configs`
 There's a little bit of coding to do the first time.  First let's create the initialization code.  Put this somewhere in your game loading code. Here's what an example setup would look like:
     
     UnityPlatform.Setup();
-    Config.FileManager.AddSource(new ResourcesSource());
+    Config.FileManager.AddSource(new ResourcesSource(hotload: true));
     Config.Preload();
     Config.OnPreload += () => {
         // load the rest of the game here
