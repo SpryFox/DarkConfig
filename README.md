@@ -4,6 +4,7 @@ DarkConfig
 DarkConfig is a configuration library for games which supports fast and expressive iteration.
 
 Here's how DarkConfig supports fast iteration:
+
 * It hotloads files into the running game when they're changed, allowing you to see the results of tweaks in moments.
 * It requires very little code to get running, and supports arbitrary classes.
 * It uses YAML, a stress-free format for authoring and editing.
@@ -57,7 +58,13 @@ You now have a rudimentary keyboard mapping object. Any changes that you make in
 Setup
 ------
 
-Install DarkConfig in your project by putting the contents of DLL/Debug into your Unity project.  DarkConfig is built as a pair of DLLs to avoid lengthening compile times.
+The core of DarkConfig is a standalone managed DLL for ease of integration with many platforms, and to avoid lengthening compile times.  To integrate Dark Config into your own projects, you'll first need to build this DLL:
+
+1. Open `Sln/DarkConfig.sln` in Visual Studio, or Monodevelop.
+2. Clean and build the project.
+3. Copy `DarkConfig.dll` from `Sln/bin/Debug` into your project (if you built for release, the dll will be in `Sln/bin/Release/`).
+
+For integration with Unity, you'll also need a few additional files.  Copy over the `Assets/DarkConfig/Unity` folder into your project.
 
 DarkConfig by default expects its config files in the `Assets/Resources/Configs` directory.  Create your first configuration file there.  Configuration files need to have a ".bytes" extension (this is due to a Unity limitation).  E.g. `Assets/Resources/Configs/player.bytes`.  You'd refer to this file in the code as simply `player`.
 
@@ -87,13 +94,13 @@ Next, create a simple menu item script to autogenerate the index file.  If you'r
         }
     }
 
-Now, autogenerate index.bytes by using the menu item "_Assets -> Autogenerate DarkConfig Index_".  DarkConfig uses the index to locate its configuration files on platforms that don't support directory listing (such as Unity resources).
+Finally, autogenerate index.bytes by using the menu item "_Assets -> Autogenerate DarkConfig Index_".  DarkConfig uses the index to locate its configuration files on platforms that don't support directory listing (such as Unity resources).
 
 
-Building Objects
+Building Objects From Configs
 -----------------
 
-There are three entry points for using configuration files to build up in-memory object structures.
+There are two entry points for using configuration files to build up in-memory object structures.
 
 ### Apply:
 
@@ -123,7 +130,7 @@ You can save the DocNode to an instance variable and access it in a dynamically-
 The DocNode will throw an exception if the typing is wrong at runtime (e.g. you're trying to access it as if it's a dictionary but in the YAML it's a list).  There's more documentation on how to use DocNodes in Docs/docnode.md
 
 
-Standalone Builds
+Hotloading in Standalone Unity Builds
 ------
 
 [TODO: this is mostly correct but I haven't messed with this in a while so I don't remember if this works with ResourcesSource or if it requires FileSource]
@@ -139,18 +146,19 @@ Best Practices
 ---------------
 
 Use the hot reloading to your advantage.  Being able to see the results of your changes quickly is absolutely essential for game design iteration.  While DarkConfig does a lot to help you do this, it can't do everything.
-* Don't copy values off of objects which are managed by DarkConfig.  Once you've copied the value of a variable, the copy won't be updated by DarkConfig when the config file changes.  Instead, pass a reference to the DarkConfig-managed object to every place that needs it and refer to the field on it directly.  There's no efficiency concern there.  See the PlaneCard structure in the demo for an example of what that looks like.
-* If you must copy values, set up listeners to take action when the config values change.  One reason you might have to do this is that you're setting the position on a Transform.  Use the PostDoc technique to do this, see the documentation in Docs/types.md and the class PlaneCard in the demo.
+
+* Don't copy values off of objects that are managed by DarkConfig.  Once you've copied the value of a variable, the copy won't be updated by DarkConfig when the config file changes.  Instead, pass a reference to the object managed by DarkConfig and refer to the fields on it directly.  See the PlaneCard structure in the demo for an example of what that looks like.
+* If you must copy values, set up listeners to take action when the config-driven values change.  One reason you might have to do this is that you're setting the position on a Transform.  Use the PostDoc technique to do this; see the documentation in Docs/types.md and the class PlaneCard in the demo.
 
 
 Security
 ---------
 
-Whenever you're reading files, there's a chance that they could be maliciously constructed.  In the past people have [devised exploits](https://www.sitepoint.com/anatomy-of-an-exploit-an-in-depth-look-at-the-rails-yaml-vulnerability/) that use a malicious YAML file to execute code within the process that is reading the file.  While we're not aware of any such exploits affecting DarkConfig, neither have we done the work necessary to demonstrate that it's resistant to them.
+Whenever you're reading files, there's a chance that they could be maliciously constructed.  In the past people have [devised exploits](https://www.sitepoint.com/anatomy-of-an-exploit-an-in-depth-look-at-the-rails-yaml-vulnerability/) that use a malicious YAML file to execute code within the process that is reading the file.  While we're not aware of any such exploits affecting DarkConfig, we also haven't done the work necessary to demonstrate that it's resistant to them.
 
 Thus far, we've only deployed DarkConfig for loading configs we author, on player computers/phones.  In these situations, the worst case of file tampering means that the player gets control over a local process which they already had complete access to, so in our opinion the risk of a malicious YAML file does not increase the overall security risk.
 
-We do not recommend using DarkConfig to be the seed of a user-generated-content engine, where players load files created by others.  That introduces the risk that a malicious file gets distributed to many computers and does something bad to them.  For similar reasons, we also don't recommend loading files authored by untrusted sources on computers that you own.  It would not be wise to implement a server modding engine using DarkConfig.
+We do not recommend using DarkConfig to seed a user-generated-content engine, where players load files created by others.  That introduces the risk that a malicious file gets distributed to many computers and does something bad to them.  For similar reasons, we also don't recommend loading files authored by untrusted sources on computers that you own.  It would not be wise to implement a modding engine using DarkConfig.
 
 
 A Note From The Spry Foxes

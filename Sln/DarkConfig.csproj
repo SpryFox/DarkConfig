@@ -4,28 +4,24 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{AEBD8E1D-00EF-41DA-A423-4DBCC2871D54}</ProjectGuid>
+    <ProjectGuid>{65BCACF2-0E6D-459E-AB7F-D416FFCC5E45}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>DarkConfig</RootNamespace>
     <AssemblyName>DarkConfig</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>..\DLL\Console\Debug\</OutputPath>
+    <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;ASSERTS_ENABLED</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
@@ -33,19 +29,17 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
-  <PropertyGroup>
-    <StartupObject />
-  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\Assets\DarkConfig\7zip\Compress\RangeCoder\RangeCoderBitTree.cs">
-      <Link>7zip\Compress\RangeCoder\RangeCoderBitTree.cs</Link>
-    </Compile>
-    <Compile Include="..\Assets\DarkConfig\7zip\ICoder.cs">
-      <Link>7zip\ICoder.cs</Link>
-    </Compile>
     <Compile Include="..\Assets\DarkConfig\Attributes.cs">
       <Link>Attributes.cs</Link>
     </Compile>
@@ -70,14 +64,23 @@
     <Compile Include="..\Assets\DarkConfig\ConsolePlatform.cs">
       <Link>ConsolePlatform.cs</Link>
     </Compile>
+    <Compile Include="..\Assets\DarkConfig\DefaultFromDocs.cs">
+      <Link>DefaultFromDocs.cs</Link>
+    </Compile>
     <Compile Include="..\Assets\DarkConfig\DocNode.cs">
       <Link>DocNode.cs</Link>
     </Compile>
     <Compile Include="..\Assets\DarkConfig\DocNodeExtensions.cs">
       <Link>DocNodeExtensions.cs</Link>
     </Compile>
+    <Compile Include="..\Assets\DarkConfig\DocPath.cs">
+      <Link>DocPath.cs</Link>
+    </Compile>
     <Compile Include="..\Assets\DarkConfig\FileSource.cs">
       <Link>FileSource.cs</Link>
+    </Compile>
+    <Compile Include="..\Assets\DarkConfig\LoadUtils.cs">
+      <Link>LoadUtils.cs</Link>
     </Compile>
     <Compile Include="..\Assets\DarkConfig\MurmurHash3.cs">
       <Link>MurmurHash3.cs</Link>
@@ -322,8 +325,16 @@
     <Compile Include="..\Assets\DarkConfig\YamlDotNet\RepresentationModel\YamlVisitor.cs">
       <Link>YamlDotNet\RepresentationModel\YamlVisitor.cs</Link>
     </Compile>
+    <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <None Include="..\Assets\DarkConfig\YamlDotNet\LICENSE">
+      <Link>YamlDotNet\LICENSE</Link>
+    </None>
+    <None Include="..\Assets\DarkConfig\YamlDotNet\LICENSE-libyaml">
+      <Link>YamlDotNet\LICENSE-libyaml</Link>
+    </None>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

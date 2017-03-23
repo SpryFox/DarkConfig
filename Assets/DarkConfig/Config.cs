@@ -237,49 +237,49 @@ namespace DarkConfig {
         static ConfigFileManager s_files = null;
 
         // logging ////////////////////////////////////////////////
-        internal static void Log(LogVerbosity level, string msg) {
+        public static void Log(LogVerbosity level, string msg) {
             if(level <= Verbosity) {
                 var s = "DarkConfig: " + msg;
                 if(level > LogVerbosity.Error) { Platform.Instance.Log(s); } else { Platform.Instance.LogError(s); }
             }
         }
 
-        internal static void Log(LogVerbosity level, object msg1) {
+        public static void Log(LogVerbosity level, object msg1) {
             if(level <= Verbosity) {
                 var s = "DarkConfig: " + msg1.ToString();
                 if(level > LogVerbosity.Error) { Platform.Instance.Log(s); } else { Platform.Instance.LogError(s); }
             }
         }
 
-        internal static void Log(LogVerbosity level, object msg1, object msg2) {
+        public static void Log(LogVerbosity level, object msg1, object msg2) {
             if(level <= Verbosity) {
                 var s = "DarkConfig: " + msg1.ToString() + " " + msg2.ToString();
                 if(level > LogVerbosity.Error) { Platform.Instance.Log(s); } else { Platform.Instance.LogError(s); }
             }
         }
 
-        internal static void Log(LogVerbosity level, object msg1, object msg2, object msg3) {
+        public static void Log(LogVerbosity level, object msg1, object msg2, object msg3) {
             if(level <= Verbosity) {
                 var s = "DarkConfig: " + msg1.ToString() + " " + msg2.ToString() + " " + msg3.ToString();
                 if(level > LogVerbosity.Error) { Platform.Instance.Log(s); } else { Platform.Instance.LogError(s); }
             }
         }
 
-        internal static void Log(LogVerbosity level, object msg1, object msg2, object msg3, object msg4) {
+        public static void Log(LogVerbosity level, object msg1, object msg2, object msg3, object msg4) {
             if(level <= Verbosity) {
                 var s = "DarkConfig: " + msg1.ToString() + " " + msg2.ToString() + " " + msg3.ToString() + " " + msg4.ToString();
                 if(level > LogVerbosity.Error) { Platform.Instance.Log(s); } else { Platform.Instance.LogError(s); }
             }
         }
 
-        internal static void Log(LogVerbosity level, object msg1, object msg2, object msg3, object msg4, object msg5) {
+        public static void Log(LogVerbosity level, object msg1, object msg2, object msg3, object msg4, object msg5) {
             if(level <= Verbosity) {
                 var s = "DarkConfig: " + msg1.ToString() + " " + msg2.ToString() + " " + msg3.ToString() + " " + msg4.ToString() + " " + msg5.ToString();
                 if(level > LogVerbosity.Error) { Platform.Instance.Log(s); } else { Platform.Instance.LogError(s); }
             }
         }
 
-        internal static void Log(LogVerbosity level, object msg1, object msg2, object msg3, object msg4, object msg5, object msg6) {
+        public static void Log(LogVerbosity level, object msg1, object msg2, object msg3, object msg4, object msg5, object msg6) {
             if (level <= Verbosity) {
                 var s = "DarkConfig: " + msg1.ToString() + " " + msg2.ToString() + " " + msg3.ToString() + " " + msg4.ToString() + " " + msg5.ToString() + " " + msg6.ToString();
                 if(level > LogVerbosity.Error) { Platform.Instance.Log(s); } else { Platform.Instance.LogError(s); }
