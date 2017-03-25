@@ -21,6 +21,16 @@ class LoadUtilsFacts {
         return Config.LoadDocFromString(s, c_filename);
     }
 
+    [SetUp]
+    public void SetUp() {
+        Config.DefaultOptions = ConfigOptions.AllowMissingFields;
+    }
+
+    [TearDown]
+    public void TearDown() {
+        Config.DefaultOptions = ConfigOptions.AllowMissingExtraFields | ConfigOptions.CaseSensitive;
+    }
+
     [Test]
     public void LoadUtils_SetParentDefaults_LoadSimple() {
         var doc = FromString(@"
