@@ -92,23 +92,23 @@ public static class ReflectionCache {
     }
     static Dictionary<Type, FieldInfo[]> typeInstanceFields = new Dictionary<Type, FieldInfo[]>();
 
-    public static FieldInfo GetPostDocDelegate(Type type) {
-        FieldInfo d;
-        if(!typePostDocDelegates.TryGetValue(type, out d)) {
-            d = type.GetField("PostDoc", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance);
-            typePostDocDelegates[type] = d;
+    public static MethodInfo GetPostDoc(Type type) {
+        MethodInfo postDoc;
+        if(!typePostDocs.TryGetValue(type, out postDoc)) {
+            postDoc = type.GetMethod("PostDoc", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+            typePostDocs[type] = postDoc;
         }
-        return d;
+        return postDoc;
     }
-    static Dictionary<Type, FieldInfo> typePostDocDelegates = new Dictionary<Type, FieldInfo>();
+    static Dictionary<Type, MethodInfo> typePostDocs = new Dictionary<Type, MethodInfo>();
 
     public static MethodInfo GetFromDoc(Type type) {
-        MethodInfo m;
-        if(!typeFromDocs.TryGetValue(type, out m)) {
-            m = type.GetMethod("FromDoc", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
-            typeFromDocs[type] = m;
+        MethodInfo fromDoc;
+        if(!typeFromDocs.TryGetValue(type, out fromDoc)) {
+            fromDoc = type.GetMethod("FromDoc", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+            typeFromDocs[type] = fromDoc;
         }
-        return m;
+        return fromDoc;
     }
     static Dictionary<Type, MethodInfo> typeFromDocs = new Dictionary<Type, MethodInfo>();
 
