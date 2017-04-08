@@ -1,28 +1,34 @@
-using UnityEngine;
-using NUnit.Framework;
 using DarkConfig;
-using System.Collections.Generic;
-using System;
+using NUnit.Framework;
 
 [TestFixture]
 class PostDocFacts {
     class PostDocClass {
+        public static PostDocClass PostDoc(PostDocClass existing) {
+            existing.baseKey += 1;
+            return existing;
+        }
+
         public int baseKey;
-        public System.Func<PostDocClass, PostDocClass> PostDoc = (d) => {
-                d.baseKey += 1;
-                return d;
-            };
     }
 
     class PostDocClass2 {
         public int baseKey = 0;
-        System.Func<PostDocClass, PostDocClass> PostDoc;
     }
 
+    class PostDocClass3 {
+        public static PostDocClass3 PostDoc(PostDocClass3 existing) {
+            return new PostDocClass3 {
+                baseKey = 99
+            };
+        }
+
+        public int baseKey = 0;
+    }
 
     const string c_filename = "PostDocFacts_TestFilename";
 
-    T ReifyString<T>(string str) where T: new() {
+    static T ReifyString<T>(string str) where T: new() {
         var doc = Config.LoadDocFromString(str, c_filename);
         T tc = default(T);
         ConfigReifier.Reify(ref tc, doc);
@@ -32,30 +38,24 @@ class PostDocFacts {
     [Test]
     public void PostDoc_IsCalled() {
         var tc = ReifyString<PostDocClass>("baseKey: 10");
-        Assert.True(tc.PostDoc != null);
         Assert.AreEqual(tc.baseKey, 11);
     }
 
     [Test]
-    public void PostDoc_IsNull() {
+    public void PostDoc_DoesntExist() {
         var doc = Config.LoadDocFromString("baseKey: 10", c_filename);
         PostDocClass2 tc = null;
         ConfigReifier.Reify(ref tc, doc);
+        Assert.NotNull(tc);
         Assert.AreEqual(tc.baseKey, 10);
     }
 
     [Test]
-    public void PostDoc_MultipleCalled() {
-        bool secondCalled = false;
-        var tc = ReifyString<PostDocClass>("baseKey: 10");
-        tc.PostDoc += (x) => {
-            secondCalled = true;
-            return x;
-        };
+    public void PostDoc_CanReplaceWithReturnValue() {
         var doc = Config.LoadDocFromString("baseKey: 10", c_filename);
+        PostDocClass3 tc = null;
         ConfigReifier.Reify(ref tc, doc);
-        Assert.AreEqual(tc.PostDoc.GetInvocationList().Length, 2);
-        Assert.True(secondCalled);
-        Assert.AreEqual(tc.baseKey, 11);
+        Assert.NotNull(tc);
+        Assert.AreEqual(tc.baseKey, 99);
     }
 }

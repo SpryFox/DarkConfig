@@ -3,9 +3,9 @@ obj.meta
 Library
 Temp
 
-./*.csproj
-./*.sln
-./*.userprefs
+*.userprefs
+*.sln
+*.csproj
 *.unityproj
 *.suo
 *.user
@@ -16,13 +16,13 @@ Builds
 UnitTestResults.xml*
 *-TestResults.xml*
 
-# ignore these specifically since the ./*.ext approach isn't working
-Assembly-CSharp-Editor-vs.csproj
-Assembly-CSharp-Editor.csproj
-Assembly-CSharp-vs.csproj
-Assembly-CSharp.csproj
+# ignore these specifically
 players
 plainlog.txt
 DLL
 
 Sln/bin
+
+# Don't ignore these sln and csproj files because they're part of the non-Unity project.
+!Sln/DarkConfig.sln
+!Sln/DarkConfig.csproj

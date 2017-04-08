@@ -66,20 +66,11 @@ namespace DarkConfig {
             s_fromDocs[t] = del;
         }
 
-        static object CallPostDoc(Type typ, object obj) {
-            var fieldInfo = ReflectionCache.GetPostDocDelegate(typ);
-            if (fieldInfo != null) {
+        static object CallPostDoc(Type serializedType, object obj) {
+            var postDoc = ReflectionCache.GetPostDoc(serializedType);
+            if (postDoc != null) {
                 try {
-                    var delg = fieldInfo.GetValue(obj) as MulticastDelegate;
-                    if(delg != null) {
-                        var invocations = delg.GetInvocationList();
-                        if(invocations != null) {
-                            for(int i = 0; i < invocations.Length; i++) {
-                                s_tmpPostDocArray[0] = obj;
-                                obj = invocations[i].Method.Invoke(invocations[i].Target, s_tmpPostDocArray);
-                            }
-                        }
-                    }
+                    obj = postDoc.Invoke(null, new[] { obj });
                 } catch (System.Reflection.TargetInvocationException e) {
                     throw e.InnerException;
                 }
@@ -371,10 +362,10 @@ namespace DarkConfig {
                 // special-case behavior, set the first instance field on it from the doc
                 var allFields = ReflectionCache.GetInstanceFields(type);
                 Config.Assert(allFields.Length == 1, "Trying to set a field of type: ",
-				              						 type, allFields.Length, "from value of wrong type:", 
-				              						 doc.Type == DocNodeType.Scalar ? doc.StringValue : doc.Type.ToString(),
-                                                     "at",
-                                                     doc.SourceInformation);
+                              type, allFields.Length, "from value of wrong type:", 
+                              doc.Type == DocNodeType.Scalar ? doc.StringValue : doc.Type.ToString(),
+                              "at",
+                              doc.SourceInformation);
                 SetField(allFields[0], ref setCopy, doc, options);
                 obj = setCopy;
                 return;

@@ -43,6 +43,8 @@ public class PlaneCard {
     [ConfigAllowMissing]
     static Dictionary<string, PlaneCard> m_cards;
 
+    public System.Action<PlaneCard> OnChanged;
+
     public static Dictionary<string, PlaneCard> Cards {
         get { if(m_cards == null) LoadConfigs(); return m_cards; }
     }
@@ -53,5 +55,8 @@ public class PlaneCard {
         Config.Apply("PlaneCards", ref m_cards);
     }
 
-    public System.Func<PlaneCard, PlaneCard> PostDoc;
+    public static PlaneCard PostDoc(PlaneCard existing) {
+        if(existing.OnChanged != null) existing.OnChanged(existing);
+        return existing;
+    }
 }
