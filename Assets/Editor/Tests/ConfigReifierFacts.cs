@@ -1088,5 +1088,25 @@ class ConfigReifierFacts {
         Assert.AreEqual(d["ugh"].AsString(), "bugh");
     }
 
+    [Test]
+    public void ParseException_EmptyEnum() {
+        Assert.Throws<ParseException>(() => {
+            ReifyString<TestClass>("enumKey: \"\"");
+        });
+    }
+
+    [Test]
+    public void ParseException_BadInt() {
+        Assert.Throws<ParseException>(() => {
+            ReifyString<TestClass>("intKey: incorrect");
+        });
+    }
+
+    [Test]
+    public void ParseException_BadBool() {
+        Assert.Throws<ParseException>(() => {
+            ReifyString<TestClass>("boolKeyDefaultFalse: incorrect");
+        });
+    }
     
 }

@@ -275,7 +275,7 @@ namespace DarkConfig {
                         return CallPostDoc(fieldType, existing);
                     }
                 }
-            } catch (FormatException e) {
+            } catch (Exception e) {
                 throw new ParseException("Exception based on document starting at: " + value.SourceInformation, e);
             }
 
