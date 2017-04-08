@@ -239,23 +239,15 @@ And the corresponding config file:
 Observers via PostDoc
 --------------------------
 
-Sometimes you want to take action when an object is updated from the configuration.  Maybe it's a post-processing step.  Maybe you just want to refresh rendering of something.  No matter the reason, you can define a delegate named PostDoc (it's a magic name just like FromDoc) on a class and it will get called when DarkConfig updates or creates such an object.
+Sometimes you want to take action when an object is updated from the configuration.  Maybe it's a post-processing step.  Maybe you just want to refresh rendering of something.  No matter the reason, you can define a function named PostDoc (it's a magic name just like FromDoc) on a class and it will get called when DarkConfig updates or creates such an object.
 
-Here's an example from the PlaneCard class.
+Here's an example:
 
-    public System.Func<PlaneCard, PlaneCard> PostDoc;
-
-Elsewhere we can add an observer like so:
-
-    m_card.PostDoc += Refresh;
-
-The definition for a PostDoc delegate looks like this:
-
-    public PlaneCard Refresh(PlaneCard card) {
-        return card;
+    public static PlaneCard PostDoc(PlaneCard existing) {
+        return existing;
     }
 
 Note that:
 * It accepts an instance of its own class, and returns an instance of the same type.  This gives you an opportunity to modify or replace the instance.  If the instance is a value type, you have to replace it to modify it.
 
-PostDoc will be called after all the fields have been set by the normal DarkConfig methods.  If is generally easier to implement listeners with PostDoc than implementing a custom FromDoc.
+PostDoc will be called after all the fields have been set by the normal DarkConfig methods.  It is probably easier to implement listeners with PostDoc than implementing a custom FromDoc.

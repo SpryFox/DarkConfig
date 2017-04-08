@@ -16,14 +16,14 @@ public class PlaneView : MonoBehaviour {
     public PlaneCard Card {
         get { return m_card; }
         set { 
-            if(m_card != null) m_card.PostDoc -= Refresh;
+            if(m_card != null) m_card.OnChanged -= Refresh;
             m_card = value;
-            m_card.PostDoc += Refresh;
+            m_card.OnChanged += Refresh;
             Refresh(m_card);
         }
     }
 
-    public PlaneCard Refresh(PlaneCard card) {
+    public void Refresh(PlaneCard card) {
         Fuselage.transform.localPosition = Card.Fuselage.Pos;
         Fuselage.transform.localScale = Card.Fuselage.Size.XYZ1();
         LeftWing.transform.localPosition = new Vector2(-Card.Wing.Pos.x, Card.Wing.Pos.y);
@@ -35,7 +35,7 @@ public class PlaneView : MonoBehaviour {
         RightStabilizer.transform.localPosition = Card.Stabilizer.Pos;
         RightStabilizer.transform.localScale = new Vector2(-Card.Stabilizer.Size.x, Card.Stabilizer.Size.y).XYZ1();
 
-        if(Controller == null) return card;
+        if(Controller == null) return;
         var healthPct = ((float)Controller.HitPoints) / Controller.MaxHitPoints;
         var color = Color.Lerp(Color.white, Color.Lerp(Color.red, Color.black, 0.2f), 1 - healthPct);
         Fuselage.color = color;
@@ -43,12 +43,10 @@ public class PlaneView : MonoBehaviour {
         RightWing.color = color;
         LeftStabilizer.color = color;
         RightStabilizer.color = color;
-
-        return card;
     }
 
     void OnDestroy() {
-        if(Card != null) Card.PostDoc -= Refresh;
+        if(Card != null) Card.OnChanged -= Refresh;
     }
 
     void Killed() {
