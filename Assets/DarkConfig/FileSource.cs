@@ -142,15 +142,17 @@ namespace DarkConfig {
 
         
         public void HotloadIndex(ConfigFileInfo indexInfo) {
+            if(m_index == null) {
+                Config.Log(LogVerbosity.Warn, "Null m_index");
+                return;
+            }
+
             var indexNode = indexInfo.Parsed;
 
             var newFiles = new List<string>(10);
             var removedFiles = new List<string>(10);
             for(int i = 0; i < indexNode.Count; i++) {
                 var fname = indexNode[i].StringValue;
-                if(m_index == null) {
-                    Config.Log(LogVerbosity.Info, "Null m_index");
-                }
                 if(!m_index.Contains(fname)) {
                     newFiles.Add(fname);
                 }
