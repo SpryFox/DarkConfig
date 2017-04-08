@@ -1108,5 +1108,18 @@ class ConfigReifierFacts {
             ReifyString<TestClass>("boolKeyDefaultFalse: incorrect");
         });
     }
+
+    [Test]
+    public void EmptyDoc_ReturnsDocNode() {
+        var doc = Config.LoadDocFromString("", "EmptyDoc");
+        Assert.IsNotNull(doc);
+        Assert.IsTrue(doc is DocNode);
+    }
     
+    [Test]
+    public void EmptyDoc_Stream_ReturnsDocNode() {
+        var doc = Config.LoadDocFromStream(new System.IO.MemoryStream(), "EmptyDoc");
+        Assert.IsNotNull(doc);
+        Assert.IsTrue(doc is DocNode);
+    }
 }

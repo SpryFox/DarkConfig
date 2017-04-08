@@ -209,6 +209,9 @@ namespace DarkConfig {
             var yaml = new YamlStream();
             yaml.Load(input, filename);
 
+            if(yaml.Documents.Count <= 0) {
+                return new YamlDocNode(null);
+            }
             return new YamlDocNode(yaml.Documents[0].RootNode);
         }
 
@@ -220,6 +223,9 @@ namespace DarkConfig {
             var yaml = new YamlStream();
             yaml.Load(input, filename);
 
+            if(yaml.Documents.Count <= 0) {
+                return new YamlDocNode(null);
+            }
             return new YamlDocNode(yaml.Documents[0].RootNode);
         }
 
