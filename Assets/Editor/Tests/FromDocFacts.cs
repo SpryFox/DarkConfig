@@ -110,8 +110,8 @@ class FromDocFacts {
     }
 
     [Test]
-    [ExpectedException(typeof(System.ArgumentException))]
-    public void FromDoc_PassesAlongExceptions() {
+    [ExpectedException(typeof(ParseException))]
+    public void FromDoc_WrapsExceptions() {
         ReifyString<TestClass>("{\"wrong\": \"structure\"}");
     }
 
