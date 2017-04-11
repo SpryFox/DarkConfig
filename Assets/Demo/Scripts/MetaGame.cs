@@ -80,6 +80,11 @@ public class MetaGame : MonoBehaviour {
             Debug.Log("Hotloading configs");
             Config.FileManager.CheckHotload();
         }
+
+        if(Input.GetKeyDown(KeyCode.Q)) {
+            Config.FileManager.IsHotloadingFiles = !Config.FileManager.IsHotloadingFiles;
+            Debug.Log("Setting auto hotloading to: " + Config.FileManager.IsHotloadingFiles);
+        }
     }
 
     public void PlayerKilled() {

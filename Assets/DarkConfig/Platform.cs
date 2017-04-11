@@ -28,6 +28,10 @@ namespace DarkConfig {
         public virtual object StartCoroutine(IEnumerator coro) {
             throw new System.NotSupportedException("Cannot start coroutine using empty Platform");
         }
+
+        public virtual void StopCoroutine(IEnumerator coro) {
+            throw new System.NotSupportedException("Cannot start coroutine using empty Platform");
+        }
     }
 
 }

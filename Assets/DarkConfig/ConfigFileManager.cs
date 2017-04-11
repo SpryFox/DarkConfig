@@ -18,8 +18,12 @@ namespace DarkConfig {
             get { return m_isHotloadingFiles; }
             set {
                 m_isHotloadingFiles = value;
-                if (m_isHotloadingFiles && !m_isRunningWatchFilesCoro) {
-                    Platform.Instance.StartCoroutine(WatchFilesCoro());
+                if (m_isHotloadingFiles && m_watchFilesCoro == null) {
+                    m_watchFilesCoro = WatchFilesCoro();
+                    Platform.Instance.StartCoroutine(m_watchFilesCoro);
+                } else if(!m_isHotloadingFiles && m_watchFilesCoro != null) {
+                    Platform.Instance.StopCoroutine(m_watchFilesCoro);
+                    m_watchFilesCoro = null;
                 }
             }
         }
@@ -443,7 +447,6 @@ namespace DarkConfig {
         }
 
         IEnumerator WatchFilesCoro() {
-            m_isRunningWatchFilesCoro = true;
             try {
                 while (IsHotloadingFiles) {
                     while (!m_isPreloaded) yield return Platform.Instance.WaitForSeconds(0.1f);
@@ -452,7 +455,7 @@ namespace DarkConfig {
                     yield return Platform.Instance.StartCoroutine(CheckHotloadCoro());
                 }
             } finally {
-                m_isRunningWatchFilesCoro = false;
+                m_watchFilesCoro = null;
             }
         }
 
@@ -510,7 +513,7 @@ namespace DarkConfig {
         bool m_isPreloading = false;
         bool m_isPreloaded = false;
         bool m_isHotloadingFiles = true;
-        bool m_isRunningWatchFilesCoro = false;
+        IEnumerator m_watchFilesCoro = null;
 
         bool m_isCheckingHotloadNow = false;
 
