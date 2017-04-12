@@ -469,13 +469,5 @@ namespace DarkConfig {
         }
 
         protected static Dictionary<Type, FromDocDelegate> s_fromDocs = new Dictionary<Type, FromDocDelegate>();
-
-        static object[] s_tmpPostDocArray = new object[1];
-    }
-
-    public class ParseException : System.Exception {
-        public ParseException(string message, Exception inner)
-            : base(message, inner) {
-        }
     }
 }

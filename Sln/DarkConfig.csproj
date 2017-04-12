@@ -84,6 +84,9 @@
     <Compile Include="..\Assets\DarkConfig\YamlDocNode.cs">
       <Link>YamlDocNode.cs</Link>
     </Compile>
+    <Compile Include="..\Assets\DarkConfig\ParseException.cs">
+      <Link>ParseException.cs</Link>
+    </Compile>
     <Compile Include="..\Assets\DarkConfig\YamlDotNet\Core\AnchorNotFoundException.cs">
       <Link>YamlDotNet\Core\AnchorNotFoundException.cs</Link>
     </Compile>
