@@ -46,6 +46,10 @@ namespace DarkConfig {
             return TokenMonoBehaviour.StartCoroutine(coro);
         }
 
+        public override void StopCoroutine(IEnumerator coro) {
+            TokenMonoBehaviour.StopCoroutine(coro);
+        }
+
         // instance of MonoBehaviour used only for its StartCoroutine functionality
         internal static MonoBehaviour TokenMonoBehaviour {
             get {
