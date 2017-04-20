@@ -387,6 +387,7 @@ namespace DarkConfig {
                 List<string> modifiedFiles = new List<string>();
 
                 for (int k = 0; k < m_configFiles.Count; k++) {
+                    if(!IsHotloadingFiles) yield break;
                     var configName = m_configFiles[k];
                     try {
                         var newInfo = CheckHotload(configName);
