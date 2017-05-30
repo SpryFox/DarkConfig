@@ -109,11 +109,20 @@ class FromDocFacts {
         Assert.IsTrue(tc is TestClassDerived);
     }
 
+#if UNITY_5_6
+    [Test]
+    public void FromDoc_WrapsExceptions() {
+        Assert.That(() => {
+            ReifyString<TestClass>("{\"wrong\": \"structure\"}");
+        }, Throws.TypeOf<ParseException>());
+    }
+#else
     [Test]
     [ExpectedException(typeof(ParseException))]
     public void FromDoc_WrapsExceptions() {
         ReifyString<TestClass>("{\"wrong\": \"structure\"}");
     }
+#endif
 
     [Test]
     public void FromDoc_CalledWhenReifyingNullClass() {
