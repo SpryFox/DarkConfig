@@ -29,7 +29,11 @@ namespace DarkConfig {
 
         public override string StackTrace {
             get {
-                return privateInner.StackTrace + "\n-----\n" + base.StackTrace;
+                if(privateInner == null) {
+                    return base.StackTrace;
+                } else {
+                    return privateInner.StackTrace + "\n-----\n" + base.StackTrace;
+                }
             }
         }
     }
