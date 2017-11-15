@@ -32,6 +32,26 @@ namespace DarkConfig {
             obj = (T)ValueOfType(typeof(T), obj, doc, options);
         }
 
+		/// <summary>
+		/// Sets up *obj* based on the contents of the parsed document *doc* with a type override.
+		/// Useful for (eg) instaiating concrete classes of an interface based on a keyword.
+		/// So if obj is a Thing:
+		///   public class Thing {
+		///      float m1;
+		///      string m2;
+		///   }
+		///
+		/// You can create a new instance, or set an existing instance's fields with this parsed document:
+		///  {"m1":1.0, "m2":"test"}
+		///
+		/// *obj* can be null; if it is it gets assigned a new instance based on its type and the contents of *doc* (this is why the parameter is a ref)
+		/// 
+		/// Works on static and private variables, too.
+		/// </summary>
+		public static void Reify<T>(ref T obj, Type objType, DocNode doc, ConfigOptions? options = null) {
+			obj = (T)ValueOfType(objType, obj, doc, options);
+		}
+
         /// <summary>
         /// Sets up static variables (and only static variables) on type *T* based on the contents of the parsed document *doc*
         ///
