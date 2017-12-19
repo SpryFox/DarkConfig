@@ -92,6 +92,38 @@ namespace DarkConfig {
             }
             return false;
         }
+
+        // combines hierarchies.
+        // lists are concatenated, but dicts are recursively DeepMerged. 
+        // favours second node on any conflict.
+        public static DocNode DeepMerge(DocNode lhs, DocNode rhs) {
+            if (lhs.Type != rhs.Type) {
+                throw new ArgumentException("can not merge different types " + lhs.Type + " " + rhs.Type);
+            }
+
+            if (lhs.Type == DocNodeType.List) {
+                return Config.CombineList(new List<DocNode>{ lhs, rhs });
+                
+            } else if (lhs.Type == DocNodeType.Dictionary) {
+                var mergedDict = new ComposedDocNode(DocNodeType.Dictionary);
+                foreach(var lhsPair in lhs.Pairs) {
+                    mergedDict[lhsPair.Key] = lhsPair.Value;
+                }
+                foreach(var rhsPair in rhs.Pairs) {
+                    if (mergedDict.ContainsKey(rhsPair.Key)) {
+                        mergedDict[rhsPair.Key] = DeepMerge(mergedDict[rhsPair.Key], rhsPair.Value);
+                    } else {
+                        mergedDict[rhsPair.Key] = rhsPair.Value;
+                    }
+                }
+                return mergedDict;
+                
+            } else if (lhs.Type == DocNodeType.Scalar) {
+                return rhs;
+            } else {
+                throw new ArgumentException("can not merge doc nodes of type " + lhs.Type);
+            }
+        }
     }
 
     public class DocNodeAccessException : System.Exception {
