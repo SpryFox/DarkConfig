@@ -1,4 +1,4 @@
-=== Hotloading ===
+# Hotloading
 
 Hotloading is getting values from config files into the game while the game 
 is running.
@@ -15,7 +15,7 @@ that hotloading saved him 75% of the time it took to create items.
 
 Unity supports some forms of hotloading; DarkConfig complements it with more.
 
-== How ==
+## How
 
 Hotloading is great, and DarkConfig does as much as it can to facilitate it,
 but it isn't omniscient and it's possible for code to "break" hotloading.    
@@ -89,7 +89,7 @@ you'll understand why it remains `50`.  However, many people would expect it
 to "return" to the default value of `10`.  That difference is the source of 
 some confusion in using DarkConfig for now.
 
-== Object Identity ==
+## Object Identity
 
 Because DarkConfig modifies objects in-place, you can simply take a reference
 to an object anywhere in the object tree, and DarkConfig will update it for 
@@ -134,7 +134,7 @@ unupdatable. In practice, it's rare to modify the order of collections and
 also pass out references to the contents of those collections, so this 
 limitation is not encountered often.
 
-== Hotload Notifications ==
+## Hotload Notifications
 
 Sometimes, you have to perform a side-effect that effectively copies a field
 from the config object tree.  For example, if you set the position of an 
@@ -151,7 +151,7 @@ for the first time.
 There are a number of different ways DarkConfig can notify your code about
 hotloads.  Here they are.
 
-= Load =
+### Load
 
 When you call `DarkConfig.Config.Load` to load the contents of a file with a
 function argument, that function gets called every time the file is hotloaded
@@ -190,7 +190,7 @@ boss_b:
     # ... other fields ...
 ```
 
-= Custom Parsers =
+### Custom Parsers
 
 See the `custom_parsing` for more specifics on how to implement these.  When
 you're implementing the custom parsing logic, it will get called during
@@ -259,7 +259,7 @@ Note also that the new field `_derivedLootTable` gets the `ConfigIgnore`
 attribute; this guarantees that it can't be inadvertently overridden in the
 config file.
 
-= PostDoc =
+### PostDoc
 
 Sometimes you don't want to implement a custom parser just to get notification
 that an object was hotloaded.  For that, we have PostDoc.
@@ -277,7 +277,7 @@ public static PlaneCard PostDoc(PlaneCard existing) {
 You can see an example of this in the demo project, in `PlaneCard.cs`, where it's used to trigger updates to the Unity structures that display the graphics of the planes.
 
 
-== When Files Are Hotloaded ==
+## When Files Are Hotloaded
 
 DarkConfig decides that a file should be hotloaded by seeing whether its
 modified time has changed or its size has changed.  If either has changed,
@@ -289,7 +289,7 @@ Because it takes a non-zero amount of time to run these checks, it can't check
 all the files every frame.  DarkConfig has a few options for controlling when
 to look at files for hotloading purposes.
 
-= Continuous Polling =
+### Continuous Polling
 
 When enabled, continuous checking will periodically initiate a background
 coroutine.  This coroutine will check one file per iteration to see whether
@@ -308,7 +308,7 @@ However, if there a hundreds of files, it will take many seconds for
 continuous polling to check them all, which means potentially unacceptably 
 long waits.
 
-= Manual =
+### Manual
 
 You can trigger a manual check by calling:
 
