@@ -118,9 +118,10 @@ class FromDocFacts {
     }
 #else
     [Test]
-    [ExpectedException(typeof(ParseException))]
     public void FromDoc_WrapsExceptions() {
-        ReifyString<TestClass>("{\"wrong\": \"structure\"}");
+        Assert.Throws(typeof(ParseException), () => {
+            ReifyString<TestClass>("{\"wrong\": \"structure\"}");
+        });
     }
 #endif
 
