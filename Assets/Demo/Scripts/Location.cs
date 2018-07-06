@@ -13,10 +13,12 @@ public class Location {
         Size = size;
     }
 
-    // let's take over the parsing of Location, because we want to be able to have a short form for the common case of specifying only the position
+    // let's take over the parsing of Location, because we want to be able to 
+    // have a short form for the common case of specifying only the position
     public static Location FromDoc(Location existing, DocNode doc) {
         if(existing == null) {
-            // want to modify an existing Location if possible, but if it's null we need to instantiate it
+            // want to modify an existing Location if possible, but if it's 
+            // null we need to instantiate it
             existing = new Location(default(Vector2), default(Vector2));
         }
         if(doc.Type == DocNodeType.List) {
@@ -24,6 +26,9 @@ public class Location {
             Config.Reify(ref existing.Pos, doc);
             existing.Size = new Vector2(1, 1);
         } else {
+            // Do the default parsing for an object.  Note that calling
+            // Config.Refiy on the same type would trigger infinite recursion.
+            // It's safe to call Reify a few lines up because the type is different.
             Config.SetFieldsOnObject(ref existing, doc);
         }
         return existing;

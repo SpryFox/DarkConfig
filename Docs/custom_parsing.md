@@ -47,7 +47,7 @@ Naming It "FromDoc"
 
 If you control the class, it might be easiest to simply name the custom parsing function "FromDoc".  When DarkConfig attempts to reify an object of a particular type, it checks whether that type has a `FromDoc` method, and calls it.  Example:
 
-    public static Point FromDoc(Point existing, DarkConfig.DocNode doc) {
+    public static Point FromDoc(Point existing, DocNode doc) {
         int p1 = doc[0].As<int>();
         int p2 = p1;
         if (doc.Count >= 2) {

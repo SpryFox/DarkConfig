@@ -13,6 +13,7 @@ public class AIController : MonoBehaviour {
     }
 
     void Update () {
+        // try and target the player (which is a singleton because it's a single player game)
         var player = MetaGame.Instance.GetPlayer();
         if(player == null) return;
         var directionToPlayer = player.transform.position - transform.position;
@@ -33,6 +34,7 @@ public class AIController : MonoBehaviour {
     void Killed() {
         MetaGame.Instance.AIKilled();
 
+        // spawn loot from the loot table
         var lootTable = Controller.Card.LootTable;
         if(lootTable == null) {
             Debug.LogError("null lootTable " + Controller.Card);

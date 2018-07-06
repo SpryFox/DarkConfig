@@ -3,11 +3,19 @@ using System.Collections;
 using DarkConfig;
 using System.Diagnostics;
 
+// This is the main loading class for the game.  It's expected to run inside
+// its own scene, which then could display a loading indicator.
 public class LoadGame : MonoBehaviour {
     void Awake() {
         #if(DEBUG)
+        // Be strict in debug mode so that content creators will be quickly
+        // notified of any mistakes.  It will warn for any missing fields
+        // (which haven't been annotated with ConfigAllowMissing) and for any
+        // extra fields.
         Config.DefaultOptions = ConfigOptions.None;
         #else
+        // In production mode, ignore missing/extra checks.  This makes the 
+        // runtime faster.  ConfigMandatory fields are still checked.
         Config.DefaultOptions = ConfigOptions.AllowMissingExtraFields;
         #endif
 
@@ -15,7 +23,7 @@ public class LoadGame : MonoBehaviour {
     }
 
     IEnumerator WaitAndStartGame() {
-        // this latency is purely because Unity's profiler doesn't capture the first frame a game is running
+        // this delay is purely because Unity's profiler doesn't capture the first frame a game is running
         yield return new WaitForSeconds(0.1f);
 
         UnityPlatform.Setup();
@@ -25,6 +33,7 @@ public class LoadGame : MonoBehaviour {
         // uncomment to disable periodic hotloading of files, it'll have to be manual
         //Config.FileManager.IsHotloadingFiles = false;
         
+        // preload will call StartGame when it's finished
         Config.Preload(StartGame);
     }
 
@@ -38,10 +47,6 @@ public class LoadGame : MonoBehaviour {
         // at the same time
         PlaneCard.LoadConfigs();
         UnityEngine.SceneManagement.SceneManager.LoadScene("PlaneDemo");
-    }
-
-    public static byte[] GetPassword() {
-        return new byte[] { 4, 5, 12, 34, 99, 81, 4, 6 };
     }
 
     Stopwatch m_sw;

@@ -3,13 +3,15 @@ using System.Collections.Generic;
 using DarkConfig;
 
 public class Pickup : MonoBehaviour {
+    // these two fields are used if it's a health pickup
     public int Health = 0;
 
+    public SpriteRenderer PlusSprite;
+
+    // these two fields are used if the pickup is a plane
     public Transform PlaneViewPrefab;
 
     PlaneView View;
-
-    public SpriteRenderer PlusSprite;
 
     void Start() {
         PlusSprite.color = Color.green;

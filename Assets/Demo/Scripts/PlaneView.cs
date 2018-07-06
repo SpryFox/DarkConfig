@@ -15,7 +15,8 @@ public class PlaneView : MonoBehaviour {
     PlaneCard m_card;
     public PlaneCard Card {
         get { return m_card; }
-        set { 
+        set {
+            // we hook up listeners to OnChanged so it gets called when the Card gets modified
             if(m_card != null) m_card.OnChanged -= Refresh;
             m_card = value;
             m_card.OnChanged += Refresh;
@@ -24,6 +25,9 @@ public class PlaneView : MonoBehaviour {
     }
 
     public void Refresh(PlaneCard card) {
+        // Here, we're copying values from the card because we have to to interface with Unity.
+        // However, we've arranged things so that this function gets called any time
+        // the card gets modified.
         Fuselage.transform.localPosition = Card.Fuselage.Pos;
         Fuselage.transform.localScale = Card.Fuselage.Size.XYZ1();
         LeftWing.transform.localPosition = new Vector2(-Card.Wing.Pos.x, Card.Wing.Pos.y);
@@ -46,6 +50,7 @@ public class PlaneView : MonoBehaviour {
     }
 
     void OnDestroy() {
+        // need to clean up this listener so it's not a memory leak
         if(Card != null) Card.OnChanged -= Refresh;
     }
 

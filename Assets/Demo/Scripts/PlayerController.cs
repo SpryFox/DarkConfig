@@ -5,13 +5,18 @@ using DarkConfig;
 public class PlayerController : MonoBehaviour {
     public static string StartingCard = null;
 
-    public PlaneController Controller;
-
     public Dictionary<string, KeyCode> Keyboard;
 
+    [ConfigIgnore]
+    public PlaneController Controller;
+
     void Start() {
+        // Get keyboard bindings from the config, and also automatically 
+        // hotload them.
         Config.ApplyThis("player", this);
-        Config.ApplyStatic<PlayerController>("player");  // this is just to exercise ApplyStatic
+        // The previous call to ApplyThis won't have touched the StartingCard
+        // field, so for that we call ApplyStatic.
+        Config.ApplyStatic<PlayerController>("player");
 
         Controller.Setup(PlaneCard.Cards[StartingCard]);
     }

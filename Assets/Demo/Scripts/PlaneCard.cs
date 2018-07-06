@@ -8,15 +8,21 @@ public class GunMount {
 
     public GunCard Card {
         get {
+            // Note that this is assuming that GunCard.Cards is loaded by the 
+            // time we get into this property accessor.
             return GunCard.Cards[Name];
         }
     }
 }
 
 public class LootTableEntry {
+    // Don't permit this field to be missing in the config, even if DarkConfig 
+    // isn't being strict.
     [ConfigMandatory]
     public float Weight;
 
+    // Permit this field to be missing in the config, even if DarkConfig is 
+    // being strict.
     [ConfigAllowMissing]
     public int Health;
 
@@ -25,6 +31,7 @@ public class LootTableEntry {
 }
 
 public class PlaneCard {
+    // Fields that are expected to be set in configs. 
     public Location Fuselage = new Location(new Vector2(0, 0), new Vector2(1, 1));
     public Location Wing = new Location(new Vector2(0, 0), new Vector2(1, 1));
     public Location Stabilizer = new Location(new Vector2(0, -1), new Vector2(1, 1));
@@ -40,21 +47,38 @@ public class PlaneCard {
     [ConfigMandatory]
     public List<LootTableEntry> LootTable;
 
-    [ConfigAllowMissing]
-    static Dictionary<string, PlaneCard> m_cards;
+    /////////////////////////////////////////////////////////
 
+    // this field can't be set by DarkConfig because it's a function; it's 
+    // also ignored for clarity
+    [ConfigIgnore]
     public System.Action<PlaneCard> OnChanged;
 
+    // see LoadConfigs for where this is hooked up
+    [ConfigIgnore]
+    static Dictionary<string, PlaneCard> m_cards;
+
+    // DarkConfig can't currently set properties
     public static Dictionary<string, PlaneCard> Cards {
         get { if(m_cards == null) LoadConfigs(); return m_cards; }
     }
 
     public static void LoadConfigs() {
         // loads all config files in the Planes directory
-        Config.FileManager.RegisterCombinedFile(Config.FileManager.GetFilesByGlob("Planes/**"), "PlaneCards", Config.CombineDict);
+        Config.FileManager.RegisterCombinedFile(
+            Config.FileManager.GetFilesByGlob("Planes/**"),
+            "PlaneCards",
+            Config.CombineDict);
         Config.Apply("PlaneCards", ref m_cards);
     }
 
+    // We have a few places in the code which need to be notified when their
+    // PlaneCard is modified.  These are places where we had no choice but to 
+    // copy some of the values from the PlaneCard into some other object, and 
+    // therefore need to re-copy the values when the PlaneCard gets hotloaded.
+    // 
+    // To see those use cases, look for usage of OnChanged in PlaneView.cs. 
+    // See hotloading.md for more information on hotloading in general.
     public static PlaneCard PostDoc(PlaneCard existing) {
         if(existing.OnChanged != null) existing.OnChanged(existing);
         return existing;

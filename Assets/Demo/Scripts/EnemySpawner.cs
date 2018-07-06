@@ -7,7 +7,15 @@ public class EnemySpawner : MonoBehaviour {
     public Transform EnemyPrefab;
 
     void Start() {
-        // this is unnecessary for this demo, but I wanted to test whether immediate preloading works
+        // This is _not_ the main initialization code, that's in LoadGame.cs.
+        // This code runs in the editor, in the PlaneDemo scene, if LoadGame
+        // hasn't run yet.
+        // What happens here is that we add the source and then call ApplyThis
+        // without calling Config.Preload.  In the Unity editor (or as 
+        // determined by the Platform implementation), it will trigger an 
+        // "immediate preload" inside ApplyThis that will load/parse all the 
+        // config files within the function call (so it'll be slow and drop a 
+        // frame).
         if(Config.FileManager.CountSources() == 0) {
             Config.FileManager.AddSource(new FileSource(Application.dataPath + "/Demo/Resources/Configs"));
         }

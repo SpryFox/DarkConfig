@@ -71,19 +71,24 @@ public class MetaGame : MonoBehaviour {
             }
         }
         if(m_gameState == GameStateEnum.Postgame) {
-            if(Time.time - m_stateStartTime > 10 || Input.GetKeyDown(KeyCode.Space)) {
+            if(Time.time - m_stateStartTime > 10 || 
+                Input.GetKeyDown(KeyCode.Space)) {
                 SetState(GameStateEnum.Title);
             }
         }
 
-        if(Input.GetKeyDown(KeyCode.H) && (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))) {
+        if(Input.GetKeyDown(KeyCode.H) && 
+            (Input.GetKey(KeyCode.LeftShift) ||
+                Input.GetKey(KeyCode.RightShift))) {
             Debug.Log("Hotloading configs");
             Config.FileManager.CheckHotload();
         }
 
         if(Input.GetKeyDown(KeyCode.Q)) {
-            Config.FileManager.IsHotloadingFiles = !Config.FileManager.IsHotloadingFiles;
-            Debug.Log("Setting auto hotloading to: " + Config.FileManager.IsHotloadingFiles);
+            Config.FileManager.IsHotloadingFiles = 
+                !Config.FileManager.IsHotloadingFiles;
+            Debug.Log("Setting auto hotloading to: " +
+                Config.FileManager.IsHotloadingFiles);
         }
     }
 
