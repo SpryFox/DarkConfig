@@ -10,13 +10,14 @@ class DocNodeMergeFacts {
     [Test]
     public void DeepMerge_EmptyListDocs_ReturnsEmptyListDoc()
     {
-        var emptyDoc = new ComposedDocNode(DocNodeType.List);
-        var otherEmptyDoc = new ComposedDocNode(DocNodeType.List);
+        var emptyDoc = new ComposedDocNode(DocNodeType.List, sourceInformation: "e1");
+        var otherEmptyDoc = new ComposedDocNode(DocNodeType.List, sourceInformation: "e2");
 
         var merged = DocNode.DeepMerge(emptyDoc, otherEmptyDoc);
 
         var idealEmpty = new ComposedDocNode(DocNodeType.List);
         Assert.AreEqual(idealEmpty, merged);
+        Assert.AreEqual("Combination of: [e1, e2]", merged.SourceInformation);
     }
 
     [Test]
@@ -29,6 +30,7 @@ class DocNodeMergeFacts {
 
         var idealEmpty = new ComposedDocNode(DocNodeType.Dictionary);
         Assert.AreEqual(idealEmpty, merged);
+        Assert.AreEqual(merged.SourceInformation, "Merging of: [ComposedDocNode Dictionary, ComposedDocNode Dictionary]");
     }
 
     [Test]

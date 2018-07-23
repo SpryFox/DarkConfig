@@ -18,8 +18,8 @@ Unity supports some forms of hotloading; DarkConfig complements it with more.
 ## How
 
 Hotloading is great, and DarkConfig does as much as it can to facilitate it,
-but it isn't omniscient and it's possible for code to "break" hotloading.    
-If changing values in the config doesn't result in those values being 
+but it isn't omniscient and it's possible for code to "break" hotloading. If
+changing values in the config doesn't result in those values being 
 reflected in the game while it's running, that's broken. This section goes
 over some concepts that will help keep hotloading running well.
 

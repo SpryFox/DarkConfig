@@ -105,7 +105,8 @@ namespace DarkConfig {
                 return Config.CombineList(new List<DocNode>{ lhs, rhs });
                 
             } else if (lhs.Type == DocNodeType.Dictionary) {
-                var mergedDict = new ComposedDocNode(DocNodeType.Dictionary);
+                var mergedDict = new ComposedDocNode(DocNodeType.Dictionary, 
+                    sourceInformation: "Merging of: [" + lhs.SourceInformation + ", " + rhs.SourceInformation + "]");
                 foreach(var lhsPair in lhs.Pairs) {
                     mergedDict[lhsPair.Key] = lhsPair.Value;
                 }

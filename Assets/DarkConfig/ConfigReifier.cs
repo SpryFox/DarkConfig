@@ -207,7 +207,7 @@ namespace DarkConfig {
                         var iexisting = (System.Collections.IDictionary)existing;
                         Type kType = typeParameters[0];
                         Type vType = typeParameters[1];
-                        ComposedDocNode keyNode = new ComposedDocNode(DocNodeType.Scalar);  // can reuse this one object
+                        ComposedDocNode keyNode = new ComposedDocNode(DocNodeType.Scalar, sourceInformation: value.SourceInformation);  // can reuse this one object
                         HashSet<object> usedKeys = new HashSet<object>();
 
                         // create/update all pairs in the doc

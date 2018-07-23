@@ -162,7 +162,15 @@ namespace DarkConfig {
         }
 
         public static DocNode CombineList(List<DocNode> docs) {
-            ComposedDocNode result = new ComposedDocNode(DocNodeType.List);
+            var sb = new System.Text.StringBuilder("Combination of: [");
+            for (int i = 0; i < docs.Count; i++) {
+                if(i > 0) sb.Append(", ");
+                sb.Append(docs[i].SourceInformation);
+            }
+            sb.Append("]");
+
+            ComposedDocNode result = new ComposedDocNode(DocNodeType.List,
+                sourceInformation: sb.ToString());
             for (int i = 0; i < docs.Count; i++) {
                 if (docs[i].Type == DocNodeType.List) { // flatten file containing list
                     for (int j = 0; j < docs[i].Count; j++) {
@@ -191,7 +199,15 @@ namespace DarkConfig {
         }
 
         public static DocNode CombineDict(List<DocNode> docs) {
-            ComposedDocNode result = new ComposedDocNode(DocNodeType.Dictionary);
+            var sb = new System.Text.StringBuilder("Combination of: [");
+            for (int i = 0; i < docs.Count; i++) {
+                if(i > 0) sb.Append(", ");
+                sb.Append(docs[i].SourceInformation);
+            }
+            sb.Append("]");
+
+            ComposedDocNode result = new ComposedDocNode(DocNodeType.Dictionary,
+                sourceInformation: sb.ToString());
             for (int i = 0; i < docs.Count; i++) {
                 var doc = docs[i];
                 foreach (var kv in doc.Pairs) {

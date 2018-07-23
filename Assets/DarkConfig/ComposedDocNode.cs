@@ -10,8 +10,9 @@ namespace DarkConfig {
         //////////////////////////////////////////////////////////////////////
         // DocNode Methods
         //////////////////////////////////////////////////////////////////////
-        public ComposedDocNode(DocNodeType type, int size = -1) {
+        public ComposedDocNode(DocNodeType type, int size = -1, string sourceInformation = null) {
             m_type = type;
+            m_sourceInfo = sourceInformation;
             switch(type) {
                 case DocNodeType.Invalid:
                     break;
@@ -122,6 +123,7 @@ namespace DarkConfig {
 
         public override string SourceInformation {
             get {
+                if(m_sourceInfo != null) return m_sourceInfo;
                 return "ComposedDocNode " + Type;
             }
         }
@@ -149,6 +151,8 @@ namespace DarkConfig {
         Dictionary<string, DocNode> m_dictionary;
         List<DocNode> m_list;
         string m_scalar;
+
+        string m_sourceInfo;
     }
 
 }
