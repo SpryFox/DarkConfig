@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿#if false
+using UnityEngine;
 using System.Collections;
 using DarkConfig;
 
@@ -32,3 +33,4 @@ public class MissingFiles : IntegrationTestBase {
         Finish();
     }
 }
+#endif
