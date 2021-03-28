@@ -13,7 +13,7 @@ public class DemoEditorMenus {
         return Application.dataPath + GetRelPath();
     }
 
-    [MenuItem ("Assets/DarkConfig/Autogenerate Index")]
+    [MenuItem("Assets/DarkConfig/Autogenerate Index")]
     static void MenuGenerateIndex() {
         EditorUtils.GenerateIndex(GetRelPath());
         AssetDatabase.Refresh();

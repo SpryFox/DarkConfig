@@ -26,10 +26,10 @@ public class Parallax : MonoBehaviour {
             m_currentPos = newPos;
         }
 
-        if(drift) {
-            transform.position = m_currentPos + 
-                      new Vector3(Mathf.Sin(Time.time * 0.152f + (name.GetHashCode() & 0xFF)) * 10, 
-                                  Mathf.Cos(Time.time * 0.1193f + ((name.GetHashCode() & 0xFF00) >> 8)) * 10, 0);
+        if (drift) {
+            transform.position = m_currentPos +
+                                 new Vector3(Mathf.Sin(Time.time * 0.152f + (name.GetHashCode() & 0xFF)) * 10,
+                                     Mathf.Cos(Time.time * 0.1193f + ((name.GetHashCode() & 0xFF00) >> 8)) * 10, 0);
         } else {
             transform.position = m_currentPos;
         }

@@ -9,7 +9,7 @@ public class EditorUtilsFacts {
     public void TearDown() {
         // clean up entire test directory
         var tempDir = new System.IO.DirectoryInfo(Application.dataPath + "/TestTemp");
-        if(tempDir.Exists) {
+        if (tempDir.Exists) {
             tempDir.Delete(true);
         }
     }

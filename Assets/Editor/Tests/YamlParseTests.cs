@@ -20,13 +20,13 @@ public class YamlParseFacts {
         [Test]
         public void JsonSubset_ParsesOK() {
             string testStr = "{\"test_key\":\"test_value\"}";
-            var mapping = (YamlMappingNode)ParseYamlNode(testStr);
+            var mapping = (YamlMappingNode) ParseYamlNode(testStr);
 
             Assert.AreEqual(mapping.Children.Count, 1);
 
             foreach (var entry in mapping.Children) {
-                Assert.AreEqual(((YamlScalarNode)entry.Key).Value, "test_key");
-                Assert.AreEqual(((YamlScalarNode)entry.Value).Value, "test_value");
+                Assert.AreEqual(((YamlScalarNode) entry.Key).Value, "test_key");
+                Assert.AreEqual(((YamlScalarNode) entry.Value).Value, "test_value");
             }
         }
 
@@ -35,11 +35,11 @@ public class YamlParseFacts {
             string testStr = @"---
             yaml_key: yaml_value
         ";
-            var mapping = (YamlMappingNode)ParseYamlNode(testStr);
+            var mapping = (YamlMappingNode) ParseYamlNode(testStr);
 
             foreach (var entry in mapping.Children) {
-                Assert.AreEqual(((YamlScalarNode)entry.Key).Value, "yaml_key");
-                Assert.AreEqual(((YamlScalarNode)entry.Value).Value, "yaml_value");
+                Assert.AreEqual(((YamlScalarNode) entry.Key).Value, "yaml_key");
+                Assert.AreEqual(((YamlScalarNode) entry.Value).Value, "yaml_value");
             }
         }
     }
@@ -49,7 +49,7 @@ public class YamlParseFacts {
         [Test]
         public void JsonSubset_TraversedByDocNode() {
             string testStr = "{\"test_key\":\"test_value\"}";
-            var dn = (DocNode)new YamlDocNode(ParseYamlNode(testStr));
+            var dn = (DocNode) new YamlDocNode(ParseYamlNode(testStr));
 
             Assert.AreEqual(dn.Count, 1);
             Assert.AreEqual(dn["test_key"].StringValue, "test_value");
@@ -67,7 +67,7 @@ public class YamlParseFacts {
 key:
     inner_key: value
 ";
-            var dn = (DocNode)new YamlDocNode(ParseYamlNode(testStr, "testfilename"));
+            var dn = (DocNode) new YamlDocNode(ParseYamlNode(testStr, "testfilename"));
             try {
                 var x = dn["key"][3];
                 Assert.Fail("Should not succeed at indexing dictionary " + x);

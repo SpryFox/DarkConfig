@@ -8,7 +8,7 @@ using System;
 class DefaultFromDocFacts {
     const string c_filename = "DefaultFromDocFacts_TestFileName";
 
-    T ReifyString<T>(string str) where T: new() {
+    T ReifyString<T>(string str) where T : new() {
         var doc = Config.LoadDocFromString(str, c_filename);
         T tc = default(T);
         ConfigReifier.Reify(ref tc, doc);
@@ -80,5 +80,4 @@ class DefaultFromDocFacts {
         Assert.AreEqual(0.50196f, c.b, 0.0001);
         Assert.AreEqual(1f, c.a, 0.0001);
     }
-
 }

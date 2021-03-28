@@ -11,18 +11,19 @@ namespace DarkConfig {
             var absPath = new DirectoryInfo(Application.dataPath + baseDir);
             var absPathSlashed = absPath.FullName.Replace("\\", "/");
 
-            var fileInfo = absPath.GetFiles("*.bytes", SearchOption.AllDirectories); 
+            var fileInfo = absPath.GetFiles("*.bytes", SearchOption.AllDirectories);
             foreach (var file in fileInfo) {
-               var dirName = file.DirectoryName.Replace("\\", "/");
-               
-               var relativeToBase = dirName.Replace(absPathSlashed, "").Trim('/', '\\');
-               var completePath = (relativeToBase + "/" + file.Name).Trim('/', '\\');
-               retval.Add(completePath);
+                var dirName = file.DirectoryName.Replace("\\", "/");
+
+                var relativeToBase = dirName.Replace(absPathSlashed, "").Trim('/', '\\');
+                var completePath = (relativeToBase + "/" + file.Name).Trim('/', '\\');
+                retval.Add(completePath);
             }
-            retval.Sort((a,b) => {
+
+            retval.Sort((a, b) => {
                 var slashesA = CountCharacter('/', a);
                 var slashesB = CountCharacter('/', b);
-                if(slashesA != slashesB) {
+                if (slashesA != slashesB) {
                     return slashesA.CompareTo(slashesB);
                 } else {
                     return a.CompareTo(b);
@@ -34,9 +35,10 @@ namespace DarkConfig {
 
         static int CountCharacter(char c, string s) {
             int count = 0;
-            for(int i = 0; i < s.Length; i++) {
+            for (int i = 0; i < s.Length; i++) {
                 if (s[i] == c) count++;
             }
+
             return count;
         }
 
@@ -56,24 +58,25 @@ namespace DarkConfig {
 
             // create directory if necessary
             var indexDir = new FileInfo(indexPath).Directory;
-            if(!indexDir.Exists) {
+            if (!indexDir.Exists) {
                 indexDir.Create();
             }
 
             // write the header into the file
             var writer = new StreamWriter(indexPath, false);
-            for(int i = 0; i < c_indexFileHeader.Length; i++) {
+            for (int i = 0; i < c_indexFileHeader.Length; i++) {
                 writer.WriteLine(c_indexFileHeader[i]);
             }
 
             // write all the index entries into the file
             int totalWritten = 0;
-            for(int i = 0; i < filesInIndex.Count; i++) {
+            for (int i = 0; i < filesInIndex.Count; i++) {
                 // skip over index file itself, it's likely to be in the list already
-                if(filesInIndex[i] == relToResources) continue;
+                if (filesInIndex[i] == relToResources) continue;
                 writer.WriteLine("- " + filesInIndex[i]);
                 totalWritten++;
             }
+
             writer.Flush();
             writer.Close();
             File.SetLastWriteTime(indexPath, System.DateTime.Now);
@@ -87,12 +90,14 @@ namespace DarkConfig {
         };
 
         static string GetShortName(string prefix, string filename) {
-            if(filename.StartsWith(prefix)) {
+            if (filename.StartsWith(prefix)) {
                 filename = filename.Replace(prefix + "/", "");
             }
-            if(filename.EndsWith(".bytes")) {
+
+            if (filename.EndsWith(".bytes")) {
                 filename = filename.Replace(".bytes", "");
             }
+
             return filename;
         }
 
@@ -102,9 +107,10 @@ namespace DarkConfig {
             Debug.Log("Generating Index at " + fullIndexFile + " using files in directory " + prefix);
             var configs = FindConfigFiles(prefix);
             // rename to short names
-            for(int i = 0; i < configs.Count; i++) {
+            for (int i = 0; i < configs.Count; i++) {
                 configs[i] = GetShortName(prefix, configs[i]);
             }
+
             var total = WriteIndexFile(configs, fullIndexFile);
             Debug.Log("Wrote " + total + " configs to index");
         }

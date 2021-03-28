@@ -9,10 +9,10 @@ namespace DarkConfig {
         }
 
         public UnityPlatform() {
-            if(Application.isEditor) {
+            if (Application.isEditor) {
                 DefaultFilePath = Application.dataPath + "/Resources/Configs";
             } else {
-                DefaultFilePath  = Application.dataPath;
+                DefaultFilePath = Application.dataPath;
             }
 
             CanDoImmediatePreload = Application.isEditor;
@@ -31,7 +31,7 @@ namespace DarkConfig {
         }
 
         public override void Clear() {
-            if(Application.isEditor && !Application.isPlaying) {
+            if (Application.isEditor && !Application.isPlaying) {
                 if (s_ownObject != null) GameObject.DestroyImmediate(s_ownObject);
             } else {
                 if (s_ownObject != null) GameObject.Destroy(s_ownObject);
@@ -53,22 +53,24 @@ namespace DarkConfig {
         // instance of MonoBehaviour used only for its StartCoroutine functionality
         internal static MonoBehaviour TokenMonoBehaviour {
             get {
-                if(s_tokenMonoBehaviour == null) {
+                if (s_tokenMonoBehaviour == null) {
                     s_ownObject = new GameObject("DarkConfigTemporary");
                     s_ownObject.hideFlags = HideFlags.HideAndDontSave;
-					if (!Application.isEditor || Application.isPlaying) {
-						UnityEngine.Object.DontDestroyOnLoad(s_ownObject);
-					}
+                    if (!Application.isEditor || Application.isPlaying) {
+                        UnityEngine.Object.DontDestroyOnLoad(s_ownObject);
+                    }
+
                     s_tokenMonoBehaviour = s_ownObject.AddComponent<MonoBehaviourSubclass>();
                 }
+
                 return s_tokenMonoBehaviour;
             }
         }
+
         static MonoBehaviour s_tokenMonoBehaviour;
         static GameObject s_ownObject = null;
-
     }
 
-	[ExecuteInEditMode]
-	public class MonoBehaviourSubclass : MonoBehaviour { }
+    [ExecuteInEditMode]
+    public class MonoBehaviourSubclass : MonoBehaviour { }
 }

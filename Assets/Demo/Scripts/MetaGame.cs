@@ -23,13 +23,13 @@ public class MetaGame : MonoBehaviour {
     }
 
     void SetState(GameStateEnum state) {
-        if(m_gameState != state) {
+        if (m_gameState != state) {
             ExitState(m_gameState);
             m_gameState = state;
             m_stateStartTime = Time.time;
         }
 
-        switch(state) {
+        switch (state) {
             case GameStateEnum.Title:
                 Camera.main.transform.position = new Vector3(0, 0, -10);
                 m_title = Instantiate(TitlePrefab);
@@ -39,7 +39,7 @@ public class MetaGame : MonoBehaviour {
                 m_score = 0;
                 Score.text = "Score: 0";
 
-                var playerTrf = (Transform)Instantiate(PlayerPrefab);
+                var playerTrf = (Transform) Instantiate(PlayerPrefab);
                 m_player = playerTrf.GetComponent<PlayerController>();
                 FindObjectOfType<CameraFollow>().Target = playerTrf;
 
@@ -52,7 +52,7 @@ public class MetaGame : MonoBehaviour {
     }
 
     void ExitState(GameStateEnum state) {
-        switch(state) {
+        switch (state) {
             case GameStateEnum.Title:
                 Destroy(m_title.gameObject);
                 break;
@@ -65,30 +65,31 @@ public class MetaGame : MonoBehaviour {
     }
 
     void Update() {
-        if(m_gameState == GameStateEnum.Title) {
-            if(Input.GetKeyDown(KeyCode.Space)) {
+        if (m_gameState == GameStateEnum.Title) {
+            if (Input.GetKeyDown(KeyCode.Space)) {
                 SetState(GameStateEnum.Playing);
             }
         }
-        if(m_gameState == GameStateEnum.Postgame) {
-            if(Time.time - m_stateStartTime > 10 || 
+
+        if (m_gameState == GameStateEnum.Postgame) {
+            if (Time.time - m_stateStartTime > 10 ||
                 Input.GetKeyDown(KeyCode.Space)) {
                 SetState(GameStateEnum.Title);
             }
         }
 
-        if(Input.GetKeyDown(KeyCode.H) && 
+        if (Input.GetKeyDown(KeyCode.H) &&
             (Input.GetKey(KeyCode.LeftShift) ||
-                Input.GetKey(KeyCode.RightShift))) {
+             Input.GetKey(KeyCode.RightShift))) {
             Debug.Log("Hotloading configs");
             Config.FileManager.CheckHotload();
         }
 
-        if(Input.GetKeyDown(KeyCode.Q)) {
-            Config.FileManager.IsHotloadingFiles = 
+        if (Input.GetKeyDown(KeyCode.Q)) {
+            Config.FileManager.IsHotloadingFiles =
                 !Config.FileManager.IsHotloadingFiles;
             Debug.Log("Setting auto hotloading to: " +
-                Config.FileManager.IsHotloadingFiles);
+                      Config.FileManager.IsHotloadingFiles);
         }
     }
 
@@ -102,7 +103,7 @@ public class MetaGame : MonoBehaviour {
     }
 
     public PlayerController GetPlayer() {
-        if(m_player == null) return null;
+        if (m_player == null) return null;
         return m_player;
     }
 
@@ -114,7 +115,11 @@ public class MetaGame : MonoBehaviour {
 
     PlayerController m_player;
 
-    enum GameStateEnum { Title, Playing, Postgame };
+    enum GameStateEnum {
+        Title,
+        Playing,
+        Postgame
+    };
 
     GameStateEnum m_gameState;
 }

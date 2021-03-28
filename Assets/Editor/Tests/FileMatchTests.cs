@@ -24,36 +24,36 @@ class FileMatchFacts {
     [Test]
     public void MatchStar() {
         AssertSeq(Config.FileManager.GetFilesByGlobImpl("Folder/*", AllFiles),
-            new string[] { "Folder/1File", "Folder/2File", "Folder/3File", "Folder/Thumbs" });
+            new string[] {"Folder/1File", "Folder/2File", "Folder/3File", "Folder/Thumbs"});
     }
 
     [Test]
     public void MatchStarPosfix() {
         AssertSeq(Config.FileManager.GetFilesByGlobImpl("Folder/*File", AllFiles),
-            new string[] { "Folder/1File", "Folder/2File", "Folder/3File" });
+            new string[] {"Folder/1File", "Folder/2File", "Folder/3File"});
     }
 
     [Test]
     public void MatchQuestionMark() {
         AssertSeq(Config.FileManager.GetFilesByGlobImpl("Folder/?File", AllFiles),
-            new string[] { "Folder/1File", "Folder/2File", "Folder/3File" });
+            new string[] {"Folder/1File", "Folder/2File", "Folder/3File"});
     }
 
     [Test]
     public void MatchStarOnePathOnly() {
         AssertSeq(Config.FileManager.GetFilesByGlobImpl("*", AllFiles),
-            new string[] { "Uggabo", "Buggabo" });
+            new string[] {"Uggabo", "Buggabo"});
     }
 
     [Test]
     public void MatchDoubleStar() {
         AssertSeq(Config.FileManager.GetFilesByGlobImpl("Parent/**", AllFiles),
-            new string[] { "Parent/Child/Grandchild/a", "Parent/Child/Grandchild/b", "Parent/Child/Grandchild/c" });
+            new string[] {"Parent/Child/Grandchild/a", "Parent/Child/Grandchild/b", "Parent/Child/Grandchild/c"});
     }
 
     [Test]
     public void MatchDoubleStarCapped() {
         AssertSeq(Config.FileManager.GetFilesByGlobImpl("Parent/**/b", AllFiles),
-            new string[] { "Parent/Child/Grandchild/b" });
+            new string[] {"Parent/Child/Grandchild/b"});
     }
 }

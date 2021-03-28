@@ -13,11 +13,12 @@ public class PlaneView : MonoBehaviour {
     public PlaneController Controller;
 
     PlaneCard m_card;
+
     public PlaneCard Card {
         get { return m_card; }
         set {
             // we hook up listeners to OnChanged so it gets called when the Card gets modified
-            if(m_card != null) m_card.OnChanged -= Refresh;
+            if (m_card != null) m_card.OnChanged -= Refresh;
             m_card = value;
             m_card.OnChanged += Refresh;
             Refresh(m_card);
@@ -39,8 +40,8 @@ public class PlaneView : MonoBehaviour {
         RightStabilizer.transform.localPosition = Card.Stabilizer.Pos;
         RightStabilizer.transform.localScale = new Vector2(-Card.Stabilizer.Size.x, Card.Stabilizer.Size.y).XYZ1();
 
-        if(Controller == null) return;
-        var healthPct = ((float)Controller.HitPoints) / Controller.MaxHitPoints;
+        if (Controller == null) return;
+        var healthPct = ((float) Controller.HitPoints) / Controller.MaxHitPoints;
         var color = Color.Lerp(Color.white, Color.Lerp(Color.red, Color.black, 0.2f), 1 - healthPct);
         Fuselage.color = color;
         LeftWing.color = color;
@@ -51,10 +52,8 @@ public class PlaneView : MonoBehaviour {
 
     void OnDestroy() {
         // need to clean up this listener so it's not a memory leak
-        if(Card != null) Card.OnChanged -= Refresh;
+        if (Card != null) Card.OnChanged -= Refresh;
     }
 
-    void Killed() {
-        
-    }
+    void Killed() { }
 }

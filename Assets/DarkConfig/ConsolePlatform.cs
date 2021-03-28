@@ -25,7 +25,7 @@ namespace DarkConfig {
         }
 
         void FinishCoro(Coro coro, ref int index) {
-            if(coro.parent != null) {
+            if (coro.parent != null) {
                 // parent swaps in for the child
                 m_coroutines[index] = coro.parent;
             } else {
@@ -48,44 +48,46 @@ namespace DarkConfig {
             m_stoppedCoroutines.AddRange(m_newStoppedCoroutines);
             m_newStoppedCoroutines.Clear();
 
-            for(int i = 0; i < m_coroutines.Count; i++) {
+            for (int i = 0; i < m_coroutines.Count; i++) {
                 var coro = m_coroutines[i];
 
                 // check if the current coro is stopped
                 Coro coroStopped = null;
-                for(int s = 0; s < m_stoppedCoroutines.Count && coroStopped == null; s++) {
+                for (int s = 0; s < m_stoppedCoroutines.Count && coroStopped == null; s++) {
                     var stopped = m_stoppedCoroutines[s];
                     var tmpCoro = coro;
                     do {
-                        if(tmpCoro.iter == stopped) {
+                        if (tmpCoro.iter == stopped) {
                             coroStopped = tmpCoro;
                             break;
                         }
+
                         // also check parents, stopping parent stops the child!
                         tmpCoro = coro.parent;
-                    } while(tmpCoro != null);
+                    } while (tmpCoro != null);
                 }
-                if(coroStopped != null) {
+
+                if (coroStopped != null) {
                     FinishCoro(coroStopped, ref i);
                     continue;
                 }
 
                 // don't run coroutines that are not yet ready to run
-                if(coro.resumeAt > currentTime) continue;
+                if (coro.resumeAt > currentTime) continue;
 
                 // now it's time to run it one step
                 try {
-                    if(!coro.iter.MoveNext()) {
+                    if (!coro.iter.MoveNext()) {
                         FinishCoro(coro, ref i);
                         continue;
                     }
 
                     // coroutine not finished, check the result
                     var stepResult = coro.iter.Current;
-                    if(stepResult is float) {
+                    if (stepResult is float) {
                         // wait for some seconds
-                        coro.resumeAt = currentTime + (float)stepResult;
-                    } else if(stepResult is Coro) {
+                        coro.resumeAt = currentTime + (float) stepResult;
+                    } else if (stepResult is Coro) {
                         // child coro, need to wait for that to finish
                         var childCoro = stepResult as Coro;
                         childCoro.parent = coro;
@@ -96,7 +98,7 @@ namespace DarkConfig {
                         // it's anything else, including null, so execute as soon as possible
                         coro.resumeAt = float.MinValue;
                     }
-                } catch(Exception e) {
+                } catch (Exception e) {
                     LogError("Caught coroutine error" + e);
                     m_coroutines.Remove(coro);
                     i--;
@@ -111,7 +113,7 @@ namespace DarkConfig {
         }
 
         public override object StartCoroutine(IEnumerator coro) {
-            if(coro == null) return null;
+            if (coro == null) return null;
 
             var startedCoro = new Coro {
                 iter = coro,
@@ -123,7 +125,7 @@ namespace DarkConfig {
         }
 
         public override void StopCoroutine(IEnumerator coro) {
-            if(coro == null) return;
+            if (coro == null) return;
             m_newStoppedCoroutines.Add(coro);
         }
 

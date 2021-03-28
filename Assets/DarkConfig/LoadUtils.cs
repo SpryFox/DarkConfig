@@ -11,9 +11,9 @@ namespace DarkConfig {
             string[] unparentableFieldNames = null) {
             // clear existing values before the reify; because later we bake them
             var fields = typeof(V).GetFields();
-            if(container != null) {
-                foreach(var kv in container) {
-                    foreach(var field in fields) {
+            if (container != null) {
+                foreach (var kv in container) {
+                    foreach (var field in fields) {
                         field.SetValue(kv.Value, GetDefault(field.FieldType));
                     }
                 }
@@ -27,7 +27,7 @@ namespace DarkConfig {
             foreach (var kv in container) {
                 var val = kv.Value;
                 var basedOn = getBasedOn(val);
-                if(basedOn == null) continue;
+                if (basedOn == null) continue;
                 if (!container.ContainsKey(basedOn)) {
                     Config.Log(LogVerbosity.Error,
                         string.Format("In file {0}, {1} is based on {2}, which doesn't exist",
@@ -43,15 +43,16 @@ namespace DarkConfig {
                 var val = kv.Value;
                 foreach (var field in fields) {
                     if (field.IsSpecialName) continue;
-                        if(unparentableFieldNames != null) {
+                    if (unparentableFieldNames != null) {
                         bool shouldNotParentThisField = false;
-                        for(int i = 0; i < unparentableFieldNames.Length; i++) {
-                            if(field.Name == unparentableFieldNames[i]) {
+                        for (int i = 0; i < unparentableFieldNames.Length; i++) {
+                            if (field.Name == unparentableFieldNames[i]) {
                                 shouldNotParentThisField = true;
                                 break;
                             }
                         }
-                        if(shouldNotParentThisField) continue;
+
+                        if (shouldNotParentThisField) continue;
                     }
 
                     var fieldValue = GetParentedFieldValue(field, val, parentRelationships, 0);
@@ -61,20 +62,20 @@ namespace DarkConfig {
         }
 
         static object GetParentedFieldValue<V>(
-                System.Reflection.FieldInfo field,
-                V conf,
-                Dictionary<V, V> parentRelationships,
-                int recursionDepth) {
-
+            System.Reflection.FieldInfo field,
+            V conf,
+            Dictionary<V, V> parentRelationships,
+            int recursionDepth) {
             var fieldValue = field.GetValue(conf);
             V parent;
-            if(!parentRelationships.TryGetValue(conf, out parent)) return fieldValue;
-            if(parent == null) return fieldValue;
+            if (!parentRelationships.TryGetValue(conf, out parent)) return fieldValue;
+            if (parent == null) return fieldValue;
             if (recursionDepth > 100) {
-                Config.Log(LogVerbosity.Error, 
+                Config.Log(LogVerbosity.Error,
                     string.Format("Might be a loop in the basedOn references at: {0}, parent {1}", conf, parent));
                 return fieldValue;
             }
+
             if (fieldValue == null) {
                 // need to get the default from the parent
                 return GetParentedFieldValue(field, parent, parentRelationships, recursionDepth + 1);
@@ -84,7 +85,7 @@ namespace DarkConfig {
         }
 
         static object GetDefault(System.Type type) {
-            if(type.IsValueType) return System.Activator.CreateInstance(type);
+            if (type.IsValueType) return System.Activator.CreateInstance(type);
             return null;
         }
     }

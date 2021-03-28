@@ -6,6 +6,7 @@ using YamlDotNet.RepresentationModel;
 
 namespace DarkConfig {
     public delegate bool ReloadDelegate(DocNode d);
+
     public delegate void AssertDelegate(bool test, params object[] messages);
 
     public class Config : ConfigReifier {
@@ -21,16 +22,15 @@ namespace DarkConfig {
         /// </summary>
         public static event System.Action OnPreload {
             add {
-                OnPreloadInvoker += value; 
-                if(IsPreloaded) value();
+                OnPreloadInvoker += value;
+                if (IsPreloaded) value();
             }
-            remove {
-                OnPreloadInvoker -= value;
-            }
+            remove { OnPreloadInvoker -= value; }
         }
+
         // http://forum.unity3d.com/threads/executionengineexception-on-ios-only.113750/
         static System.Action OnPreloadInvoker;
-        
+
         /// <summary>
         /// Preloads the configuration files from the index into memory.  Must be completed
         /// before using any other DarkConfig functionality.
@@ -39,7 +39,7 @@ namespace DarkConfig {
         /// </summary>
         public static void Preload(System.Action callback = null) {
             OnPreload += PreloadComplete;
-            if(callback != null) OnPreload += callback;
+            if (callback != null) OnPreload += callback;
             FileManager.Preload(OnPreloadInvoker);
         }
 
@@ -76,11 +76,11 @@ namespace DarkConfig {
         /// </summary>
         public static void Apply<T>(string filename, ref T obj) {
             Reify(ref obj, FileManager.LoadConfig(filename));
-            if(obj != null) {
+            if (obj != null) {
                 var wr = new WeakReference(obj);
                 FileManager.RegisterReload(filename, (d) => {
-                    var t = (T)wr.Target;
-                    if(t == null) return false;
+                    var t = (T) wr.Target;
+                    if (t == null) return false;
                     Reify(ref t, d);
                     return true;
                 });
@@ -133,6 +133,7 @@ namespace DarkConfig {
                     }
                 }
             }
+
             return subclasses;
         }
 
@@ -164,9 +165,10 @@ namespace DarkConfig {
         public static DocNode CombineList(List<DocNode> docs) {
             var sb = new System.Text.StringBuilder("Combination of: [");
             for (int i = 0; i < docs.Count; i++) {
-                if(i > 0) sb.Append(", ");
+                if (i > 0) sb.Append(", ");
                 sb.Append(docs[i].SourceInformation);
             }
+
             sb.Append("]");
 
             ComposedDocNode result = new ComposedDocNode(DocNodeType.List,
@@ -180,6 +182,7 @@ namespace DarkConfig {
                     result.Add(docs[i]);
                 }
             }
+
             return result;
         }
 
@@ -201,9 +204,10 @@ namespace DarkConfig {
         public static DocNode CombineDict(List<DocNode> docs) {
             var sb = new System.Text.StringBuilder("Combination of: [");
             for (int i = 0; i < docs.Count; i++) {
-                if(i > 0) sb.Append(", ");
+                if (i > 0) sb.Append(", ");
                 sb.Append(docs[i].SourceInformation);
             }
+
             sb.Append("]");
 
             ComposedDocNode result = new ComposedDocNode(DocNodeType.Dictionary,
@@ -214,6 +218,7 @@ namespace DarkConfig {
                     result[kv.Key] = kv.Value;
                 }
             }
+
             return result;
         }
 
@@ -225,9 +230,10 @@ namespace DarkConfig {
             var yaml = new YamlStream();
             yaml.Load(input, filename);
 
-            if(yaml.Documents.Count <= 0) {
+            if (yaml.Documents.Count <= 0) {
                 return new YamlDocNode(null);
             }
+
             return new YamlDocNode(yaml.Documents[0].RootNode);
         }
 
@@ -239,9 +245,10 @@ namespace DarkConfig {
             var yaml = new YamlStream();
             yaml.Load(input, filename);
 
-            if(yaml.Documents.Count <= 0) {
+            if (yaml.Documents.Count <= 0) {
                 return new YamlDocNode(null);
             }
+
             return new YamlDocNode(yaml.Documents[0].RootNode);
         }
 
@@ -253,58 +260,92 @@ namespace DarkConfig {
                 if (s_files == null) {
                     s_files = new ConfigFileManager();
                 }
+
                 return s_files;
             }
         }
+
         static ConfigFileManager s_files = null;
 
         // logging ////////////////////////////////////////////////
         public static void Log(LogVerbosity level, string msg) {
-            if(level <= Verbosity) {
+            if (level <= Verbosity) {
                 var s = "DarkConfig: " + msg;
-                if(level > LogVerbosity.Error) { Platform.Instance.Log(s); } else { Platform.Instance.LogError(s); }
+                if (level > LogVerbosity.Error) {
+                    Platform.Instance.Log(s);
+                } else {
+                    Platform.Instance.LogError(s);
+                }
             }
         }
 
         public static void Log(LogVerbosity level, object msg1) {
-            if(level <= Verbosity) {
+            if (level <= Verbosity) {
                 var s = "DarkConfig: " + msg1.ToString();
-                if(level > LogVerbosity.Error) { Platform.Instance.Log(s); } else { Platform.Instance.LogError(s); }
+                if (level > LogVerbosity.Error) {
+                    Platform.Instance.Log(s);
+                } else {
+                    Platform.Instance.LogError(s);
+                }
             }
         }
 
         public static void Log(LogVerbosity level, object msg1, object msg2) {
-            if(level <= Verbosity) {
+            if (level <= Verbosity) {
                 var s = "DarkConfig: " + msg1.ToString() + " " + msg2.ToString();
-                if(level > LogVerbosity.Error) { Platform.Instance.Log(s); } else { Platform.Instance.LogError(s); }
+                if (level > LogVerbosity.Error) {
+                    Platform.Instance.Log(s);
+                } else {
+                    Platform.Instance.LogError(s);
+                }
             }
         }
 
         public static void Log(LogVerbosity level, object msg1, object msg2, object msg3) {
-            if(level <= Verbosity) {
+            if (level <= Verbosity) {
                 var s = "DarkConfig: " + msg1.ToString() + " " + msg2.ToString() + " " + msg3.ToString();
-                if(level > LogVerbosity.Error) { Platform.Instance.Log(s); } else { Platform.Instance.LogError(s); }
+                if (level > LogVerbosity.Error) {
+                    Platform.Instance.Log(s);
+                } else {
+                    Platform.Instance.LogError(s);
+                }
             }
         }
 
         public static void Log(LogVerbosity level, object msg1, object msg2, object msg3, object msg4) {
-            if(level <= Verbosity) {
-                var s = "DarkConfig: " + msg1.ToString() + " " + msg2.ToString() + " " + msg3.ToString() + " " + msg4.ToString();
-                if(level > LogVerbosity.Error) { Platform.Instance.Log(s); } else { Platform.Instance.LogError(s); }
+            if (level <= Verbosity) {
+                var s = "DarkConfig: " + msg1.ToString() + " " + msg2.ToString() + " " + msg3.ToString() + " " +
+                        msg4.ToString();
+                if (level > LogVerbosity.Error) {
+                    Platform.Instance.Log(s);
+                } else {
+                    Platform.Instance.LogError(s);
+                }
             }
         }
 
         public static void Log(LogVerbosity level, object msg1, object msg2, object msg3, object msg4, object msg5) {
-            if(level <= Verbosity) {
-                var s = "DarkConfig: " + msg1.ToString() + " " + msg2.ToString() + " " + msg3.ToString() + " " + msg4.ToString() + " " + msg5.ToString();
-                if(level > LogVerbosity.Error) { Platform.Instance.Log(s); } else { Platform.Instance.LogError(s); }
+            if (level <= Verbosity) {
+                var s = "DarkConfig: " + msg1.ToString() + " " + msg2.ToString() + " " + msg3.ToString() + " " +
+                        msg4.ToString() + " " + msg5.ToString();
+                if (level > LogVerbosity.Error) {
+                    Platform.Instance.Log(s);
+                } else {
+                    Platform.Instance.LogError(s);
+                }
             }
         }
 
-        public static void Log(LogVerbosity level, object msg1, object msg2, object msg3, object msg4, object msg5, object msg6) {
+        public static void Log(LogVerbosity level, object msg1, object msg2, object msg3, object msg4, object msg5,
+            object msg6) {
             if (level <= Verbosity) {
-                var s = "DarkConfig: " + msg1.ToString() + " " + msg2.ToString() + " " + msg3.ToString() + " " + msg4.ToString() + " " + msg5.ToString() + " " + msg6.ToString();
-                if(level > LogVerbosity.Error) { Platform.Instance.Log(s); } else { Platform.Instance.LogError(s); }
+                var s = "DarkConfig: " + msg1.ToString() + " " + msg2.ToString() + " " + msg3.ToString() + " " +
+                        msg4.ToString() + " " + msg5.ToString() + " " + msg6.ToString();
+                if (level > LogVerbosity.Error) {
+                    Platform.Instance.Log(s);
+                } else {
+                    Platform.Instance.LogError(s);
+                }
             }
         }
 
@@ -317,7 +358,7 @@ namespace DarkConfig {
                 AssertCallback(test, message);
             } else {
                 // here's a simple internal assertion implementation
-                if(test == false) {
+                if (test == false) {
                     throw new AssertionException(message);
                 }
             }
@@ -325,50 +366,58 @@ namespace DarkConfig {
 
         [System.Diagnostics.Conditional(s_assertGuard)]
         public static void Assert(bool test, object msg1) {
-            if(!test) {
+            if (!test) {
                 Assert(false, msg1.ToString());
             }
         }
 
         [System.Diagnostics.Conditional(s_assertGuard)]
         public static void Assert(bool test, object msg1, object msg2) {
-            if(!test) {
+            if (!test) {
                 Assert(false, msg1.ToString() + " " + msg2.ToString());
             }
         }
 
         [System.Diagnostics.Conditional(s_assertGuard)]
         public static void Assert(bool test, object msg1, object msg2, object msg3) {
-            if(!test) {
+            if (!test) {
                 Assert(false, msg1.ToString() + " " + msg2.ToString() + " " + msg3.ToString());
             }
         }
 
         [System.Diagnostics.Conditional(s_assertGuard)]
         public static void Assert(bool test, object msg1, object msg2, object msg3, object msg4) {
-            if(!test) {
+            if (!test) {
                 Assert(false, msg1.ToString() + " " + msg2.ToString() + " " + msg3.ToString() + " " + msg4.ToString());
             }
         }
 
         [System.Diagnostics.Conditional(s_assertGuard)]
         public static void Assert(bool test, object msg1, object msg2, object msg3, object msg4, object msg5) {
-            if(!test) {
-                Assert(false, msg1.ToString() + " " + msg2.ToString() + " " + msg3.ToString() + " " + msg4.ToString() + " " + msg5.ToString());
+            if (!test) {
+                Assert(false,
+                    msg1.ToString() + " " + msg2.ToString() + " " + msg3.ToString() + " " + msg4.ToString() + " " +
+                    msg5.ToString());
             }
         }
-        
+
         [System.Diagnostics.Conditional(s_assertGuard)]
-        public static void Assert(bool test, object msg1, object msg2, object msg3, object msg4, object msg5, object msg6) {
-            if(!test) {
-                Assert(false, msg1.ToString() + " " + msg2.ToString() + " " + msg3.ToString() + " " + msg4.ToString() + " " + msg5.ToString() + " " + msg6.ToString());
+        public static void Assert(bool test, object msg1, object msg2, object msg3, object msg4, object msg5,
+            object msg6) {
+            if (!test) {
+                Assert(false,
+                    msg1.ToString() + " " + msg2.ToString() + " " + msg3.ToString() + " " + msg4.ToString() + " " +
+                    msg5.ToString() + " " + msg6.ToString());
             }
         }
-        
+
         [System.Diagnostics.Conditional(s_assertGuard)]
-        public static void Assert(bool test, object msg1, object msg2, object msg3, object msg4, object msg5, object msg6, object msg7) {
-            if(!test) {
-                Assert(false, msg1.ToString() + " " + msg2.ToString() + " " + msg3.ToString() + " " + msg4.ToString() + " " + msg5.ToString() + " " + msg6.ToString() + " " + msg7.ToString());
+        public static void Assert(bool test, object msg1, object msg2, object msg3, object msg4, object msg5,
+            object msg6, object msg7) {
+            if (!test) {
+                Assert(false,
+                    msg1.ToString() + " " + msg2.ToString() + " " + msg3.ToString() + " " + msg4.ToString() + " " +
+                    msg5.ToString() + " " + msg6.ToString() + " " + msg7.ToString());
             }
         }
 
@@ -378,17 +427,18 @@ namespace DarkConfig {
     }
 
     public class AssertionException : System.Exception {
-        public AssertionException(string message) : base(message) {
-        }
+        public AssertionException(string message) : base(message) { }
     }
 
     public class ConfigFileNotFoundException : System.IO.FileNotFoundException {
-        public ConfigFileNotFoundException(string filename) : base("Could't find file " + filename + ". Perhaps it isn't in the index, or wasn't preloaded.", filename) {
-        }
+        public ConfigFileNotFoundException(string filename) : base(
+            "Could't find file " + filename + ". Perhaps it isn't in the index, or wasn't preloaded.", filename) { }
     }
 }
 
 
 public enum LogVerbosity {
-    Error, Warn, Info
+    Error,
+    Warn,
+    Info
 }

@@ -22,7 +22,7 @@ class FileSourceFacts {
     }
 
     void CreateFile(string filename, string contents) {
-        using(var sw = new StreamWriter(Path.Combine(m_tmpDir, filename), false, new System.Text.UTF8Encoding())) {
+        using (var sw = new StreamWriter(Path.Combine(m_tmpDir, filename), false, new System.Text.UTF8Encoding())) {
             sw.Write(contents);
         }
     }
@@ -56,7 +56,7 @@ class FileSourceFacts {
         CreateFile("index.bytes", "- derp");
 
         var fs = new FileSource(m_tmpDir, true);
-        fs.Preload(() => {});
+        fs.Preload(() => { });
         var files = fs.GetFiles();
         Assert.AreEqual(2, files.Count);
         Assert.AreEqual("index", files[0].Name);
@@ -70,7 +70,7 @@ class FileSourceFacts {
         CreateFile("index.bytes", "- derp");
 
         var fs = new FileSource(m_tmpDir, true);
-        fs.Preload(() => {});
+        fs.Preload(() => { });
 
         var fs2 = new FileSource(m_tmpDir, true);
         fs2.ReceivePreloaded(fs.GetFiles());
@@ -87,7 +87,7 @@ class FileSourceFacts {
         CreateFile("index.bytes", "- derp");
 
         var fs = new FileSource(m_tmpDir, true);
-        fs.Preload(() => {});
+        fs.Preload(() => { });
 
         CreateFile("derp.bytes", "key: value2");
         var fi = fs.GetFiles()[1];
@@ -104,7 +104,7 @@ class FileSourceFacts {
         CreateFile("index.bytes", "- derp\n- durr");
 
         var fs = new FileSource(m_tmpDir, true);
-        fs.Preload(() => {});
+        fs.Preload(() => { });
 
         CreateFile("index.bytes", "- derp");
         DeleteFile("durr.bytes");
@@ -119,7 +119,7 @@ class FileSourceFacts {
         CreateFile("index.bytes", "- derp");
 
         var fs = new FileSource(m_tmpDir, true);
-        fs.Preload(() => {});
+        fs.Preload(() => { });
 
         CreateFile("durr.bytes", "a: b");
         CreateFile("index.bytes", "- derp\n- durr");
@@ -140,7 +140,7 @@ class FileSourceFacts {
         CreateFile("index.bytes", "- derp");
 
         var fs = new FileSource(m_tmpDir, true);
-        fs.Preload(() => {});
+        fs.Preload(() => { });
 
         CreateFile("durr.bytes", "a: b");
         CreateFile("hurr.bytes", "x: y");
@@ -167,14 +167,14 @@ class FileSourceFacts {
         CreateFile("index.bytes", "- derp");
 
         var fs = new FileSource(m_tmpDir, true);
-        fs.Preload(() => {});
+        fs.Preload(() => { });
 
         CreateFile("durr.bytes", "a: b");
         CreateFile("index.bytes", "- derp\n- durr");
 
         var index = fs.GetFiles()[0];
         fs.TryHotload(index);
-        
+
         CreateFile("hurr.bytes", "x: y");
         CreateFile("index.bytes", "- derp\n- durr\n- hurr");
 

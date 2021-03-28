@@ -6,8 +6,8 @@ public class CameraFollow : MonoBehaviour {
 
     public Vector3 RelativePosition = new Vector3(0, 0, -10);
 
-    void LateUpdate () {
-        if(Target == null) return;
+    void LateUpdate() {
+        if (Target == null) return;
         transform.position = Target.position + RelativePosition;
     }
 }

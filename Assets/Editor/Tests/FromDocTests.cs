@@ -8,25 +8,30 @@ using System;
 class FromDocFacts {
     class TestClass {
         public int baseKey;
+
         public static TestClass FromDoc(TestClass existing, DocNode doc) {
-            if(doc.Type != DocNodeType.List) {
+            if (doc.Type != DocNodeType.List) {
                 throw new System.ArgumentException("Not a list! " + doc.Type);
             }
 
-            if(doc[0].StringValue == "Derived") {
+            if (doc[0].StringValue == "Derived") {
                 TestClassDerived derivedExisting;
-                if(existing is TestClassDerived) {
-                    derivedExisting = (TestClassDerived)existing;
+                if (existing is TestClassDerived) {
+                    derivedExisting = (TestClassDerived) existing;
                 } else {
                     derivedExisting = new TestClassDerived();
                 }
-                derivedExisting.derivedKey = Convert.ToInt32(doc[1].StringValue, System.Globalization.CultureInfo.InvariantCulture);
+
+                derivedExisting.derivedKey =
+                    Convert.ToInt32(doc[1].StringValue, System.Globalization.CultureInfo.InvariantCulture);
                 return derivedExisting;
             } else {
-                if(!(existing is TestClass)) {
+                if (!(existing is TestClass)) {
                     existing = new TestClass();
                 }
-                existing.baseKey = Convert.ToInt32(doc[1].StringValue, System.Globalization.CultureInfo.InvariantCulture);
+
+                existing.baseKey =
+                    Convert.ToInt32(doc[1].StringValue, System.Globalization.CultureInfo.InvariantCulture);
                 return existing;
             }
         }
@@ -38,7 +43,7 @@ class FromDocFacts {
 
     const string c_filename = "FromDocFacts_TestFileName";
 
-    T ReifyString<T>(string str) where T: new() {
+    T ReifyString<T>(string str) where T : new() {
         var doc = Config.LoadDocFromString(str, "FromDocFacts_ReifyString_TestFileName");
         T tc = default(T);
         ConfigReifier.Reify(ref tc, doc);
@@ -60,7 +65,7 @@ class FromDocFacts {
 
     [Test]
     public void FromDoc_UpdatesTestClass() {
-        var tc = new TestClass { baseKey = 15 };
+        var tc = new TestClass {baseKey = 15};
         var saved = tc;
         var doc = Config.LoadDocFromString("[\"Base\", 99]", c_filename);
         ConfigReifier.Reify(ref tc, doc);
@@ -70,35 +75,35 @@ class FromDocFacts {
 
     [Test]
     public void FromDoc_UpdatesDerived() {
-        TestClass tc = new TestClassDerived { baseKey = 1, derivedKey = 2 };
+        TestClass tc = new TestClassDerived {baseKey = 1, derivedKey = 2};
         var saved = tc;
         var doc = Config.LoadDocFromString("[\"Derived\", 66]", c_filename);
         ConfigReifier.Reify(ref tc, doc);
         Assert.AreSame(tc, saved);
         Assert.AreEqual(tc.baseKey, 1);
-        Assert.AreEqual(((TestClassDerived)tc).derivedKey, 66);
+        Assert.AreEqual(((TestClassDerived) tc).derivedKey, 66);
     }
 
     [Test]
     public void FromDoc_UpdatesDerived_AsBase() {
-        TestClass tc = new TestClassDerived { baseKey = 4, derivedKey = 5 };
+        TestClass tc = new TestClassDerived {baseKey = 4, derivedKey = 5};
         var saved = tc;
         var doc = Config.LoadDocFromString("[\"Base\", 123]", c_filename);
         ConfigReifier.Reify(ref tc, doc);
         Assert.AreSame(tc, saved);
         Assert.AreEqual(tc.baseKey, 123);
-        Assert.AreEqual(((TestClassDerived)tc).derivedKey, 5);
+        Assert.AreEqual(((TestClassDerived) tc).derivedKey, 5);
     }
 
     [Test]
     public void FromDoc_OverwritesBase_WithDerived() {
-        TestClass tc = new TestClass { baseKey = 19 };
+        TestClass tc = new TestClass {baseKey = 19};
         var saved = tc;
         var doc = Config.LoadDocFromString("[\"Derived\", 321]", c_filename);
         ConfigReifier.Reify(ref tc, doc);
         Assert.IsFalse(object.ReferenceEquals(tc, saved));
         Assert.IsTrue(tc is TestClassDerived);
-        Assert.AreEqual(((TestClassDerived)tc).derivedKey, 321);
+        Assert.AreEqual(((TestClassDerived) tc).derivedKey, 321);
     }
 
     [Test]
@@ -119,9 +124,7 @@ class FromDocFacts {
 #else
     [Test]
     public void FromDoc_WrapsExceptions() {
-        Assert.Throws(typeof(ParseException), () => {
-            ReifyString<TestClass>("{\"wrong\": \"structure\"}");
-        });
+        Assert.Throws(typeof(ParseException), () => { ReifyString<TestClass>("{\"wrong\": \"structure\"}"); });
     }
 #endif
 
