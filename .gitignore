@@ -3,6 +3,7 @@ obj.meta
 Library
 Temp
 
+.idea
 *.userprefs
 *.sln
 *.csproj
