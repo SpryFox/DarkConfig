@@ -1,4 +1,5 @@
-﻿using UnityEditor;
+﻿#if false
+using UnityEditor;
 using UnityEngine;
 using System.Collections;
 
@@ -19,3 +20,4 @@ public class TestReloadWatcher {
         }
     }
 }
+#endif

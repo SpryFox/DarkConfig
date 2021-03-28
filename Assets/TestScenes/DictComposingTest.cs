@@ -1,3 +1,4 @@
+#if false
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
@@ -68,3 +69,4 @@ public class DictComposingTest : IntegrationTestBase {
         Finish();
     }
 }
+#endif

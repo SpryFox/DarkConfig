@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿#if false
+using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using DarkConfig;
@@ -48,3 +49,4 @@ public class ApplyTest : IntegrationTestBase {
         Assert(g.Capacity == 12, "Loaded playerGlass capacity", 12);
     }
 }
+#endif

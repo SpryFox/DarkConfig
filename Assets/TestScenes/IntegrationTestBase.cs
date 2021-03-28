@@ -1,6 +1,5 @@
-﻿using UnityEngine;
-using UnityTest;
-using System.Collections;
+﻿#if false
+using UnityEngine;
 using System.Linq;
 using DarkConfig;
 
@@ -31,3 +30,4 @@ public class IntegrationTestBase : MonoBehaviour {
 
     public static bool WantsAssetRefresh = false;
 }
+#endif
