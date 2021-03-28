@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 
 namespace DarkConfig {
-
     public enum DocNodeType {
         Invalid,
         Dictionary,
@@ -64,32 +63,35 @@ namespace DarkConfig {
 
         public bool Equals(DocNode d) {
             var self = this;
-            if(d.Type != self.Type) return false;
-            if(object.Equals(self, d)) return true;
-            switch(self.Type){
+            if (d.Type != self.Type) return false;
+            if (object.Equals(self, d)) return true;
+            switch (self.Type) {
                 case DocNodeType.Scalar:
-                    if(d.StringValue == null || self.StringValue == null) return self.StringValue == d.StringValue;
+                    if (d.StringValue == null || self.StringValue == null) return self.StringValue == d.StringValue;
                     return d.StringValue.Equals(self.StringValue);
                 case DocNodeType.List:
-                    if(d.Count != self.Count) return false;
-                    for(int i = 0; i < self.Count; i++) {
-                        if(!self[i].Equals(d[i])) {
+                    if (d.Count != self.Count) return false;
+                    for (int i = 0; i < self.Count; i++) {
+                        if (!self[i].Equals(d[i])) {
                             return false;
                         }
                     }
+
                     return true;
                 case DocNodeType.Dictionary:
-                    if(d.Count != self.Count) return false;
+                    if (d.Count != self.Count) return false;
                     var iter1 = self.Pairs.GetEnumerator();
                     var iter2 = d.Pairs.GetEnumerator();
-                    while(iter1.MoveNext() && iter2.MoveNext()) {
-                        if(iter1.Current.Key != iter2.Current.Key) return false;
-                        if(!iter1.Current.Value.Equals(iter2.Current.Value)) return false;
+                    while (iter1.MoveNext() && iter2.MoveNext()) {
+                        if (iter1.Current.Key != iter2.Current.Key) return false;
+                        if (!iter1.Current.Value.Equals(iter2.Current.Value)) return false;
                     }
+
                     return true;
                 case DocNodeType.Invalid:
                     return true;
             }
+
             return false;
         }
 
@@ -102,23 +104,23 @@ namespace DarkConfig {
             }
 
             if (lhs.Type == DocNodeType.List) {
-                return Config.CombineList(new List<DocNode>{ lhs, rhs });
-                
+                return Config.CombineList(new List<DocNode> {lhs, rhs});
             } else if (lhs.Type == DocNodeType.Dictionary) {
-                var mergedDict = new ComposedDocNode(DocNodeType.Dictionary, 
+                var mergedDict = new ComposedDocNode(DocNodeType.Dictionary,
                     sourceInformation: "Merging of: [" + lhs.SourceInformation + ", " + rhs.SourceInformation + "]");
-                foreach(var lhsPair in lhs.Pairs) {
+                foreach (var lhsPair in lhs.Pairs) {
                     mergedDict[lhsPair.Key] = lhsPair.Value;
                 }
-                foreach(var rhsPair in rhs.Pairs) {
+
+                foreach (var rhsPair in rhs.Pairs) {
                     if (mergedDict.ContainsKey(rhsPair.Key)) {
                         mergedDict[rhsPair.Key] = DeepMerge(mergedDict[rhsPair.Key], rhsPair.Value);
                     } else {
                         mergedDict[rhsPair.Key] = rhsPair.Value;
                     }
                 }
+
                 return mergedDict;
-                
             } else if (lhs.Type == DocNodeType.Scalar) {
                 return rhs;
             } else {
@@ -129,8 +131,6 @@ namespace DarkConfig {
 
     public class DocNodeAccessException : System.Exception {
         public DocNodeAccessException(string message)
-            : base(message) {
-        }
+            : base(message) { }
     }
-
 }

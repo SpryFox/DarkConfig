@@ -2,8 +2,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace SpryFox.Common
-{
+namespace SpryFox.Common {
     public static class Vector3Extensions {
         public static Vector2 XY(this Vector3 self) {
             return new Vector2(self.x, self.y);
@@ -31,16 +30,15 @@ namespace SpryFox.Common
 
         // because we can't do Vector3? as it's a struct
         public struct VectorResult {
-
             public static VectorResult CreateValid(Vector3 result) {
                 return new VectorResult {
                     Result = result,
                     IsValid = true,
                 };
             }
-        
-            public static readonly VectorResult INVALID 
-            = new VectorResult { IsValid = false, };
+
+            public static readonly VectorResult INVALID
+                = new VectorResult {IsValid = false,};
 
             public Vector3 Result;
             public bool IsValid;
@@ -48,10 +46,9 @@ namespace SpryFox.Common
 
         public static VectorResult IntersectionWithPlane(
             this Ray ray, Vector3 planeOrigin, Vector3 planeNormal) {
-        
             float rayPlaneParallelness = Vector3.Dot(planeNormal, ray.direction);
             float rayOriginPlaneOffset = Vector3.Dot((planeOrigin - ray.origin), planeNormal);
-        
+
             if (Mathf.Approximately(rayPlaneParallelness, 0f)) {
                 // ray parallel to plane. can only intersect if starts inside plane!
 
@@ -60,7 +57,6 @@ namespace SpryFox.Common
                 } else {
                     return VectorResult.INVALID;
                 }
-
             } else {
                 float rayT = rayOriginPlaneOffset / rayPlaneParallelness;
                 var intersectionPoint = ray.origin + ray.direction * rayT;
@@ -92,6 +88,7 @@ namespace SpryFox.Common
 
         public const float layerResolution = 64;
         public const float layerDelta = 1f / layerResolution;
+
         public static Vector3 SetLayer(this Vector3 self, int layer) {
             self.z = 0 + (layerDelta * layer);
             return self;
@@ -117,15 +114,15 @@ namespace SpryFox.Common
 
         public static Vector3 LimitFractional(this Vector3 self, long fraction = MathPlus.defaultFraction) {
             return new Vector3(
-                ((long)(self.x * fraction)) / (float)fraction,
-                ((long)(self.y * fraction)) / (float)fraction,
-                ((long)(self.z * fraction)) / (float)fraction);
+                ((long) (self.x * fraction)) / (float) fraction,
+                ((long) (self.y * fraction)) / (float) fraction,
+                ((long) (self.z * fraction)) / (float) fraction);
         }
 
         public static Vector3 SnapToGrid(this Vector3 self, float gridSize) {
-            return new Vector3(((long)(self.x / gridSize)) * gridSize,
-                               ((long)(self.y / gridSize)) * gridSize,
-                               ((long)(self.z / gridSize)) * gridSize);
+            return new Vector3(((long) (self.x / gridSize)) * gridSize,
+                ((long) (self.y / gridSize)) * gridSize,
+                ((long) (self.z / gridSize)) * gridSize);
         }
 
         public static Vector3 MulPointwise(this Vector3 self, Vector3 o) {
@@ -161,11 +158,11 @@ namespace SpryFox.Common
         public static Vector2 InvertScreenY(this Vector2 self) {
             return new Vector2(self.x, Screen.height - self.y);
         }
-	
+
         public static Vector2 LimitFractional2(this Vector2 self, long fraction = MathPlus.defaultFraction) {
             return new Vector2(
-                ((long)(self.x * fraction)) / (float)fraction,
-                ((long)(self.y * fraction)) / (float)fraction);
+                ((long) (self.x * fraction)) / (float) fraction,
+                ((long) (self.y * fraction)) / (float) fraction);
         }
 
         public static Vector3 XYZ(this Vector2 self) {
@@ -194,33 +191,30 @@ namespace SpryFox.Common
     public static class QuaternionExtensions {
         public static Quaternion LimitFractional(this Quaternion self, long fraction = MathPlus.defaultFraction) {
             return new Quaternion(
-                ((long)(self.x * fraction)) / (float)fraction,
-                ((long)(self.y * fraction)) / (float)fraction,
-                ((long)(self.z * fraction)) / (float)fraction,
-                ((long)(self.w * fraction)) / (float)fraction);
+                ((long) (self.x * fraction)) / (float) fraction,
+                ((long) (self.y * fraction)) / (float) fraction,
+                ((long) (self.z * fraction)) / (float) fraction,
+                ((long) (self.w * fraction)) / (float) fraction);
         }
     }
 
     public static class MathPlus {
-
         // if negative, makes more negative. if positive, makes more positive.
         public static float IncreaseMagnitude(this float val, float absoluteIncrease) {
             if (val < 0f) {
                 return val - absoluteIncrease;
-            }
-            else {
+            } else {
                 return val + absoluteIncrease;
             }
         }
 
         // projects value from one range to another range
         public static float MapValue(float value,
-                                     float inMin, float inMax,
-                                     float outMin, float outMax) {
-
+            float inMin, float inMax,
+            float outMin, float outMax) {
             float t = Mathf.InverseLerp(inMin, inMax, value);
             float outValue = Mathf.Lerp(outMin, outMax, t);
-            return outValue;        
+            return outValue;
         }
 
         public static float NormalizeAngle(float angle) {
@@ -240,7 +234,8 @@ namespace SpryFox.Common
         }
 
         public static int CircularDifference(int a, int b, int cap) {
-            Assert.True(a >= 0 && b >= 0 && a < cap && b < cap, "Attempting to circular subtract two indices that aren't within the cap", a, b, cap);
+            Assert.True(a >= 0 && b >= 0 && a < cap && b < cap,
+                "Attempting to circular subtract two indices that aren't within the cap", a, b, cap);
             if (a - b == -1 || a - b == 1 || a - b == 0) return a - b;
             if (a < b) {
                 a += cap;
@@ -252,14 +247,15 @@ namespace SpryFox.Common
         }
 
         public static int Clamp(int i, int min, int max) {
-            if(i < min) return min;
-            if(i > max) return max;
+            if (i < min) return min;
+            if (i > max) return max;
             return i;
         }
 
         public const long defaultFraction = 1024;
+
         public static float LimitFractional(float x, long fraction = defaultFraction) {
-            return ((long)(x * fraction)) / (float)fraction;
+            return ((long) (x * fraction)) / (float) fraction;
         }
 
         public static int NextPowerOf2(int val) {
@@ -280,6 +276,7 @@ namespace SpryFox.Common
         }
 
         public const double DEpsilon = 1e-45;
+
         public static bool Approximately(double a, double b) {
             if (a < b) {
                 return (b - a) < DEpsilon;
@@ -299,6 +296,7 @@ namespace SpryFox.Common
                 svar += (d - old_mean) * (d - mean);
                 n++;
             }
+
             if (n > 1) {
                 stdev = System.Math.Sqrt(svar / (n - 1));
             } else {
@@ -326,6 +324,7 @@ namespace SpryFox.Common
     public struct LineSegment {
         public Vector3 S;
         public Vector3 E;
+
         public LineSegment(Vector3 s, Vector3 e) {
             S = s;
             E = e;
@@ -335,7 +334,7 @@ namespace SpryFox.Common
 
     public static class RectExtensions {
         public static bool Intersects(this Rect a, Rect b) {
-            return !((a.xMin > b.xMax) || 
+            return !((a.xMin > b.xMax) ||
                      (a.xMax < b.xMin) ||
                      (a.yMin > b.yMax) ||
                      (a.yMax < b.yMin));
@@ -360,32 +359,33 @@ namespace SpryFox.Common
             // be larger than either one of its parents' Maxes.
             // It's two ulps because occasionally the rounding involved in
             // computing the Max obliterates one ulp
-            if(r.xMax < a.xMax || r.xMax < b.xMax) {
+            if (r.xMax < a.xMax || r.xMax < b.xMax) {
                 r.width += Mathf.Abs(MathPlus.Ulp(r.width)) * 2;
             }
-            if(r.yMax < a.yMax || r.yMax < b.yMax) {
+
+            if (r.yMax < a.yMax || r.yMax < b.yMax) {
                 r.height += Mathf.Abs(MathPlus.Ulp(r.height)) * 2;
             }
+
             return r;
         }
 
         public static bool ContainsStrict(this Rect a, Rect b) {
             return b.xMax < a.xMax &&
-                b.xMin > a.xMin &&
-                b.yMin > a.yMin &&
-                b.yMax < a.yMax;
+                   b.xMin > a.xMin &&
+                   b.yMin > a.yMin &&
+                   b.yMax < a.yMax;
         }
 
         public static bool Contains(this Rect a, Rect b) {
             return b.xMin >= a.xMin &&
-                b.xMax <= a.xMax &&
-                b.yMin >= a.yMin &&
-                b.yMax <= a.yMax;
+                   b.xMax <= a.xMax &&
+                   b.yMin >= a.yMin &&
+                   b.yMax <= a.yMax;
         }
 
         // if pos is outside bounds, clamps pos to the edge
-        public static Vector2 ClipPosition(this Rect bounds, Vector2 p)
-        {
+        public static Vector2 ClipPosition(this Rect bounds, Vector2 p) {
             float clampedX = Mathf.Clamp(p.x, bounds.xMin, bounds.xMax);
             float clampedY = Mathf.Clamp(p.y, bounds.yMin, bounds.yMax);
             var clampedPos = new Vector2(clampedX, clampedY);
@@ -396,35 +396,27 @@ namespace SpryFox.Common
         // if ray starts outside box then returns rayLength.
         // if ray starts inside box but stops before box edge, returns rayLength
         public static float ClipRay(this Rect box,
-                                    Vector2 rayOrigin, Vector2 rayDir, float rayLength)
-        {
-            if (box.Contains(rayOrigin) == false)
-            {
+            Vector2 rayOrigin, Vector2 rayDir, float rayLength) {
+            if (box.Contains(rayOrigin) == false) {
                 return rayLength;
             }
 
             var rayEnd = rayOrigin + rayDir * rayLength;
             float clippedRayLength = rayLength;
 
-            if (rayEnd.x > box.xMax)
-            {
+            if (rayEnd.x > box.xMax) {
                 float horizontalDistanceToEdge = box.xMax - rayOrigin.x;
                 clippedRayLength = horizontalDistanceToEdge / rayDir.x;
-            }
-            else if (rayEnd.x < box.xMin)
-            {
+            } else if (rayEnd.x < box.xMin) {
                 float horizontalDistanceToEdge = box.xMin - rayOrigin.x;
                 clippedRayLength = horizontalDistanceToEdge / rayDir.x;
             }
 
-            if (rayEnd.y > box.yMax)
-            {
+            if (rayEnd.y > box.yMax) {
                 float verticalDistanceToEdge = box.yMax - rayOrigin.y;
                 float clippedLengthToTopEdge = verticalDistanceToEdge / rayDir.y;
                 clippedRayLength = Mathf.Min(clippedRayLength, clippedLengthToTopEdge);
-            }
-            else if (rayEnd.y < box.yMin)
-            {
+            } else if (rayEnd.y < box.yMin) {
                 float verticalDistanceToEdge = box.yMin - rayOrigin.y;
                 float clippedLengthToBottomEdge = verticalDistanceToEdge / rayDir.y;
                 clippedRayLength = Mathf.Min(clippedRayLength, clippedLengthToBottomEdge);
@@ -432,6 +424,5 @@ namespace SpryFox.Common
 
             return clippedRayLength;
         }
-
     }
 }

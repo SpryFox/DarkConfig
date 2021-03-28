@@ -33,7 +33,7 @@ class ConsolePlatformFacts {
 
     IEnumerator NestCoro(uint nestAmount) {
         nestLevel++;
-        if(nestAmount > 0) {
+        if (nestAmount > 0) {
             var tmp = NestCoro(nestAmount - 1);
             coroPasser = tmp;
             yield return cp.StartCoroutine(tmp);
@@ -42,6 +42,7 @@ class ConsolePlatformFacts {
             coroPasser = tmp;
             yield return cp.StartCoroutine(tmp);
         }
+
         nestLevel--;
     }
 
@@ -235,7 +236,7 @@ class ConsolePlatformFacts {
         Assert.AreEqual(1, nestLevel);
 
         cp.StopCoroutine(x);
-        
+
         cp.Update(0.2f);
         Assert.AreEqual(1, counter);
         Assert.AreEqual(1, nestLevel);
@@ -252,10 +253,10 @@ class ConsolePlatformFacts {
         cp.Update(0);
         Assert.AreEqual(0, counter);
         Assert.AreEqual(1, nestLevel);
-        
+
         cp.StopCoroutine(coroPasser);
         cp.Update(0.2f);
-        
+
         Assert.AreEqual(0, counter);
         Assert.AreEqual(1, nestLevel);
 

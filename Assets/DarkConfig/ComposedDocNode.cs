@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 
 namespace DarkConfig {
-
     /// <summary>
     /// ComposedDocNode is a mutable DocNode implementation, intended to be used to
     /// help compiling multiple source documents into one meta-document.
@@ -13,15 +12,15 @@ namespace DarkConfig {
         public ComposedDocNode(DocNodeType type, int size = -1, string sourceInformation = null) {
             m_type = type;
             m_sourceInfo = sourceInformation;
-            switch(type) {
+            switch (type) {
                 case DocNodeType.Invalid:
                     break;
                 case DocNodeType.Dictionary:
-                    if(size > 0) m_dictionary = new Dictionary<string, DocNode>(size);
+                    if (size > 0) m_dictionary = new Dictionary<string, DocNode>(size);
                     else m_dictionary = new Dictionary<string, DocNode>();
                     break;
                 case DocNodeType.List:
-                    if(size > 0) m_list = new List<DocNode>(size);
+                    if (size > 0) m_list = new List<DocNode>(size);
                     else m_list = new List<DocNode>();
                     break;
                 case DocNodeType.Scalar:
@@ -31,9 +30,7 @@ namespace DarkConfig {
         }
 
         public override DocNodeType Type {
-            get {
-                return m_type;
-            }
+            get { return m_type; }
         }
 
         void AssertTypeIs(DocNodeType type) {
@@ -43,6 +40,7 @@ namespace DarkConfig {
         }
 
         static System.Text.StringBuilder s_exceptionBuilder = new System.Text.StringBuilder(500);
+
         void ThrowAccessException(string expectedType, string actualType) {
             s_exceptionBuilder.Length = 0;
             s_exceptionBuilder.Append("Accessing ComposedDocNode as ");
@@ -59,9 +57,7 @@ namespace DarkConfig {
                 AssertTypeIs(DocNodeType.List);
                 return m_list[index];
             }
-            set {
-                throw new System.NotImplementedException();
-            }
+            set { throw new System.NotImplementedException(); }
         }
 
         // access the node as if it was a Dictionary
@@ -81,12 +77,15 @@ namespace DarkConfig {
                 if (Type != DocNodeType.Dictionary && Type != DocNodeType.List) {
                     ThrowAccessException("Countable (Dictionary or List)", Type.ToString());
                 }
+
                 if (Type == DocNodeType.Dictionary) {
                     return m_dictionary.Count;
                 }
+
                 if (Type == DocNodeType.List) {
                     return m_list.Count;
                 }
+
                 throw new System.NotImplementedException();
             }
         }
@@ -123,13 +122,13 @@ namespace DarkConfig {
 
         public override string SourceInformation {
             get {
-                if(m_sourceInfo != null) return m_sourceInfo;
+                if (m_sourceInfo != null) return m_sourceInfo;
                 return "ComposedDocNode " + Type;
             }
         }
 
         public override string ToString() {
-            return string.Format("ComposedDocNode({0}, {1})", Type, 
+            return string.Format("ComposedDocNode({0}, {1})", Type,
                 (Type == DocNodeType.Scalar ? m_scalar : Count.ToString()));
         }
 
@@ -154,5 +153,4 @@ namespace DarkConfig {
 
         string m_sourceInfo;
     }
-
 }

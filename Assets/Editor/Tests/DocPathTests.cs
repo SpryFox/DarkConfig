@@ -5,8 +5,7 @@ using System.Collections.Generic;
 [TestFixture]
 class DocPathFacts {
     [SetUp]
-    public void DoSetup() {       
-    }
+    public void DoSetup() { }
 
     [Test]
     public void Equal_SingleSegments() {

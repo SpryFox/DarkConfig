@@ -32,11 +32,13 @@ namespace DarkConfig {
             if (doc.Type != DocNodeType.List) {
                 throw new DocNodeAccessException("Expected List, is " + doc.Type);
             }
-            for(int i = 0; i < doc.Count; i++) {
-                if(doc[i].StringValue == item) {
+
+            for (int i = 0; i < doc.Count; i++) {
+                if (doc[i].StringValue == item) {
                     return true;
                 }
             }
+
             return false;
         }
     }

@@ -28,7 +28,7 @@ class PostDocFacts {
 
     const string c_filename = "PostDocFacts_TestFilename";
 
-    static T ReifyString<T>(string str) where T: new() {
+    static T ReifyString<T>(string str) where T : new() {
         var doc = Config.LoadDocFromString(str, c_filename);
         T tc = default(T);
         ConfigReifier.Reify(ref tc, doc);

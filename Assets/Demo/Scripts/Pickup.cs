@@ -18,21 +18,22 @@ public class Pickup : MonoBehaviour {
     }
 
     Transform TopParent(Transform t) {
-        while(t.parent != null) {
+        while (t.parent != null) {
             t = t.parent;
         }
+
         return t;
     }
 
     void OnTriggerEnter2D(Collider2D c) {
         var trf = TopParent(c.transform);
-        if(trf.tag != "Player") return;
+        if (trf.tag != "Player") return;
         var planeController = trf.GetComponent<PlaneController>();
-        if(planeController == null) return;
-        if(Health > 0) {
+        if (planeController == null) return;
+        if (Health > 0) {
             planeController.Heal(Health);
         }
-        
+
         Destroy(gameObject);
     }
 }

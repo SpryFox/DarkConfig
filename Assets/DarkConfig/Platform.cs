@@ -12,14 +12,11 @@ namespace DarkConfig {
             throw new System.NotSupportedException("There's not default source in empty Platform");
         }
 
-        public virtual void Log(string msg) {
-        }
+        public virtual void Log(string msg) { }
 
-        public virtual void LogError(string msg) {
-        }
+        public virtual void LogError(string msg) { }
 
-        public virtual void Clear() {
-        }
+        public virtual void Clear() { }
 
         public virtual object WaitForSeconds(float seconds) {
             throw new System.NotSupportedException("Cannot call WaitForSeconds using empty Platform");
@@ -33,5 +30,4 @@ namespace DarkConfig {
             throw new System.NotSupportedException("Cannot start coroutine using empty Platform");
         }
     }
-
 }

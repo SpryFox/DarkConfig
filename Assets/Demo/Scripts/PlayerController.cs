@@ -7,8 +7,7 @@ public class PlayerController : MonoBehaviour {
 
     public Dictionary<string, KeyCode> Keyboard;
 
-    [ConfigIgnore]
-    public PlaneController Controller;
+    [ConfigIgnore] public PlaneController Controller;
 
     void Start() {
         // Get keyboard bindings from the config, and also automatically 
@@ -21,20 +20,21 @@ public class PlayerController : MonoBehaviour {
         Controller.Setup(PlaneCard.Cards[StartingCard]);
     }
 
-    void Update () {
+    void Update() {
         float rotation = 0;
-        if(Input.GetKey(Keyboard["Left"])) {
+        if (Input.GetKey(Keyboard["Left"])) {
             rotation += 1;
         }
-        if(Input.GetKey(Keyboard["Right"])) {
+
+        if (Input.GetKey(Keyboard["Right"])) {
             rotation -= 1;
         }
 
-        if(Input.GetKey(Keyboard["Slow"])) {
+        if (Input.GetKey(Keyboard["Slow"])) {
             Controller.Throttle = 0.6f;
         }
 
-        if(Input.GetKey(Keyboard["Boost"])) {
+        if (Input.GetKey(Keyboard["Boost"])) {
             Controller.Throttle = 1.4f;
         }
 

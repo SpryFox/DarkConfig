@@ -15,7 +15,7 @@ namespace DarkConfig {
         public bool CanLoadNow() {
             return true;
         }
-        
+
         public bool CanHotload() {
             return Application.isEditor && m_hotload;
         }
@@ -27,27 +27,28 @@ namespace DarkConfig {
             m_files.Add(indexInfo);
             var indexNode = indexInfo.Parsed;
             m_index = new List<string>(indexNode.Count);
-            for(int i = 0; i < indexNode.Count; i++) {
+            for (int i = 0; i < indexNode.Count; i++) {
                 m_index.Add(indexNode[i].StringValue);
             }
 
-            for(int i = 0; i < m_index.Count; i++) {
+            for (int i = 0; i < m_index.Count; i++) {
                 var filename = m_index[i];
-                if(filename == "index") continue;
+                if (filename == "index") continue;
                 try {
                     var finfo = ReadFile(m_baseDir + "/" + filename, filename);
                     m_files.Add(finfo);
-                } catch(Exception) {
+                } catch (Exception) {
                     continue;
                 }
             }
+
             callback();
         }
-        
+
         public void ReceivePreloaded(List<ConfigFileInfo> files) {
             m_files = new List<ConfigFileInfo>(files);
             m_index = new List<string>();
-            for(int i = 0; i < m_files.Count; i++) {
+            for (int i = 0; i < m_files.Count; i++) {
                 m_index.Add(m_files[i].Name);
             }
         }
@@ -56,11 +57,12 @@ namespace DarkConfig {
             try {
                 // for some reason Unity prefers resource names without extensions
                 var filename = System.IO.Path.ChangeExtension(fname, null);
-                TextAsset asset = (TextAsset)Resources.Load(filename);
-                if(asset == null) {
+                TextAsset asset = (TextAsset) Resources.Load(filename);
+                if (asset == null) {
                     Config.Log(LogVerbosity.Error, "Null loading file", fname);
                     return null;
                 }
+
                 var contents = asset.text;
 
                 var parsed = Config.LoadDocFromString(contents, fname);
@@ -79,14 +81,15 @@ namespace DarkConfig {
         public ConfigFileInfo TryHotload(ConfigFileInfo finfo) {
             var filename = m_baseDir + "/" + finfo.Name;
             filename = System.IO.Path.ChangeExtension(filename, null);
-            TextAsset asset = (TextAsset)Resources.Load(filename);
-            if(asset == null) {
+            TextAsset asset = (TextAsset) Resources.Load(filename);
+            if (asset == null) {
                 Config.Log(LogVerbosity.Error, "Null when loading file", filename);
                 return null;
             }
+
             var contents = asset.text;
             var checksum = ConfigFileManager.Checksum(contents);
-            if(checksum == finfo.Checksum) {
+            if (checksum == finfo.Checksum) {
                 // early-out with a false result
                 return null;
             }
@@ -113,5 +116,4 @@ namespace DarkConfig {
         bool m_hotload;
         List<ConfigFileInfo> m_files;
     }
-
 }

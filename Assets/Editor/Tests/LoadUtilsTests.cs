@@ -38,7 +38,7 @@ class LoadUtilsFacts {
                 intKey: 1
                 stringKey: 2
             ");
-        
+
         Dictionary<string, TestClass> d = null;
         LoadUtils.SetParentDefaults(ref d, doc, TestClass.getBasedOn);
         Assert.AreEqual(1, d.Count);
@@ -56,7 +56,7 @@ class LoadUtilsFacts {
                 basedOn: default
                 intKey: 1
             ");
-        
+
         Dictionary<string, TestClass> d = null;
         LoadUtils.SetParentDefaults(ref d, doc, TestClass.getBasedOn);
         Assert.AreEqual(2, d.Count);
@@ -77,7 +77,7 @@ class LoadUtilsFacts {
                 basedOn: basic
                 intKey: 2
             ");
-        
+
         Dictionary<string, TestClass> d = null;
         LoadUtils.SetParentDefaults(ref d, doc, TestClass.getBasedOn);
         Assert.AreEqual(3, d.Count);
@@ -99,7 +99,7 @@ class LoadUtilsFacts {
                 basedOn: basic
                 stringKey: deeperString
             ");
-        
+
         Dictionary<string, TestClass> d = null;
         LoadUtils.SetParentDefaults(ref d, doc, TestClass.getBasedOn);
         Assert.AreEqual(3, d.Count);
@@ -117,7 +117,7 @@ class LoadUtilsFacts {
                 basedOn: default
                 intKey: 1
             ");
-        
+
         Dictionary<string, TestClass> d = null;
         LoadUtils.SetParentDefaults(ref d, doc, TestClass.getBasedOn);
         var doc2 = FromString(@"
@@ -143,9 +143,9 @@ class LoadUtilsFacts {
             basic:
                 basedOn: default
             ");
-        
+
         Dictionary<string, TestClass> d = null;
-        LoadUtils.SetParentDefaults(ref d, doc, TestClass.getBasedOn, 
+        LoadUtils.SetParentDefaults(ref d, doc, TestClass.getBasedOn,
             new string[] {"basedOn", "intKey"});
         Assert.AreEqual(null, d["basic"].intKey);
         Assert.AreEqual("a", d["basic"].stringKey);

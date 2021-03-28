@@ -29,9 +29,7 @@ class DocNodeExtensionFacts {
         var doc = GetDocNode(@"---
             not_an_int
             ");
-        Assert.Throws<ParseException>(() => {
-            doc.AsInt();
-        });
+        Assert.Throws<ParseException>(() => { doc.AsInt(); });
     }
 
     [Test]
@@ -105,5 +103,4 @@ class DocNodeExtensionFacts {
         Assert.AreEqual(dict["parry"], new Vector3(1, 2, 0.5f));
         Assert.AreEqual(dict["swerve"], new Vector3(1, 1, 1));
     }
-
 }

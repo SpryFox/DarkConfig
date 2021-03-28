@@ -12,20 +12,17 @@ public class GunCard {
     public float RPS;
 
     public float FireInterval {
-        get {
-            return 1f/RPS;
-        }
+        get { return 1f / RPS; }
     }
 
     // This static collection allows us to manage the configs for the GunCard
     // completely within the GunCard class.  Just have to be a little careful
     // to not access Cards before the preload finishes.
-    [ConfigAllowMissing]
-    static Dictionary<string, GunCard> m_cards;
+    [ConfigAllowMissing] static Dictionary<string, GunCard> m_cards;
 
     public static Dictionary<string, GunCard> Cards {
-        get { 
-            if(m_cards == null) Config.Apply("guns", ref m_cards);
+        get {
+            if (m_cards == null) Config.Apply("guns", ref m_cards);
             return m_cards;
         }
     }

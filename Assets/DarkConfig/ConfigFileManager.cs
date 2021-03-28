@@ -21,7 +21,7 @@ namespace DarkConfig {
                 if (m_isHotloadingFiles && m_watchFilesCoro == null) {
                     m_watchFilesCoro = WatchFilesCoro();
                     Platform.Instance.StartCoroutine(m_watchFilesCoro);
-                } else if(!m_isHotloadingFiles && m_watchFilesCoro != null) {
+                } else if (!m_isHotloadingFiles && m_watchFilesCoro != null) {
                     Platform.Instance.StopCoroutine(m_watchFilesCoro);
                     m_watchFilesCoro = null;
                 }
@@ -60,41 +60,41 @@ namespace DarkConfig {
         /// in DarkConfig.
         /// </summary>
         public void Preload(System.Action callback = null) {
-            if(m_isPreloaded || m_isPreloading) return;
+            if (m_isPreloaded || m_isPreloading) return;
             m_isPreloading = true;
 
             m_loadedFiles.Clear();
             m_configFiles.Clear();
 
             Config.Log(LogVerbosity.Info, "Preloading", m_sources.Count, "sources");
-            for(int i = 0; i < m_sources.Count; i++) {
+            for (int i = 0; i < m_sources.Count; i++) {
                 var source = m_sources[i];
-                if(!source.CanLoadNow()) continue;
-                
+                if (!source.CanLoadNow()) continue;
+
                 Config.Log(LogVerbosity.Info, "Using source", source);
 
-                source.Preload(()=> {
+                source.Preload(() => {
                     m_isPreloading = false;
                     m_isPreloaded = true;
 
                     var files = source.GetFiles();
-                    foreach(var finfo in files) {
+                    foreach (var finfo in files) {
                         m_configFiles.Add(finfo.Name);
                         m_loadedFiles.Add(finfo.Name, finfo);
                     }
 
                     // put files in all other sources
-                    for(int j = 0; j < m_sources.Count; j++) {
-                        if(m_sources[j] != source) m_sources[j].ReceivePreloaded(files);
+                    for (int j = 0; j < m_sources.Count; j++) {
+                        if (m_sources[j] != source) m_sources[j].ReceivePreloaded(files);
                     }
 
                     Config.Log(LogVerbosity.Info, "Done preloading, IsHotloadingFiles: ", IsHotloadingFiles);
 
-                    if(IsHotloadingFiles) {
+                    if (IsHotloadingFiles) {
                         Platform.Instance.StartCoroutine(WatchFilesCoro());
                     }
 
-                    if(callback != null) callback();
+                    if (callback != null) callback();
                 });
                 break;
             }
@@ -119,9 +119,10 @@ namespace DarkConfig {
         /// </summary>
         public DocNode LoadConfig(string configName) {
             CheckPreload();
-            if(!m_loadedFiles.ContainsKey(configName)) {
+            if (!m_loadedFiles.ContainsKey(configName)) {
                 throw new ConfigFileNotFoundException(configName);
             }
+
             return m_loadedFiles[configName].Parsed;
         }
 
@@ -131,11 +132,12 @@ namespace DarkConfig {
         /// </summary>
         public void LoadConfig(string configName, ReloadDelegate cb) {
             CheckPreload();
-            if(!m_loadedFiles.ContainsKey(configName)) {
+            if (!m_loadedFiles.ContainsKey(configName)) {
                 throw new ConfigFileNotFoundException(configName);
             }
+
             bool save = cb(m_loadedFiles[configName].Parsed);
-            if(save) {
+            if (save) {
                 RegisterReload(configName, cb);
             }
         }
@@ -153,7 +155,8 @@ namespace DarkConfig {
         /// <param name="combiner">Function that takes in an array of DocNodes and returns a
         /// DocNode.  Implement whatever algorithm you want.  This function gets called every
         /// time any of the source files changes, with the DocNodes of all source files.</param>
-        public void RegisterCombinedFile(List<string> sourceFilenames, string newFilename, System.Func<List<DocNode>, DocNode> combiner) {
+        public void RegisterCombinedFile(List<string> sourceFilenames, string newFilename,
+            System.Func<List<DocNode>, DocNode> combiner) {
             CheckPreload();
 
             // clobber any existing setup for this filename
@@ -170,6 +173,7 @@ namespace DarkConfig {
                 if (!m_combinersBySubfile.ContainsKey(filename)) {
                     m_combinersBySubfile[filename] = new List<CombinerData>();
                 }
+
                 var list = m_combinersBySubfile[sourceFilenames[i]];
                 if (!list.Contains(listener)) {
                     list.Add(listener);
@@ -177,7 +181,7 @@ namespace DarkConfig {
             }
 
             if (m_isPreloaded) {
-                m_loadedFiles[newFilename] = new ConfigFileInfo{
+                m_loadedFiles[newFilename] = new ConfigFileInfo {
                     Name = newFilename,
                     Parsed = BuildCombinedConfig(newFilename)
                 };
@@ -200,6 +204,7 @@ namespace DarkConfig {
                 var list = m_combinersBySubfile[mc.Filenames[i]];
                 list.Remove(mc);
             }
+
             m_combiners.Remove(combinedFilename);
         }
 
@@ -232,7 +237,8 @@ namespace DarkConfig {
                 .Replace(@"\?", @"[^/]");
             var re = new System.Text.RegularExpressions.Regex(
                 "^" + restring + "$",
-                System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.Singleline);
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase |
+                System.Text.RegularExpressions.RegexOptions.Singleline);
             return GetFilesByRegexImpl(re, files);
         }
 
@@ -246,16 +252,18 @@ namespace DarkConfig {
                     result.Add(files[i]);
                 }
             }
+
             return result;
         }
 
         internal void RegisterReload(string filename, ReloadDelegate cb) {
             List<ReloadDelegate> delegates;
-            if(!m_reloadCallbacks.TryGetValue(filename, out delegates)) {
+            if (!m_reloadCallbacks.TryGetValue(filename, out delegates)) {
                 delegates = new List<ReloadDelegate>();
                 m_reloadCallbacks[filename] = delegates;
             }
-            if(!delegates.Contains(cb)) {
+
+            if (!delegates.Contains(cb)) {
                 delegates.Add(cb);
             }
         }
@@ -263,17 +271,19 @@ namespace DarkConfig {
         internal int GetReloadDelegateCount() {
             int count = 0;
             var iter = m_reloadCallbacks.GetEnumerator();
-            while(iter.MoveNext()) {
+            while (iter.MoveNext()) {
                 count += iter.Current.Value.Count;
             }
+
             return count;
         }
 
         internal void CallAllDelegates() {
             List<string> modified = new List<string>();
-            foreach(var kv in m_reloadCallbacks) {
+            foreach (var kv in m_reloadCallbacks) {
                 modified.Add(kv.Key);
             }
+
             CallCallbacks(modified);
         }
 
@@ -282,15 +292,16 @@ namespace DarkConfig {
             UnityPlatform.Setup();
 #endif
 
-            if(!Platform.Instance.CanDoImmediatePreload) {
-                Config.Assert(m_isPreloaded, "Can't use configs in any way in a built game, before preloading is complete");
+            if (!Platform.Instance.CanDoImmediatePreload) {
+                Config.Assert(m_isPreloaded,
+                    "Can't use configs in any way in a built game, before preloading is complete");
                 return;
             }
 
             // we can preload immediately; this means that the developer doesn't have to go through a loading screen for every scene; just hit play
-            if(m_isPreloaded || m_isPreloading) return;
+            if (m_isPreloaded || m_isPreloading) return;
 
-            if(m_sources.Count == 0) {
+            if (m_sources.Count == 0) {
                 LoadFromSourceImmediately(Platform.Instance.GetDefaultSource());
             } else {
                 bool preloadWasImmediate = false;
@@ -306,13 +317,14 @@ namespace DarkConfig {
         /// Loads all files from the source immediately.  For editor tooling.
         /// </summary>
         public void LoadFromSourceImmediately(ConfigSource source) {
-            Config.Assert(Platform.Instance.CanDoImmediatePreload, "Trying to load immediately on a platform that doesn't support it");
+            Config.Assert(Platform.Instance.CanDoImmediatePreload,
+                "Trying to load immediately on a platform that doesn't support it");
             m_isPreloading = true;
             Config.Log(LogVerbosity.Info, "Immediate-loading " + source);
-            
-            source.Preload(() => {});  // assume that this is immediate
+
+            source.Preload(() => { }); // assume that this is immediate
             var files = source.GetFiles();
-            foreach(var finfo in files) {
+            foreach (var finfo in files) {
                 m_configFiles.Add(finfo.Name);
                 m_loadedFiles.Add(finfo.Name, finfo);
             }
@@ -329,7 +341,7 @@ namespace DarkConfig {
                 Size = contents.Length,
                 Parsed = doc,
                 Checksum = checksum
-                });
+            });
             return doc;
         }
 
@@ -364,8 +376,7 @@ namespace DarkConfig {
         public void CheckHotloadImmediate(System.Action callback = null) {
             // deliberately ignore value of m_isCheckingHotloadNow
             var iter = CheckHotloadCoro(callback, 100);
-            while(iter.MoveNext()) {
-            }
+            while (iter.MoveNext()) { }
         }
 
         /// <summary>
@@ -375,7 +386,7 @@ namespace DarkConfig {
         /// you call this, it will early exit (without calling the callback).
         /// </summary>
         public void CheckHotload(System.Action callback = null, int filesPerFrame = 1) {
-            if(m_isCheckingHotloadNow) return;
+            if (m_isCheckingHotloadNow) return;
             Platform.Instance.StartCoroutine(CheckHotloadCoro(callback, filesPerFrame));
         }
 
@@ -387,63 +398,66 @@ namespace DarkConfig {
                 List<string> modifiedFiles = new List<string>();
 
                 for (int k = 0; k < m_configFiles.Count; k++) {
-                    if(!IsHotloadingFiles) yield break;
+                    if (!IsHotloadingFiles) yield break;
                     var configName = m_configFiles[k];
                     try {
                         var newInfo = CheckHotload(configName);
-                        if(newInfo != null) {
+                        if (newInfo != null) {
                             modifiedFiles.Add(configName);
                             m_loadedFiles[configName] = newInfo;
                         }
-                    } catch(Exception e) {
+                    } catch (Exception e) {
                         Config.Log(LogVerbosity.Error, "Exception loading file", configName, e);
                     }
-                    if((k % filesPerLoop) == 0) {
+
+                    if ((k % filesPerLoop) == 0) {
                         // throttle how many files we check per frame to control the performance impact
                         yield return null;
                     }
                 }
+
                 CallCallbacks(modifiedFiles);
-                if(cb != null) cb();
-            }
-            finally {
+                if (cb != null) cb();
+            } finally {
                 m_isCheckingHotloadNow = false;
             }
         }
 
         internal ConfigFileInfo CheckHotload(string configName) {
             ConfigFileInfo finfo = null;
-            lock(m_loadedFiles) {
+            lock (m_loadedFiles) {
                 finfo = m_loadedFiles[configName];
             }
 
-            for(int i = 0; i < m_sources.Count; i++) {
+            for (int i = 0; i < m_sources.Count; i++) {
                 var source = m_sources[i];
-                if(!source.CanHotload()) continue;
+                if (!source.CanHotload()) continue;
 
                 var newInfo = source.TryHotload(finfo);
 
-                if(newInfo != null) {
+                if (newInfo != null) {
                     Config.Log(LogVerbosity.Info, "Hotloaded file " + newInfo + " old: " + finfo);
 
-                    if(newInfo.Name == "index") {
+                    if (newInfo.Name == "index") {
                         // make sure that we sync up our list of loaded files
                         HotloadIndex(source);
                     }
-                    if(OnHotloadFile != null) OnHotloadFile(newInfo.Name);
+
+                    if (OnHotloadFile != null) OnHotloadFile(newInfo.Name);
                     return newInfo;
                 }
             }
+
             return null;
         }
 
         void HotloadIndex(ConfigSource source) {
             var files = source.GetFiles();
-            foreach(var finfo in files) {
-                if(!m_configFiles.Contains(finfo.Name)) m_configFiles.Add(finfo.Name);
+            foreach (var finfo in files) {
+                if (!m_configFiles.Contains(finfo.Name)) m_configFiles.Add(finfo.Name);
                 bool isNewFile = !m_loadedFiles.ContainsKey(finfo.Name);
                 m_loadedFiles[finfo.Name] = finfo;
-                if(isNewFile && OnHotloadFile != null) OnHotloadFile(finfo.Name);
+                if (isNewFile && OnHotloadFile != null) OnHotloadFile(finfo.Name);
             }
         }
 
@@ -469,8 +483,10 @@ namespace DarkConfig {
                     if (subfilename == filename) continue; // prevent trivial infinite loops
                     subdocs.Add(LoadConfig(subfilename));
                 }
+
                 return multifile.Combiner(subdocs);
             }
+
             return null;
         }
 
@@ -481,7 +497,7 @@ namespace DarkConfig {
 
                 if (m_combinersBySubfile.ContainsKey(filename)) {
                     var multicallbacks = m_combinersBySubfile[filename];
-                    for(int j = 0; j < multicallbacks.Count; j++) {
+                    for (int j = 0; j < multicallbacks.Count; j++) {
                         var mc = multicallbacks[j];
                         var shortName = mc.DestinationFilename;
                         m_loadedFiles[shortName] = new ConfigFileInfo {
@@ -498,7 +514,7 @@ namespace DarkConfig {
                 var filename = modifiedFiles[i];
                 if (!m_reloadCallbacks.ContainsKey(filename)) continue;
                 var callbacks = m_reloadCallbacks[filename];
-                for(int j = 0; j < callbacks.Count; j++) {
+                for (int j = 0; j < callbacks.Count; j++) {
                     var doc = LoadConfig(filename);
                     var save = callbacks[j](doc);
                     if (!save) {
@@ -518,7 +534,9 @@ namespace DarkConfig {
 
         bool m_isCheckingHotloadNow = false;
 
-        internal bool IsPreloaded { get { return m_isPreloaded; } }
+        internal bool IsPreloaded {
+            get { return m_isPreloaded; }
+        }
 
         List<string> m_configFiles = new List<string>();
         Dictionary<string, ConfigFileInfo> m_loadedFiles = new Dictionary<string, ConfigFileInfo>();

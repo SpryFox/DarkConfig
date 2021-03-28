@@ -6,10 +6,8 @@ using System.Collections.Generic;
 
 [TestFixture]
 class DocNodeMergeFacts {
-
     [Test]
-    public void DeepMerge_EmptyListDocs_ReturnsEmptyListDoc()
-    {
+    public void DeepMerge_EmptyListDocs_ReturnsEmptyListDoc() {
         var emptyDoc = new ComposedDocNode(DocNodeType.List, sourceInformation: "e1");
         var otherEmptyDoc = new ComposedDocNode(DocNodeType.List, sourceInformation: "e2");
 
@@ -21,8 +19,7 @@ class DocNodeMergeFacts {
     }
 
     [Test]
-    public void DeepMerge_EmptyDictDocs_ReturnsEmptyDictDoc()
-    {
+    public void DeepMerge_EmptyDictDocs_ReturnsEmptyDictDoc() {
         var emptyDoc = new ComposedDocNode(DocNodeType.Dictionary);
         var otherEmptyDoc = new ComposedDocNode(DocNodeType.Dictionary);
 
@@ -30,12 +27,12 @@ class DocNodeMergeFacts {
 
         var idealEmpty = new ComposedDocNode(DocNodeType.Dictionary);
         Assert.AreEqual(idealEmpty, merged);
-        Assert.AreEqual(merged.SourceInformation, "Merging of: [ComposedDocNode Dictionary, ComposedDocNode Dictionary]");
+        Assert.AreEqual(merged.SourceInformation,
+            "Merging of: [ComposedDocNode Dictionary, ComposedDocNode Dictionary]");
     }
 
     [Test]
-    public void DeepMerge_ScalarDocs_ReturnsSecondScalar()
-    {
+    public void DeepMerge_ScalarDocs_ReturnsSecondScalar() {
         var emptyDoc = CreateScalarNode("foo");
         var otherEmptyDoc = CreateScalarNode("bar");
 
@@ -46,18 +43,16 @@ class DocNodeMergeFacts {
     }
 
     [Test]
-    public void DeepMerge_DifferentDocTypes_ThrowsException()
-    {
+    public void DeepMerge_DifferentDocTypes_ThrowsException() {
         var emptyDoc = new ComposedDocNode(DocNodeType.List);
         var otherEmptyDoc = new ComposedDocNode(DocNodeType.Dictionary);
 
         Assert.That(() => DocNode.DeepMerge(emptyDoc, otherEmptyDoc),
-                    Throws.TypeOf<ArgumentException>());
+            Throws.TypeOf<ArgumentException>());
     }
 
     [Test]
-    public void DeepMerge_Lists_ListsMerged()
-    {
+    public void DeepMerge_Lists_ListsMerged() {
         var doc = CreateListNode("foo", "bar");
         var otherDoc = CreateListNode("wiggle", "waggle");
 
@@ -68,8 +63,7 @@ class DocNodeMergeFacts {
     }
 
     [Test]
-    public void DeepMerge_DictsWithDifferentKeys_KeysCombined()
-    {
+    public void DeepMerge_DictsWithDifferentKeys_KeysCombined() {
         var doc = CreateDictNode(Pair("A", "1"), Pair("B", "2"));
         var otherDoc = CreateDictNode(Pair("X", "9"), Pair("Y", "10"));
 
@@ -78,10 +72,9 @@ class DocNodeMergeFacts {
         var ideal = CreateDictNode(Pair("A", "1"), Pair("B", "2"), Pair("X", "9"), Pair("Y", "10"));
         Assert.AreEqual(ideal, merged);
     }
-    
+
     [Test]
-    public void DeepMerge_DictsWithSameKeys_OtherKeysPreferred()
-    {
+    public void DeepMerge_DictsWithSameKeys_OtherKeysPreferred() {
         var doc = CreateDictNode(Pair("A", "1"), Pair("B", "2"));
         var otherDoc = CreateDictNode(Pair("A", "9"), Pair("Y", "10"));
 
@@ -92,8 +85,7 @@ class DocNodeMergeFacts {
     }
 
     [Test]
-    public void DeepMerge_DictsWithIdenticallyKeyedLists_ListsCombined()
-    {
+    public void DeepMerge_DictsWithIdenticallyKeyedLists_ListsCombined() {
         var doc = CreateDictNode(Pair("A", CreateListNode("foo", "bar")));
         var otherDoc = CreateDictNode(Pair("A", CreateListNode("wiggle", "waggle")));
 
@@ -104,8 +96,7 @@ class DocNodeMergeFacts {
     }
 
     [Test]
-    public void DeepMerge_DictsWithIdenticallyKeyedDicts_DictsCombined()
-    {
+    public void DeepMerge_DictsWithIdenticallyKeyedDicts_DictsCombined() {
         var doc = CreateDictNode(Pair("favourite", CreateDictNode(Pair("films", CreateListNode("die hard")))));
         var otherDoc =
             CreateDictNode(Pair("favourite", CreateDictNode(Pair("films", CreateListNode("fury road")))));
@@ -113,51 +104,47 @@ class DocNodeMergeFacts {
         var merged = DocNode.DeepMerge(doc, otherDoc);
 
         var ideal = CreateDictNode(Pair("favourite",
-                                        CreateDictNode(Pair("films", CreateListNode("die hard",
-                                                                                    "fury road")))));
+            CreateDictNode(Pair("films", CreateListNode("die hard",
+                "fury road")))));
         Assert.AreEqual(ideal, merged);
     }
-    
+
     //////////////////////////////////////////////////
 
-    DocNode CreateListNode(params string[] items)
-    {
+    DocNode CreateListNode(params string[] items) {
         var stringNodes = items.Select(CreateScalarNode).ToArray();
         return CreateListNode(stringNodes);
     }
 
-    DocNode CreateListNode(params DocNode[] items)
-    {
+    DocNode CreateListNode(params DocNode[] items) {
         var list = new ComposedDocNode(DocNodeType.List);
-        foreach(var item in items) {
+        foreach (var item in items) {
             list.Add(item);
         }
+
         return list;
     }
 
-    DocNode CreateDictNode(params KeyValuePair<string,DocNode>[] pairs)
-    {
+    DocNode CreateDictNode(params KeyValuePair<string, DocNode>[] pairs) {
         var dict = new ComposedDocNode(DocNodeType.Dictionary);
-        foreach(var pair in pairs) {
+        foreach (var pair in pairs) {
             dict.Add(pair.Key, pair.Value);
         }
+
         return dict;
     }
 
-    DocNode CreateScalarNode(string value)
-    {
+    DocNode CreateScalarNode(string value) {
         var valueNode = new ComposedDocNode(DocNodeType.Scalar);
         valueNode.StringValue = value;
         return valueNode;
     }
 
-    KeyValuePair<string,DocNode> Pair(string key, string value)
-    {
+    KeyValuePair<string, DocNode> Pair(string key, string value) {
         return Pair(key, CreateScalarNode(value));
     }
 
-    KeyValuePair<string,DocNode> Pair(string key, DocNode value)
-    {
+    KeyValuePair<string, DocNode> Pair(string key, DocNode value) {
         return new KeyValuePair<string, DocNode>(key, value);
     }
 }

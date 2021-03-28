@@ -16,7 +16,7 @@ public class EnemySpawner : MonoBehaviour {
         // "immediate preload" inside ApplyThis that will load/parse all the 
         // config files within the function call (so it'll be slow and drop a 
         // frame).
-        if(Config.FileManager.CountSources() == 0) {
+        if (Config.FileManager.CountSources() == 0) {
             Config.FileManager.AddSource(new FileSource(Application.dataPath + "/Demo/Resources/Configs"));
         }
 
@@ -24,34 +24,36 @@ public class EnemySpawner : MonoBehaviour {
     }
 
     void Update() {
-        if(m_player == null) {
+        if (m_player == null) {
             m_player = FindObjectOfType<PlayerController>();
         }
-        if(m_player == null) return;
+
+        if (m_player == null) return;
 
         // clean out destroyed enemies
-        for(int i = 0; i < m_enemies.Count; i++) {
-            if(m_enemies[i] == null) {
+        for (int i = 0; i < m_enemies.Count; i++) {
+            if (m_enemies[i] == null) {
                 m_enemies.RemoveAt(i);
                 i--;
             }
         }
 
-        if(m_enemies.Count < c_NumEnemies) {
+        if (m_enemies.Count < c_NumEnemies) {
             // pick a card, any card (except the card the player currently has)
             PlaneCard chosenCard = null;
-            while(chosenCard == null || chosenCard == m_player.Controller.Card) {
+            while (chosenCard == null || chosenCard == m_player.Controller.Card) {
                 var cardNames = new List<string>(PlaneCard.Cards.Keys);
-                var chosenName = cardNames[(int)(Random.value * PlaneCard.Cards.Count)];
+                var chosenName = cardNames[(int) (Random.value * PlaneCard.Cards.Count)];
                 chosenCard = PlaneCard.Cards[chosenName];
             }
 
             // pick a location near the player
-            var spawnPos = m_player.transform.position + Random.insideUnitCircle.XYZ().normalized * c_SpawnDistanceFromPlayer;
+            var spawnPos = m_player.transform.position +
+                           Random.insideUnitCircle.XYZ().normalized * c_SpawnDistanceFromPlayer;
             var spawnRotation = Quaternion.AngleAxis(Random.value * 360, Vector3.forward);
 
             // set up the ai
-            var enemyObj = (Transform)Instantiate(EnemyPrefab, spawnPos, spawnRotation);
+            var enemyObj = (Transform) Instantiate(EnemyPrefab, spawnPos, spawnRotation);
             var controller = enemyObj.GetComponent<AIController>();
             controller.Setup(chosenCard);
 
@@ -61,9 +63,11 @@ public class EnemySpawner : MonoBehaviour {
 
     /// config variables
     int c_NumEnemies = 5;
+
     int c_SpawnDistanceFromPlayer = 30;
 
     /// private variables
     List<AIController> m_enemies = new List<AIController>();
+
     PlayerController m_player;
 }
