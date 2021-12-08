@@ -1,3 +1,9 @@
+<p align="center">
+    <a href="#concept">
+      <img src="https://github.com/SpryFox/DarkConfig/raw/master/Docs/DarkConfig.png">
+    </a>
+</p>
+
 DarkConfig
 ===========
 
@@ -12,8 +18,6 @@ Here's how DarkConfig supports fast iteration:
 * It works on iOS, with .Net 2.0 subset, stripped bytecode, and "fast but no exceptions" execution model.  On Android it supports the micro mscorlib.
 
 DarkConfig supports .Net 3.5 or later, and has special support for Unity 5.2-5.5.
-
-[![DarkConfig Logo](https://github.com/SpryFox/DarkConfig/raw/master/Docs/DarkConfig.png)](#concept)
 
 Concept
 --------
