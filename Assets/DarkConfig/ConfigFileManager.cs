@@ -9,11 +9,9 @@ namespace DarkConfig {
     public class ConfigFileManager {
         delegate void SimpleLoadDelegate(DocNode d);
 
-        /// <summary>
         /// If true (the default), DarkConfig will scan files for changes every 
         /// *HotloadCheckInterval* seconds.  Setting it to false stops hotloading;
         /// recommended for production games.
-        /// </summary>
         public bool IsHotloadingFiles {
             get { return m_isHotloadingFiles; }
             set {
@@ -28,37 +26,27 @@ namespace DarkConfig {
             }
         }
 
-        /// <summary>
         /// How often, in seconds, to scan files for changes.
-        /// </summary>
         public float HotloadCheckInterval = 2f;
 
-        /// <summary>
         /// List of files in the index file.  This is all the files that DarkConfig can load at the time of access.
         /// Contents may change during preloading.  Do not modify list. (readonly lists are not supported by the 
         /// version of Mono that Unity bundles)
-        /// </summary>
         public List<string> Files {
             get { return m_configFiles; }
         }
 
-        /// <summary>
         /// Returns a dictionary of the files that are currently loaded.
-        /// </summary>
         public Dictionary<string, ConfigFileInfo> FileInfos {
             get { return m_loadedFiles; }
         }
 
-        /// <summary>
         /// This event is called for every file that gets hotloaded.
-        /// </summary>
         public System.Action<string> OnHotloadFile;
 
-        /// <summary>
         /// Loads index file and start loading all config files.  Must call
         /// this (via Config.Preload, not directly) before using anything else
         /// in DarkConfig.
-        /// </summary>
         public void Preload(System.Action callback = null) {
             if (m_isPreloaded || m_isPreloading) return;
             m_isPreloading = true;
@@ -100,23 +88,17 @@ namespace DarkConfig {
             }
         }
 
-        /// <summary>
         /// Adds a source of config files, to be consulted when loading or hotloading.
-        /// </summary>
         public void AddSource(ConfigSource source) {
             m_sources.Add(source);
         }
 
-        /// <summary>
         /// Returns the number of sources currently added.
-        /// </summary>
         public int CountSources() {
             return m_sources.Count;
         }
 
-        /// <summary>
         /// Load a config file into a DocNode and return it directly.
-        /// </summary>
         public DocNode LoadConfig(string configName) {
             CheckPreload();
             if (!m_loadedFiles.ContainsKey(configName)) {
@@ -126,10 +108,8 @@ namespace DarkConfig {
             return m_loadedFiles[configName].Parsed;
         }
 
-        /// <summary>
         /// Load a config file and call *cb* immediately with the contents.  This also registers *cb* to
         /// be called every time the file is hotloaded.
-        /// </summary>
         public void LoadConfig(string configName, ReloadDelegate cb) {
             CheckPreload();
             if (!m_loadedFiles.ContainsKey(configName)) {
@@ -188,9 +168,7 @@ namespace DarkConfig {
             }
         }
 
-        /// <summary>
         /// Stops producing a combined file, specified by name.
-        /// </summary>
         public void UnregisterCombinedFile(string combinedConfigName) {
             CheckPreload();
 
@@ -208,28 +186,22 @@ namespace DarkConfig {
             m_combiners.Remove(combinedFilename);
         }
 
-        /// <summary>
         /// Returns a list of files in the index that match a glob pattern.  Glob patterns work in a Unix-esque fashion:
         ///   '*' matches any sequence of characters, but stops at slashes
         ///   '?' matches a single character, except a slash
         ///   '**' matches any sequence of characters, including slashes
-        /// </summary>
         public List<string> GetFilesByGlob(string glob) {
             CheckPreload();
             return GetFilesByGlobImpl(glob, m_configFiles);
         }
 
-        /// <summary>
         /// Returns a list of files in the index that match a regular expression.
-        /// </summary>
         public List<string> GetFilesByRegex(System.Text.RegularExpressions.Regex pattern) {
             CheckPreload();
             return GetFilesByRegexImpl(pattern, m_configFiles);
         }
 
-        /// <summary>
         /// Don't call directly, used for tests.
-        /// </summary>
         public List<string> GetFilesByGlobImpl(string glob, List<string> files) {
             var restring = System.Text.RegularExpressions.Regex.Escape(glob)
                 .Replace(@"\*\*", @".*")
@@ -242,9 +214,7 @@ namespace DarkConfig {
             return GetFilesByRegexImpl(re, files);
         }
 
-        /// <summary>
         /// Don't call directly, used for tests.
-        /// </summary>
         public List<string> GetFilesByRegexImpl(System.Text.RegularExpressions.Regex pattern, List<string> files) {
             var result = new List<string>();
             for (int i = 0; i < files.Count; i++) {
@@ -313,9 +283,7 @@ namespace DarkConfig {
             Config.PreloadComplete();
         }
 
-        /// <summary>
         /// Loads all files from the source immediately.  For editor tooling.
-        /// </summary>
         public void LoadFromSourceImmediately(ConfigSource source) {
             Config.Assert(Platform.Instance.CanDoImmediatePreload,
                 "Trying to load immediately on a platform that doesn't support it");
@@ -345,11 +313,9 @@ namespace DarkConfig {
             return doc;
         }
 
-        /// <summary>
         /// Utility function that returns an integer checksum of a string.
         /// Used to compare file bodies to know whether they've been hotloaded
         /// or not.
-        /// </summary>
         public static int Checksum(string body) {
             byte[] input = System.Text.Encoding.UTF8.GetBytes(body);
             using (MemoryStream stream = new MemoryStream(input)) {
@@ -358,33 +324,27 @@ namespace DarkConfig {
             }
         }
 
-        /// <summary>
         /// Utility function that returns an integer checksum of a stream.
         /// Used to compare file bodies to know whether they've been hotloaded
         /// or not.
-        /// </summary>
         public static int Checksum(Stream stream) {
             return MurMurHash3.Hash(stream);
         }
 
-        /// <summary>
         /// Immediately checks all config files to see whether they can be
         /// hotloaded.  This may take tens or hundreds of milliseconds, but
         /// when it's complete every file will have been checked and hotloaded
         /// if necessary.  Calls callback when done.
-        /// </summary>
         public void CheckHotloadImmediate(System.Action callback = null) {
             // deliberately ignore value of m_isCheckingHotloadNow
             var iter = CheckHotloadCoro(callback, 100);
             while (iter.MoveNext()) { }
         }
 
-        /// <summary>
         /// Starts a coroutine to check every file to see whether it can be
         /// hotloaded, N files per frame.  It calls the callback when done
         /// with all files.  If one of the coroutines is already running when
         /// you call this, it will early exit (without calling the callback).
-        /// </summary>
         public void CheckHotload(System.Action callback = null, int filesPerFrame = 1) {
             if (m_isCheckingHotloadNow) return;
             Platform.Instance.StartCoroutine(CheckHotloadCoro(callback, filesPerFrame));
@@ -525,7 +485,7 @@ namespace DarkConfig {
             }
         }
 
-        ////////////////////////////////////////////////////////////////
+        /////////////////////////////////////////////////
 
         bool m_isPreloading = false;
         bool m_isPreloaded = false;

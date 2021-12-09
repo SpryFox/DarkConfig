@@ -9,56 +9,36 @@ namespace DarkConfig {
         Scalar
     }
 
-    /// <summary>
     /// DocNode represents a node of a parsed document. 
     /// DocNode is a union type, requiring no casting but behaving differently 
     /// depending on the underlying value.
     /// DocNode also assumes that all Dictionaries have strings as keys.
-    /// </summary>
     public abstract class DocNode : IEquatable<DocNode> {
-        /// <summary>
         /// Shape of data contained in the node.
-        /// </summary>
         public abstract DocNodeType Type { get; }
 
-        /// <summary>
         /// Access the node as if it was a List.
-        /// </summary>
         public abstract DocNode this[int index] { get; set; }
 
-        /// <summary>
         /// Access the node as if it was a Dictionary.
-        /// </summary>
         public abstract DocNode this[string key] { get; set; }
 
-        /// <summary>
         /// Number of items in the collection
-        /// </summary>
         public abstract int Count { get; }
 
-        /// <summary>
         /// Value of scalar as a string.
-        /// </summary>
         public abstract string StringValue { get; set; }
 
-        /// <summary>
         /// Returns true if the key is in the dictionary
-        /// </summary>
         public abstract bool ContainsKey(string key);
 
-        /// <summary>
         /// Iterates over the values of the list
-        /// </summary>
         public abstract IEnumerable<DocNode> Values { get; }
 
-        /// <summary>
         /// Iterates over a dictionary 
-        /// </summary>
         public abstract IEnumerable<KeyValuePair<string, DocNode>> Pairs { get; }
 
-        /// <summary>
         /// String describing the position and context in the source format (e.g. line number).
-        /// </summary>
         public abstract string SourceInformation { get; }
 
         public bool Equals(DocNode d) {
@@ -95,9 +75,9 @@ namespace DarkConfig {
             return false;
         }
 
-        // combines hierarchies.
-        // lists are concatenated, but dicts are recursively DeepMerged. 
-        // favours second node on any conflict.
+        /// combines hierarchies.
+        /// lists are concatenated, but dicts are recursively DeepMerged. 
+        /// favours second node on any conflict.
         public static DocNode DeepMerge(DocNode lhs, DocNode rhs) {
             if (lhs.Type != rhs.Type) {
                 throw new ArgumentException("can not merge different types " + lhs.Type + " " + rhs.Type);

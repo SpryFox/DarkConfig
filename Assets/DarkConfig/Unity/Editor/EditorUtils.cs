@@ -33,6 +33,12 @@ namespace DarkConfig {
             return retval;
         }
 
+        /// <summary>
+        /// Counts the instances of a character in a string
+        /// </summary>
+        /// <param name="c">character to count</param>
+        /// <param name="s">string to search within</param>
+        /// <returns>count of </returns>
         static int CountCharacter(char c, string s) {
             int count = 0;
             for (int i = 0; i < s.Length; i++) {
@@ -41,13 +47,16 @@ namespace DarkConfig {
 
             return count;
         }
-
+       
         /// <summary>
-        /// Writes the list of files to the index file.  
+        /// Writes the list of files to the index file.
         /// The files are expected to be listed relative to a Resources directory.
         /// The indexFile is specified relative to the Assets directory.  It must also be in a resources directory.
-        ///  E.g. "Assets/Resources/Configs/index.bytes"
+        /// E.g. "Assets/Resources/Configs/index.bytes"
         /// </summary>
+        /// <param name="filesInIndex"></param>
+        /// <param name="indexFile"></param>
+        /// <returns></returns>
         public static int WriteIndexFile(List<string> filesInIndex, string indexFile) {
             int resourcesIdx = indexFile.IndexOf("Resources/");
             Config.Assert(resourcesIdx >= 0, "Index file ", indexFile, " should have Resources directory in its path");
