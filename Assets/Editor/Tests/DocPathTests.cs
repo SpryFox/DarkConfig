@@ -3,7 +3,7 @@ using DarkConfig;
 using System.Collections.Generic;
 
 [TestFixture]
-class DocPathFacts {
+class DocPathTests {
     [SetUp]
     public void DoSetup() { }
 

@@ -3,7 +3,7 @@ using DarkConfig;
 using NUnit.Framework;
 
 [TestFixture]
-class LoadUtilsFacts {
+class LoadUtilsTests {
     class TestClass {
         public int? intKey = null;
         public string stringKey = null;
@@ -15,7 +15,7 @@ class LoadUtilsFacts {
         }
     }
 
-    const string c_filename = "LoadUtilsFacts_TestFileName";
+    const string c_filename = "LoadUtilsTests_TestFileName";
 
     DocNode FromString(string s) {
         return Config.LoadDocFromString(s, c_filename);

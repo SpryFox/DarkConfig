@@ -6,7 +6,7 @@ using UnityEngine;
 using DarkConfig;
 
 [TestFixture]
-public class YamlParseFacts {
+public class YamlParseTests {
     static YamlNode ParseYamlNode(string str, string filename = null) {
         var input = new StringReader(str);
         var yaml = new YamlStream();

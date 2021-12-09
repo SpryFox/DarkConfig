@@ -5,7 +5,7 @@ using System.Linq;
 using System.Collections.Generic;
 
 [TestFixture]
-class DocNodeMergeFacts {
+class DocNodeMergeTests {
     [Test]
     public void DeepMerge_EmptyListDocs_ReturnsEmptyListDoc() {
         var emptyDoc = new ComposedDocNode(DocNodeType.List, sourceInformation: "e1");

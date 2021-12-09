@@ -2,7 +2,7 @@ using DarkConfig;
 using NUnit.Framework;
 
 [TestFixture]
-class PostDocFacts {
+class PostDocTests {
     class PostDocClass {
         public static PostDocClass PostDoc(PostDocClass existing) {
             existing.baseKey += 1;
@@ -26,7 +26,7 @@ class PostDocFacts {
         public int baseKey = 0;
     }
 
-    const string c_filename = "PostDocFacts_TestFilename";
+    const string c_filename = "PostDocTests_TestFilename";
 
     static T ReifyString<T>(string str) where T : new() {
         var doc = Config.LoadDocFromString(str, c_filename);

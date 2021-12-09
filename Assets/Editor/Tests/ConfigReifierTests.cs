@@ -4,7 +4,7 @@ using DarkConfig;
 using System.Collections.Generic;
 
 [TestFixture]
-class ConfigReifierFacts {
+class ConfigReifierTests {
     // disable variable unused in function body warnings; there's a lot in here
 #pragma warning disable 168
 
@@ -117,14 +117,14 @@ class ConfigReifierFacts {
     }
 
     T ReifyString<T>(string str) where T : new() {
-        var doc = Config.LoadDocFromString(str, "ConfigReifierFacts_ReifyString_TestFilename");
+        var doc = Config.LoadDocFromString(str, "ConfigReifierTests_ReifyString_TestFilename");
         T tc = default(T);
         ConfigReifier.Reify(ref tc, doc);
         return tc;
     }
 
     T UpdateFromString<T>(ref T obj, string str) {
-        var doc = Config.LoadDocFromString(str, "ConfigReifierFacts_UpdateFromString_TestFilename");
+        var doc = Config.LoadDocFromString(str, "ConfigReifierTests_UpdateFromString_TestFilename");
         ConfigReifier.Reify(ref obj, doc);
         return obj;
     }
@@ -687,7 +687,7 @@ class ConfigReifierFacts {
             @"---
             intKey: 99088
             "
-            , "ConfigReifierFacts_ReifyString_TestFilename");
+            , "ConfigReifierTests_ReifyString_TestFilename");
         ConfigReifier.SetFieldsOnObject(ref tc, doc);
         Assert.AreEqual(tc.intKey, 99088);
     }
@@ -699,7 +699,7 @@ class ConfigReifierFacts {
             @"---
             intKey: 99077
             "
-            , "ConfigReifierFacts_ReifyString_TestFilename");
+            , "ConfigReifierTests_ReifyString_TestFilename");
         ConfigReifier.SetFieldsOnObject(ref tc, doc);
         Assert.AreEqual(((TestClass) tc).intKey, 99077);
     }
@@ -713,7 +713,7 @@ class ConfigReifierFacts {
             @"---
             childIntKey: 12345
             "
-            , "ConfigReifierFacts_ReifyString_TestFilename");
+            , "ConfigReifierTests_ReifyString_TestFilename");
         ConfigReifier.SetFieldsOnStruct(ref s, doc);
         Assert.AreEqual(s.childIntKey, 12345);
         Assert.AreEqual(s.childFloatKey, 1);
@@ -728,7 +728,7 @@ class ConfigReifierFacts {
             @"---
             childIntKey: 34567
             "
-            , "ConfigReifierFacts_ReifyString_TestFilename");
+            , "ConfigReifierTests_ReifyString_TestFilename");
         object os = (object) s;
         ConfigReifier.SetFieldsOnObject(ref os, doc);
         Assert.AreEqual(((ChildStruct) os).childIntKey, 34567);
@@ -743,7 +743,7 @@ class ConfigReifierFacts {
             staticIntArrKey: [4, 4, 0, 0]
             intKey: 10   # test non-static fields
             "
-            , "ConfigReifierFacts_ReifyString_TestFilename");
+            , "ConfigReifierTests_ReifyString_TestFilename");
         ConfigReifier.ReifyStatic<TestClass>(doc);
         Assert.AreEqual(TestClass.staticStringKey, "arbitrage");
         Assert.AreEqual(TestClass.staticIntArrKey, new int[] {4, 4, 0, 0});
@@ -755,7 +755,7 @@ class ConfigReifierFacts {
             @"---
             intKey: 10   # try to bogusly set a non-static field
             "
-            , "ConfigReifierFacts_ReifyString_TestFilename");
+            , "ConfigReifierTests_ReifyString_TestFilename");
 
         // passes if there are no exceptions
         ConfigReifier.ReifyStatic<TestClass>(doc);
@@ -767,7 +767,7 @@ class ConfigReifierFacts {
             @"---
             staticIntKey: 3049
             "
-            , "ConfigReifierFacts_ReifyString_TestFilename");
+            , "ConfigReifierTests_ReifyString_TestFilename");
         ConfigReifier.ReifyStatic<ChildStruct>(doc);
         Assert.AreEqual(ChildStruct.staticIntKey, 3049);
     }
@@ -778,7 +778,7 @@ class ConfigReifierFacts {
             @"---
             staticStringList: [herp, derp]
             "
-            , "ConfigReifierFacts_ReifyString_TestFilename");
+            , "ConfigReifierTests_ReifyString_TestFilename");
         ConfigReifier.ReifyStatic(typeof(PureStatic), doc);
         Assert.AreEqual(PureStatic.staticStringList[0], "herp");
         Assert.AreEqual(PureStatic.staticStringList[1], "derp");
@@ -790,7 +790,7 @@ class ConfigReifierFacts {
             @"---
             8342
             "
-            , "ConfigReifierFacts_ReifySingle_TestFilename");
+            , "ConfigReifierTests_ReifySingle_TestFilename");
         var inst = ConfigReifier.CreateInstance<SingleFieldClass>(doc);
         Assert.AreEqual(inst.SingleField, 8342);
     }
@@ -801,7 +801,7 @@ class ConfigReifierFacts {
             @"---
             [a, b, c, d]
             "
-            , "ConfigReifierFacts_ReifySingle_TestFilename");
+            , "ConfigReifierTests_ReifySingle_TestFilename");
         var inst = ConfigReifier.CreateInstance<SingleListClass>(doc);
         Assert.AreEqual(inst.SingleList[0], "a");
         Assert.AreEqual(inst.SingleList[1], "b");

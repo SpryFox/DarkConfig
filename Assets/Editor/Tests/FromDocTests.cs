@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System;
 
 [TestFixture]
-class FromDocFacts {
+class FromDocTests {
     class TestClass {
         public int baseKey;
 
@@ -41,10 +41,10 @@ class FromDocFacts {
         public int derivedKey;
     }
 
-    const string c_filename = "FromDocFacts_TestFileName";
+    const string c_filename = "FromDocTests_TestFileName";
 
     T ReifyString<T>(string str) where T : new() {
-        var doc = Config.LoadDocFromString(str, "FromDocFacts_ReifyString_TestFileName");
+        var doc = Config.LoadDocFromString(str, "FromDocTests_ReifyString_TestFileName");
         T tc = default(T);
         ConfigReifier.Reify(ref tc, doc);
         return tc;
