@@ -4,7 +4,7 @@ using NUnit.Framework;
 using System.Collections.Generic;
 
 [TestFixture]
-public class EditorUtilsFacts {
+public class EditorUtilsTests {
     [TearDown]
     public void TearDown() {
         // clean up entire test directory

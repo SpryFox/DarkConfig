@@ -4,7 +4,7 @@ using DarkConfig;
 using System.Collections.Generic;
 
 [TestFixture]
-class DocNodeExtensionFacts {
+class DocNodeExtensionTests {
     [SetUp]
     public void DoSetup() {
         DefaultFromDocs.RegisterAll();
@@ -12,7 +12,7 @@ class DocNodeExtensionFacts {
     }
 
     DocNode GetDocNode(string str) {
-        var doc = Config.LoadDocFromString(str, "ConfigReifierFacts_ReifyString_TestFilename");
+        var doc = Config.LoadDocFromString(str, "ConfigReifierTests_ReifyString_TestFilename");
         return doc;
     }
 

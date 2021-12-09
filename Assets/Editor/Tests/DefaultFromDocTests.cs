@@ -5,8 +5,8 @@ using System.Collections.Generic;
 using System;
 
 [TestFixture]
-class DefaultFromDocFacts {
-    const string c_filename = "DefaultFromDocFacts_TestFileName";
+class DefaultFromDocTests {
+    const string c_filename = "DefaultFromDocTests_TestFileName";
 
     T ReifyString<T>(string str) where T : new() {
         var doc = Config.LoadDocFromString(str, c_filename);

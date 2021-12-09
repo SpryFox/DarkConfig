@@ -6,13 +6,13 @@ using System.IO;
 
 
 [TestFixture]
-class FileSourceFacts {
+class FileSourceTests {
     string m_tmpDir;
 
 
     [SetUp]
     public void SetUp() {
-        m_tmpDir = Path.Combine(Path.GetTempPath(), "FileSourceFacts");
+        m_tmpDir = Path.Combine(Path.GetTempPath(), "FileSourceTests");
         Directory.CreateDirectory(m_tmpDir);
     }
 

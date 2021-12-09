@@ -4,7 +4,7 @@ using NUnit.Framework;
 using System.Collections.Generic;
 
 [TestFixture]
-class FileMatchFacts {
+class FileMatchTests {
     static List<string> AllFiles = new List<string>(new string[] {
         "Folder/1File",
         "Folder/2File",

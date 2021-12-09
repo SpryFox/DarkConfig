@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Collections;
 
 [TestFixture]
-class ConsolePlatformFacts {
+class ConsolePlatformTests {
     ConsolePlatform cp;
     int counter = 0;
     int nestLevel = 0;
