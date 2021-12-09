@@ -1,10 +1,8 @@
 using System.Collections.Generic;
 
 namespace DarkConfig {
-    /// <summary>
     /// ComposedDocNode is a mutable DocNode implementation, intended to be used to
     /// help compiling multiple source documents into one meta-document.
-    /// </summary>
     public class ComposedDocNode : DocNode {
         //////////////////////////////////////////////////////////////////////
         // DocNode Methods
@@ -51,7 +49,7 @@ namespace DarkConfig {
             throw new DocNodeAccessException(s_exceptionBuilder.ToString());
         }
 
-        // access the node as if it was a list
+        /// access the node as if it was a list
         public override DocNode this[int index] {
             get {
                 AssertTypeIs(DocNodeType.List);
@@ -60,7 +58,7 @@ namespace DarkConfig {
             set { throw new System.NotImplementedException(); }
         }
 
-        // access the node as if it was a Dictionary
+        /// access the node as if it was a Dictionary
         public override DocNode this[string key] {
             get {
                 AssertTypeIs(DocNodeType.Dictionary);

@@ -10,16 +10,12 @@ namespace DarkConfig {
     public delegate void AssertDelegate(bool test, params object[] messages);
 
     public class Config : ConfigReifier {
-        /// <summary>
         /// True if preloading is complete, false otherwise.
-        /// </summary>
         public static bool IsPreloaded {
             get { return FileManager.IsPreloaded; }
         }
 
-        /// <summary>
         /// Callback, gets called when preloading completes.
-        /// </summary>
         public static event System.Action OnPreload {
             add {
                 OnPreloadInvoker += value;
@@ -31,19 +27,16 @@ namespace DarkConfig {
         // http://forum.unity3d.com/threads/executionengineexception-on-ios-only.113750/
         static System.Action OnPreloadInvoker;
 
-        /// <summary>
         /// Preloads the configuration files from the index into memory.  Must be completed
         /// before using any other DarkConfig functionality.
         /// 
         /// Optional callback argument is called once preloading is complete.
-        /// </summary>
         public static void Preload(System.Action callback = null) {
             OnPreload += PreloadComplete;
             if (callback != null) OnPreload += callback;
             FileManager.Preload(OnPreloadInvoker);
         }
 
-        /// <summary>
         /// Load the configuration from *filename* by calling a callback.
         /// 
         /// The callback *cb* is guaranteed to be called immediately when Load is called,
@@ -51,21 +44,17 @@ namespace DarkConfig {
         /// to unsubscribe itself from future calls, true otherwise.
         /// 
         /// Preloading must be complete before calling Load.
-        /// </summary>
         public static void Load(string filename, ReloadDelegate cb) {
             FileManager.LoadConfig(filename, cb);
         }
 
-        /// <summary>
         /// Load the configuration from *filename*.
         /// 
         /// Preloading must be complete before calling Load.
-        /// </summary>
         public static DocNode Load(string filename) {
             return FileManager.LoadConfig(filename);
         }
 
-        /// <summary>
         /// Use the configuration found in file *filename* to update *obj*.
         /// 
         /// Registers the object for updates whenever the config file changes in the future.
@@ -73,7 +62,6 @@ namespace DarkConfig {
         /// for MonoBehaviours.
         /// 
         /// Preloading must be complete before calling Apply
-        /// </summary>
         public static void Apply<T>(string filename, ref T obj) {
             Reify(ref obj, FileManager.LoadConfig(filename));
             if (obj != null) {
@@ -87,21 +75,17 @@ namespace DarkConfig {
             }
         }
 
-        /// <summary>
         /// Use the configuration found in file *filename* to update *obj*.
         /// It is not a ref parameter, so it's suitable for use with the 'this'
         /// keyword.
         /// Preloading must be complete before calling ApplyThis.
-        /// </summary>
         public static void ApplyThis<T>(string filename, T obj) {
             Apply<T>(filename, ref obj);
         }
 
-        /// <summary>
         /// Use the configuration found in file *filename* to update the static fields of 
         /// class *T*.
         /// Preloading must be complete before calling ApplyStatic.
-        /// </summary>
         public static void ApplyStatic<T>(string filename) {
             ReifyStatic<T>(FileManager.LoadConfig(filename));
             FileManager.RegisterReload(filename, (d) => {
@@ -137,9 +121,7 @@ namespace DarkConfig {
             return subclasses;
         }
 
-        /// <summary>
         /// Cleans up DarkConfig's state, removing all listeners, loaded files, and so on, as if Preload had never been called.
-        /// </summary>
         public static void Clear() {
             OnPreloadInvoker = null;
             s_fromDocs = new Dictionary<Type, FromDocDelegate>();
@@ -147,14 +129,12 @@ namespace DarkConfig {
             s_files = null;
         }
 
-        /// <summary>
         /// A function that loads multiple files and delivers it as a single
         /// list.  Each file's contents becomes an entry in the list, or if
         /// a file contains a list, it is flattened into the combined doc.  Ideal
         /// for having a directory of character documents.  The callback *cb*
         /// is called with the entire data structure immediately and also
         /// whenever any of the matching files changes.
-        /// </summary>
         public static void LoadFilesAsList(string glob, ReloadDelegate cb) {
             var matchingFiles = FileManager.GetFilesByGlob(glob);
             var destFile = glob + "_file";
@@ -186,14 +166,11 @@ namespace DarkConfig {
             return result;
         }
 
-
-        /// <summary>
         /// A function that loads multiple files and delivers it as a single
         /// dictionary.  Each file's contents should be a dictionary, and the
         /// resulting dictionary merges all the keys from all the
         /// dictionaries.  Duplicate keys are overridden by later files in the
         /// index, same as if they were later keys in the same file.
-        /// </summary>
         public static void LoadFilesAsMergedDict(string glob, ReloadDelegate cb) {
             var matchingFiles = FileManager.GetFilesByGlob(glob);
             var destFile = glob + "_file";
@@ -222,9 +199,7 @@ namespace DarkConfig {
             return result;
         }
 
-        /// <summary>
         /// Low-level function to read a YAML string into a DocNode.
-        /// </summary>
         public static DocNode LoadDocFromString(string contents, string filename) {
             var input = new StringReader(contents);
             var yaml = new YamlStream();
@@ -237,9 +212,7 @@ namespace DarkConfig {
             return new YamlDocNode(yaml.Documents[0].RootNode);
         }
 
-        /// <summary>
         /// Low-level function to read a YAML stream into a DocNode.
-        /// </summary>
         public static DocNode LoadDocFromStream(Stream stream, string filename) {
             var input = new StreamReader(stream);
             var yaml = new YamlStream();

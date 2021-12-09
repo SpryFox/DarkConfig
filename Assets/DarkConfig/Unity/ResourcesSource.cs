@@ -4,8 +4,10 @@ using System.Collections;
 using System.Collections.Generic;
 
 namespace DarkConfig {
-    // loads configs from a Unity Resources directory; since we can't check the timestamp on the files, it has to read them in in their entirety to see whether to hotload them
-
+    /// loads configs from a Unity Resources directory
+    /// 
+    /// since we can't check the timestamp on the files, it has to read them in in their
+    /// entirety to see whether to hotload them
     public class ResourcesSource : ConfigSource {
         public ResourcesSource(string baseDir = "Configs", bool hotload = false) {
             m_baseDir = baseDir;
