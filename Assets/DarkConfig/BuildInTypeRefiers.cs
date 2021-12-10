@@ -1,0 +1,23 @@
+using System;
+
+namespace DarkConfig {
+    public static class BuildInTypeRefiers {
+        public static void RegisterAll() {
+            ConfigReifier.Register<DateTime>(FromDateTime);
+            ConfigReifier.Register<TimeSpan>(FromTimeSpan);
+        }
+
+        static object FromDateTime(object existing, DocNode doc) {
+            return DateTime.Parse(doc.StringValue, System.Globalization.CultureInfo.InvariantCulture);
+        }
+
+        static object FromTimeSpan(object existing, DocNode doc) {
+            bool isSuccess = TimeSpan.TryParse(doc.StringValue, out var newSpan);
+            if (!isSuccess) {
+                throw new ParseException("expected parseable timespan string " + doc.StringValue, null);
+            }
+
+            return newSpan;
+        }
+    }
+}

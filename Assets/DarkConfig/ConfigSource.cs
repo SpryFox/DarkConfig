@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using System.Collections.Generic;
 
 namespace DarkConfig {
@@ -11,13 +10,11 @@ namespace DarkConfig {
         public DocNode Parsed; // parsed contents, may be null
 
         public override string ToString() {
-            return string.Format("[{0} {1:X16} {2} {3}]", Name, Checksum, Size, Parsed == null ? "unparsed" : "parsed");
+            return $"[{Name} {Checksum:X16} {Size} {(Parsed == null ? "unparsed" : "parsed")}]";
         }
     }
 
-    public class NotPreloadedException : System.Exception { }
-
-    public interface ConfigSource {
+    public interface IConfigSource {
         bool CanLoadNow();
 
         bool CanHotload();
@@ -28,6 +25,6 @@ namespace DarkConfig {
 
         void ReceivePreloaded(List<ConfigFileInfo> files);
 
-        ConfigFileInfo TryHotload(ConfigFileInfo finfo);
+        ConfigFileInfo TryHotload(ConfigFileInfo configFileInfo);
     }
 }

@@ -7,14 +7,10 @@ namespace DarkConfig {
     public delegate object FromDocDelegate(object obj, DocNode doc);
 
     public class ConfigReifier {
-        /// <summary>
         /// Default options for refication.  Change this if you want to change
         /// DarkConfig behavior without passing in parameters to each call.
-        /// </summary>
-        public static ConfigOptions DefaultOptions =
-            ConfigOptions.AllowMissingExtraFields | ConfigOptions.CaseSensitive;
+        public static ConfigOptions DefaultOptions = ConfigOptions.AllowMissingExtraFields | ConfigOptions.CaseSensitive;
 
-        /// <summary>
         /// Sets up *obj* based on the contents of the parsed document *doc*
         /// So if obj is a Thing:
         ///   public class Thing {
@@ -28,12 +24,10 @@ namespace DarkConfig {
         /// *obj* can be null; if it is it gets assigned a new instance based on its type and the contents of *doc* (this is why the parameter is a ref)
         /// 
         /// Works on static and private variables, too.
-        /// </summary>
         public static void Reify<T>(ref T obj, DocNode doc, ConfigOptions? options = null) {
             obj = (T) ValueOfType(typeof(T), obj, doc, options);
         }
 
-        /// <summary>
         /// Sets up *obj* based on the contents of the parsed document *doc* with a type override.
         /// Useful for (eg) instaiating concrete classes of an interface based on a keyword.
         /// So if obj is a Thing:
@@ -48,29 +42,23 @@ namespace DarkConfig {
         /// *obj* can be null; if it is it gets assigned a new instance based on its type and the contents of *doc* (this is why the parameter is a ref)
         /// 
         /// Works on static and private variables, too.
-        /// </summary>
         public static void Reify<T>(ref T obj, Type objType, DocNode doc, ConfigOptions? options = null) {
             obj = (T) ValueOfType(objType, obj, doc, options);
         }
 
-        /// <summary>
         /// Sets up static variables (and only static variables) on type *T* based on the contents of the parsed document *doc*
         ///
         /// Ignores any fields in *doc* that are for non-static fields.
-        /// </summary>
         public static void ReifyStatic<T>(DocNode doc, ConfigOptions? options = null) {
             ReifyStatic(typeof(T), doc, options);
         }
 
-        /// <summary>
         /// Same as ReifyStatic<T>, but with a type argument instead of a generic.  Static classes can't be used in generics, so use this version instead.
-        /// </summary>
         public static void ReifyStatic(Type type, DocNode doc, ConfigOptions? options = null) {
             object dummyObj = null;
             SetFieldsOnObject(type, ref dummyObj, doc, DefaultedOptions(options));
         }
 
-        /// <summary>
         /// Register a handler for loading a particular type.
         /// 
         /// The delegate accepts two parameters: the existing object (if any), and the 
@@ -78,7 +66,6 @@ namespace DarkConfig {
         /// the object in-place, or if that's not possible, to return a new instance
         /// of the correct type.
         /// The return value is the updated/created object.
-        /// </summary>
         public static void Register<T>(FromDocDelegate del) {
             Register(typeof(T), del);
         }
@@ -102,57 +89,57 @@ namespace DarkConfig {
 
         static object ValueOfType(Type fieldType, object existing, DocNode value, ConfigOptions? options) {
             try {
-                if (fieldType == typeof(System.Boolean)) {
+                if (fieldType == typeof(bool)) {
                     return Convert.ToBoolean(value.StringValue, System.Globalization.CultureInfo.InvariantCulture);
                 }
 
                 // floating-point value types
-                if (fieldType == typeof(System.Single)) {
+                if (fieldType == typeof(float)) {
                     return Convert.ToSingle(value.StringValue, System.Globalization.CultureInfo.InvariantCulture);
                 }
 
-                if (fieldType == typeof(System.Double)) {
+                if (fieldType == typeof(double)) {
                     return Convert.ToDouble(value.StringValue, System.Globalization.CultureInfo.InvariantCulture);
                 }
 
-                if (fieldType == typeof(System.Decimal)) {
+                if (fieldType == typeof(decimal)) {
                     return Convert.ToDecimal(value.StringValue, System.Globalization.CultureInfo.InvariantCulture);
                 }
 
                 // integral value types
-                if (fieldType == typeof(System.SByte)) {
+                if (fieldType == typeof(sbyte)) {
                     return Convert.ToSByte(value.StringValue, System.Globalization.CultureInfo.InvariantCulture);
                 }
 
-                if (fieldType == typeof(System.Byte)) {
+                if (fieldType == typeof(byte)) {
                     return Convert.ToByte(value.StringValue, System.Globalization.CultureInfo.InvariantCulture);
                 }
 
-                if (fieldType == typeof(System.Char)) {
+                if (fieldType == typeof(char)) {
                     return Convert.ToChar(value.StringValue, System.Globalization.CultureInfo.InvariantCulture);
                 }
 
-                if (fieldType == typeof(System.Int16)) {
+                if (fieldType == typeof(short)) {
                     return Convert.ToInt16(value.StringValue, System.Globalization.CultureInfo.InvariantCulture);
                 }
 
-                if (fieldType == typeof(System.UInt16)) {
+                if (fieldType == typeof(ushort)) {
                     return Convert.ToUInt16(value.StringValue, System.Globalization.CultureInfo.InvariantCulture);
                 }
 
-                if (fieldType == typeof(System.Int32)) {
+                if (fieldType == typeof(int)) {
                     return Convert.ToInt32(value.StringValue, System.Globalization.CultureInfo.InvariantCulture);
                 }
 
-                if (fieldType == typeof(System.UInt32)) {
+                if (fieldType == typeof(uint)) {
                     return Convert.ToUInt32(value.StringValue, System.Globalization.CultureInfo.InvariantCulture);
                 }
 
-                if (fieldType == typeof(System.Int64)) {
+                if (fieldType == typeof(long)) {
                     return Convert.ToInt64(value.StringValue, System.Globalization.CultureInfo.InvariantCulture);
                 }
 
-                if (fieldType == typeof(System.UInt64)) {
+                if (fieldType == typeof(ulong)) {
                     return Convert.ToUInt64(value.StringValue, System.Globalization.CultureInfo.InvariantCulture);
                 }
 
@@ -332,35 +319,28 @@ namespace DarkConfig {
             throw new System.NotSupportedException("Don't know how to update value of type " + fieldType.ToString());
         }
 
-
-        /// <summary>
         /// Create an instance of an object and immediately set fields on it from the document. 
         /// The type of instance is supplied via the generic parameter.
-        /// </summary>
         public static T CreateInstance<T>(DocNode dict, ConfigOptions? options = null) where T : new() {
             var obj = (object) System.Activator.CreateInstance<T>();
             SetFieldsOnObject(ref obj, dict, DefaultedOptions(options));
             return (T) obj;
         }
 
-        /// <summary>
         /// Create an instance of an object and immediately set fields on it from the document. 
         /// The type of instance is supplied explicitly as the first argument.
         /// Requires a zero-args constructor on the type though it doesn't enforce that.
-        /// </summary>
         public static object CreateInstance(Type t, DocNode dict, ConfigOptions? options = null) {
             var obj = System.Activator.CreateInstance(t);
             SetFieldsOnObject(ref obj, dict, DefaultedOptions(options));
             return obj;
         }
 
-        /// <summary>
         /// Sets all members on the object *obj* (which must not be null) from *dict*.
         /// Expects *obj* to be a plain class, but if it's a boxed struct it will work as well.
-        /// </summary>
         public static void SetFieldsOnObject<T>(ref T obj, DocNode dict, ConfigOptions? options = null)
             where T : class {
-            Config.Assert(obj != null, "Can't SetFields on null");
+            Platform.Assert(obj != null, "Can't SetFields on null");
             Type type = typeof(T);
             if (type == typeof(object)) {
                 // caller is using an object, but that is not the real type
@@ -372,9 +352,7 @@ namespace DarkConfig {
             obj = (T) setCopy;
         }
 
-        /// <summary>
         /// Sets all members on the struct *obj* (which must not be null) from *dict*.
-        /// </summary>
         public static void SetFieldsOnStruct<T>(ref T obj, DocNode dict, ConfigOptions? options = null)
             where T : struct {
             Type type = typeof(T);
@@ -431,7 +409,7 @@ namespace DarkConfig {
             if (doc.Type != DocNodeType.Dictionary) {
                 // special-case behavior, set the first instance field on it from the doc
                 var allFields = ReflectionCache.GetInstanceFields(type);
-                Config.Assert(allFields.Length == 1, "Trying to set a field of type: ",
+                Platform.Assert(allFields.Length == 1, "Trying to set a field of type: ",
                     type, allFields.Length, "from value of wrong type:",
                     doc.Type == DocNodeType.Scalar ? doc.StringValue : doc.Type.ToString(),
                     "at",

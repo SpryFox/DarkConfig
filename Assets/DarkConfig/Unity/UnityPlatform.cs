@@ -4,37 +4,35 @@ using System.Collections;
 namespace DarkConfig {
     public class UnityPlatform : Platform {
         public static void Setup() {
-            Platform.Instance = new UnityPlatform();
-            UnityFromDocs.RegisterAll();
+            Instance = new UnityPlatform();
+            UnityTypeReifiers.RegisterAll();
         }
 
-        public UnityPlatform() {
-            if (Application.isEditor) {
-                DefaultFilePath = Application.dataPath + "/Resources/Configs";
-            } else {
-                DefaultFilePath = Application.dataPath;
-            }
-
+        UnityPlatform() {
             CanDoImmediatePreload = Application.isEditor;
         }
 
-        public override ConfigSource GetDefaultSource() {
-            return new ResourcesSource("Configs");
+        public override IConfigSource GetDefaultSource() {
+            return new ResourcesSource();
         }
 
-        public override void Log(string msg) {
+        protected override void Log(string msg) {
             Debug.Log(msg);
         }
 
-        public override void LogError(string msg) {
+        protected override void LogError(string msg) {
             Debug.LogError(msg);
         }
 
         public override void Clear() {
             if (Application.isEditor && !Application.isPlaying) {
-                if (s_ownObject != null) GameObject.DestroyImmediate(s_ownObject);
+                if (tempGameObject != null) {
+                    Object.DestroyImmediate(tempGameObject);
+                }
             } else {
-                if (s_ownObject != null) GameObject.Destroy(s_ownObject);
+                if (tempGameObject != null) {
+                    Object.Destroy(tempGameObject);
+                }
             }
         }
 
@@ -50,27 +48,32 @@ namespace DarkConfig {
             TokenMonoBehaviour.StopCoroutine(coro);
         }
 
-        // instance of MonoBehaviour used only for its StartCoroutine functionality
-        internal static MonoBehaviour TokenMonoBehaviour {
+        /// instance of MonoBehaviour used only for its StartCoroutine functionality
+        static MonoBehaviour TokenMonoBehaviour {
             get {
-                if (s_tokenMonoBehaviour == null) {
-                    s_ownObject = new GameObject("DarkConfigTemporary");
-                    s_ownObject.hideFlags = HideFlags.HideAndDontSave;
-                    if (!Application.isEditor || Application.isPlaying) {
-                        UnityEngine.Object.DontDestroyOnLoad(s_ownObject);
-                    }
-
-                    s_tokenMonoBehaviour = s_ownObject.AddComponent<MonoBehaviourSubclass>();
+                if (tokenMonoBehaviour == null) {
+                    tempGameObject = new GameObject("DarkConfigTemporary");
+                    tokenMonoBehaviour = tempGameObject.AddComponent<CoroutineRunner>();
                 }
 
-                return s_tokenMonoBehaviour;
+                return tokenMonoBehaviour;
             }
         }
+        
+        /////////////////////////////////////////////////
 
-        static MonoBehaviour s_tokenMonoBehaviour;
-        static GameObject s_ownObject = null;
+        static MonoBehaviour tokenMonoBehaviour;
+        static GameObject tempGameObject;
     }
 
+    /// Creating an empty MonoBehaviour just to run coroutines on.
     [ExecuteInEditMode]
-    public class MonoBehaviourSubclass : MonoBehaviour { }
+    public class CoroutineRunner : MonoBehaviour {
+        void Start() {
+            gameObject.hideFlags = HideFlags.HideAndDontSave;
+            if (!Application.isEditor || Application.isPlaying) {
+                DontDestroyOnLoad(gameObject);
+            }
+        }
+    }
 }

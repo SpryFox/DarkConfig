@@ -1,11 +1,16 @@
-﻿using UnityEngine;
-using UnityEditor;
-using System.Collections;
+﻿using System;
+using UnityEngine;
 using System.Collections.Generic;
 using System.IO;
 
 namespace DarkConfig {
     public class EditorUtils {
+        static readonly string[] INDEX_FILE_HEADER = {
+            "# automatically generated DarkConfig index file",
+            "#",
+            "---"
+        };
+        
         public static List<string> FindConfigFiles(string baseDir = "/Resources/Configs") {
             var retval = new List<string>();
             var absPath = new DirectoryInfo(Application.dataPath + baseDir);
@@ -25,9 +30,9 @@ namespace DarkConfig {
                 var slashesB = CountCharacter('/', b);
                 if (slashesA != slashesB) {
                     return slashesA.CompareTo(slashesB);
-                } else {
-                    return a.CompareTo(b);
                 }
+
+                return string.Compare(a, b, StringComparison.Ordinal);
             });
 
             return retval;
@@ -41,8 +46,10 @@ namespace DarkConfig {
         /// <returns>count of </returns>
         static int CountCharacter(char c, string s) {
             int count = 0;
-            for (int i = 0; i < s.Length; i++) {
-                if (s[i] == c) count++;
+            foreach (char t in s) {
+                if (t == c) {
+                    count++;
+                }
             }
 
             return count;
@@ -58,8 +65,8 @@ namespace DarkConfig {
         /// <param name="indexFile"></param>
         /// <returns></returns>
         public static int WriteIndexFile(List<string> filesInIndex, string indexFile) {
-            int resourcesIdx = indexFile.IndexOf("Resources/");
-            Config.Assert(resourcesIdx >= 0, "Index file ", indexFile, " should have Resources directory in its path");
+            int resourcesIdx = indexFile.IndexOf("Resources/", StringComparison.Ordinal);
+            Platform.Assert(resourcesIdx >= 0, "Index file ", indexFile, " should have Resources directory in its path");
 
             string relToResources = indexFile.Substring(resourcesIdx + "Resources/".Length);
 
@@ -71,56 +78,42 @@ namespace DarkConfig {
                 indexDir.Create();
             }
 
-            // write the header into the file
-            var writer = new StreamWriter(indexPath, false);
-            for (int i = 0; i < c_indexFileHeader.Length; i++) {
-                writer.WriteLine(c_indexFileHeader[i]);
-            }
-
-            // write all the index entries into the file
             int totalWritten = 0;
-            for (int i = 0; i < filesInIndex.Count; i++) {
-                // skip over index file itself, it's likely to be in the list already
-                if (filesInIndex[i] == relToResources) continue;
-                writer.WriteLine("- " + filesInIndex[i]);
-                totalWritten++;
+            
+            // write the header into the file
+            using (var writer = new StreamWriter(indexPath, false)) {
+                // Write file header
+                foreach (string headerLine in INDEX_FILE_HEADER) {
+                    writer.WriteLine(headerLine);
+                }
+
+                // write all the index entries into the file
+                foreach (string file in filesInIndex) {
+                    // skip over index file itself, it's likely to be in the list already
+                    if (file == relToResources) {
+                        continue;
+                    }
+                    writer.WriteLine("- " + file);
+                    totalWritten++;
+                }
             }
 
-            writer.Flush();
-            writer.Close();
-            File.SetLastWriteTime(indexPath, System.DateTime.Now);
+            File.SetLastWriteTime(indexPath, DateTime.Now);
             return totalWritten;
         }
 
-        static string[] c_indexFileHeader = new string[] {
-            "# automatically generated DarkConfig index file",
-            "#",
-            "---"
-        };
-
-        static string GetShortName(string prefix, string filename) {
-            if (filename.StartsWith(prefix)) {
-                filename = filename.Replace(prefix + "/", "");
-            }
-
-            if (filename.EndsWith(".bytes")) {
-                filename = filename.Replace(".bytes", "");
-            }
-
-            return filename;
-        }
-
         public static void GenerateIndex(string baseDir) {
-            var prefix = baseDir;
-            var fullIndexFile = baseDir + "/index.bytes";
-            Debug.Log("Generating Index at " + fullIndexFile + " using files in directory " + prefix);
-            var configs = FindConfigFiles(prefix);
+            var indexFilePath = baseDir + "/index.bytes";
+            Debug.Log("Generating Index at " + indexFilePath + " using files in directory " + baseDir);
+            var configs = FindConfigFiles(baseDir);
             // rename to short names
-            for (int i = 0; i < configs.Count; i++) {
-                configs[i] = GetShortName(prefix, configs[i]);
+            for (int configIndex = 0; configIndex < configs.Count; configIndex++) {
+                configs[configIndex] = configs[configIndex]
+                    .Replace(baseDir + "/", "")
+                    .Replace(".bytes", "");
             }
 
-            var total = WriteIndexFile(configs, fullIndexFile);
+            var total = WriteIndexFile(configs, indexFilePath);
             Debug.Log("Wrote " + total + " configs to index");
         }
     }

@@ -15,7 +15,9 @@ class DocNodeMergeTests {
 
         var idealEmpty = new ComposedDocNode(DocNodeType.List);
         Assert.AreEqual(idealEmpty, merged);
+#if DARKCONFIG_ERROR_SOURCE_INFO
         Assert.AreEqual("Combination of: [e1, e2]", merged.SourceInformation);
+#endif
     }
 
     [Test]

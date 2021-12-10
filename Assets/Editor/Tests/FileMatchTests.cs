@@ -1,5 +1,4 @@
-﻿using UnityEngine;
-using DarkConfig;
+﻿using DarkConfig;
 using NUnit.Framework;
 using System.Collections.Generic;
 

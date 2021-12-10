@@ -1,6 +1,5 @@
 using NUnit.Framework;
 using DarkConfig;
-using System.Collections.Generic;
 using System.Collections;
 
 [TestFixture]

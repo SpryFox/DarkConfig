@@ -9,6 +9,10 @@ namespace DarkConfig {
         Scalar
     }
 
+    public class DocNodeAccessException : Exception {
+        public DocNodeAccessException(string message) : base(message) { }
+    }
+
     /// DocNode represents a node of a parsed document. 
     /// DocNode is a union type, requiring no casting but behaving differently 
     /// depending on the underlying value.
@@ -41,30 +45,46 @@ namespace DarkConfig {
         /// String describing the position and context in the source format (e.g. line number).
         public abstract string SourceInformation { get; }
 
-        public bool Equals(DocNode d) {
+        public bool Equals(DocNode other) {
+            if (other == null) {
+                return false;
+            }
+            
             var self = this;
-            if (d.Type != self.Type) return false;
-            if (object.Equals(self, d)) return true;
+            if (other.Type != self.Type) {
+                return false;
+            }
+
+            if (Equals(self, other)) {
+                return true;
+            }
+            
             switch (self.Type) {
                 case DocNodeType.Scalar:
-                    if (d.StringValue == null || self.StringValue == null) return self.StringValue == d.StringValue;
-                    return d.StringValue.Equals(self.StringValue);
+                    if (other.StringValue == null || self.StringValue == null) {
+                        return self.StringValue == other.StringValue;
+                    }
+                    return other.StringValue.Equals(self.StringValue);
                 case DocNodeType.List:
-                    if (d.Count != self.Count) return false;
+                    if (other.Count != self.Count) {
+                        return false;
+                    }
                     for (int i = 0; i < self.Count; i++) {
-                        if (!self[i].Equals(d[i])) {
+                        if (!self[i].Equals(other[i])) {
                             return false;
                         }
                     }
 
                     return true;
                 case DocNodeType.Dictionary:
-                    if (d.Count != self.Count) return false;
-                    var iter1 = self.Pairs.GetEnumerator();
-                    var iter2 = d.Pairs.GetEnumerator();
-                    while (iter1.MoveNext() && iter2.MoveNext()) {
-                        if (iter1.Current.Key != iter2.Current.Key) return false;
-                        if (!iter1.Current.Value.Equals(iter2.Current.Value)) return false;
+                    if (other.Count != self.Count) return false;
+                    
+                    using (var iter1 = self.Pairs.GetEnumerator())
+                    using (var iter2 = other.Pairs.GetEnumerator()) {
+                        while (iter1.MoveNext() && iter2.MoveNext()) {
+                            if (iter1.Current.Key != iter2.Current.Key) return false;
+                            if (!iter1.Current.Value.Equals(iter2.Current.Value)) return false;
+                        }
                     }
 
                     return true;
@@ -83,34 +103,31 @@ namespace DarkConfig {
                 throw new ArgumentException("can not merge different types " + lhs.Type + " " + rhs.Type);
             }
 
-            if (lhs.Type == DocNodeType.List) {
-                return Config.CombineList(new List<DocNode> {lhs, rhs});
-            } else if (lhs.Type == DocNodeType.Dictionary) {
-                var mergedDict = new ComposedDocNode(DocNodeType.Dictionary,
-                    sourceInformation: "Merging of: [" + lhs.SourceInformation + ", " + rhs.SourceInformation + "]");
-                foreach (var lhsPair in lhs.Pairs) {
-                    mergedDict[lhsPair.Key] = lhsPair.Value;
-                }
-
-                foreach (var rhsPair in rhs.Pairs) {
-                    if (mergedDict.ContainsKey(rhsPair.Key)) {
-                        mergedDict[rhsPair.Key] = DeepMerge(mergedDict[rhsPair.Key], rhsPair.Value);
-                    } else {
-                        mergedDict[rhsPair.Key] = rhsPair.Value;
+            switch (lhs.Type) {
+                case DocNodeType.List:
+                    return Config.CombineList(new List<DocNode> {lhs, rhs});
+                case DocNodeType.Dictionary: {
+                    var mergedDict = new ComposedDocNode(DocNodeType.Dictionary,
+                        sourceInformation: "Merging of: [" + lhs.SourceInformation + ", " + rhs.SourceInformation + "]");
+                    foreach (var lhsPair in lhs.Pairs) {
+                        mergedDict[lhsPair.Key] = lhsPair.Value;
                     }
-                }
 
-                return mergedDict;
-            } else if (lhs.Type == DocNodeType.Scalar) {
-                return rhs;
-            } else {
-                throw new ArgumentException("can not merge doc nodes of type " + lhs.Type);
+                    foreach (var rhsPair in rhs.Pairs) {
+                        if (mergedDict.ContainsKey(rhsPair.Key)) {
+                            mergedDict[rhsPair.Key] = DeepMerge(mergedDict[rhsPair.Key], rhsPair.Value);
+                        } else {
+                            mergedDict[rhsPair.Key] = rhsPair.Value;
+                        }
+                    }
+
+                    return mergedDict;
+                }
+                case DocNodeType.Scalar:
+                    return rhs;
+                default:
+                    throw new ArgumentException("can not merge doc nodes of type " + lhs.Type);
             }
         }
-    }
-
-    public class DocNodeAccessException : System.Exception {
-        public DocNodeAccessException(string message)
-            : base(message) { }
     }
 }

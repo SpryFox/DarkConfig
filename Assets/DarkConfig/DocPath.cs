@@ -4,10 +4,6 @@ using System.Collections.Generic;
 
 namespace DarkConfig {
     public class DocPath : IEquatable<DocPath> {
-        string CurrentSegment;
-
-        DocPath Parent;
-
         public DocPath(string segment) {
             CurrentSegment = segment;
         }
@@ -23,8 +19,8 @@ namespace DarkConfig {
         }
 
         public bool Equals(DocPath p) {
-            if (object.ReferenceEquals(this, p)) return true;
-            if (p == null) return this == null;
+            if (p == null) return false;
+            if (ReferenceEquals(this, p)) return true;
             if (CurrentSegment != p.CurrentSegment) return false;
             if (Parent == null) return p.Parent == null;
             return Parent.Equals(p.Parent);
@@ -59,5 +55,10 @@ namespace DarkConfig {
                 result.Add(this);
             }
         }
+        
+        /////////////////////////////////////////////////
+        
+        string CurrentSegment;
+        DocPath Parent;
     }
 }

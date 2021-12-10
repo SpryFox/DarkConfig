@@ -1,5 +1,4 @@
-﻿using UnityEngine;
-using NUnit.Framework;
+﻿using NUnit.Framework;
 using DarkConfig;
 using System.Collections.Generic;
 
@@ -7,8 +6,6 @@ using System.Collections.Generic;
 class ConfigReifierTests {
     // disable variable unused in function body warnings; there's a lot in here
 #pragma warning disable 168
-
-
     enum TestEnum {
         Primi,
         Secondi
@@ -23,9 +20,6 @@ class ConfigReifierTests {
         public float floatKey = -1f;
         public double doubleKey = -1.0;
         public byte byteKey = 0;
-        public Vector2 vector2Key = Vector2.zero;
-        public Vector3 vector3Key = Vector3.zero;
-        public Color colorKey = Color.black;
         public TestEnum enumKey = TestEnum.Primi;
         public int? nullableIntKey = null;
         public ChildStruct? nullableChildStructKey = null;
@@ -95,18 +89,13 @@ class ConfigReifierTests {
         public List<string> listField = null;
     }
 
-    [ConfigMandatory]
-    class MonoBehaviourSubclass : UnityEngine.MonoBehaviour {
-        public int field1 = 0;
-    }
-
     ConfigOptions defaults;
 
     [SetUp]
     public void DoSetup() {
-        DefaultFromDocs
+        BuildInTypeRefiers
             .RegisterAll(); // needs to be called here because we can't be sure whether preload has been called before or not
-        UnityFromDocs.RegisterAll();
+        UnityTypeReifiers.RegisterAll();
         defaults = Config.DefaultOptions;
         Config.DefaultOptions = ConfigOptions.AllowMissingExtraFields;
     }
@@ -217,78 +206,6 @@ class ConfigReifierTests {
             byteKey: 55
             ");
         Assert.AreEqual(tc.byteKey, (byte) 55);
-    }
-
-    [Test]
-    public void ConfigReifier_SetsVector2() {
-        var tc = ReifyString<TestClass>(@"---
-            vector2Key: [2, 10]
-            ");
-        Assert.AreEqual(tc.vector2Key, new Vector2(2, 10));
-    }
-
-    [Test]
-    public void ConfigReifier_SetsVector2_ScalarArgument() {
-        var tc = ReifyString<TestClass>(@"---
-            vector2Key: 1.1
-            ");
-        Assert.AreEqual(tc.vector2Key, new Vector2(1.1f, 1.1f));
-    }
-
-    [Test]
-    public void ConfigReifier_SetsVector2_OneArgument() {
-        var tc = ReifyString<TestClass>(@"---
-            vector2Key: [5]
-            ");
-        Assert.AreEqual(tc.vector2Key, new Vector2(5, 5));
-    }
-
-    [Test]
-    public void ConfigReifier_SetsVector3() {
-        var tc = ReifyString<TestClass>(@"---
-            vector3Key: [10, 4, 0.5]
-            ");
-        Assert.AreEqual(tc.vector3Key, new Vector3(10, 4, 0.5f));
-    }
-
-    [Test]
-    public void ConfigReifier_SetsVector3_ScalarArgument() {
-        var tc = ReifyString<TestClass>(@"---
-            vector3Key: 2
-            ");
-        Assert.AreEqual(tc.vector3Key, new Vector3(2, 2, 2));
-    }
-
-    [Test]
-    public void ConfigReifier_SetsVector3_OneArgument() {
-        var tc = ReifyString<TestClass>(@"---
-            vector3Key: [3]
-            ");
-        Assert.AreEqual(tc.vector3Key, new Vector3(3, 3, 3));
-    }
-
-    [Test]
-    public void ConfigReifier_SetsVector3_TwoArguments() {
-        var tc = ReifyString<TestClass>(@"---
-            vector3Key: [6, 7]
-            ");
-        Assert.AreEqual(tc.vector3Key, new Vector3(6, 7, 0));
-    }
-
-    [Test]
-    public void ConfigReifier_SetsColor() {
-        var tc = ReifyString<TestClass>(@"---
-            colorKey: [1, 1, 1, 1]
-            ");
-        Assert.AreEqual(tc.colorKey, Color.white);
-    }
-
-    [Test]
-    public void ConfigReifier_SetsColor_ThreeArguments() {
-        var tc = ReifyString<TestClass>(@"---
-            colorKey: [1, 0, 0]
-            ");
-        Assert.AreEqual(tc.colorKey, Color.red);
     }
 
     [Test]
@@ -1042,20 +959,6 @@ class ConfigReifierTests {
         ", "ConfigReifier_ReifierAttributes_TestFilename");
         Assert.Throws<ParseException>(
             () => { ConfigReifier.CreateInstance<AllowMissingClass>(doc, ConfigOptions.AllowMissingFields); });
-    }
-
-    [Test]
-    public void ReifierAttributes_MonoBehaviour_ForcesAllowMissing() {
-        var doc = Config.LoadDocFromString(@"---
-            field1: 1
-        ", "ConfigReifier_ReifierAttributes_TestFilename");
-
-        var obj = new GameObject("Test_ReifierAttributes");
-        var mb = obj.AddComponent<MonoBehaviourSubclass>();
-        ConfigReifier.Reify(ref mb, doc, ConfigOptions.None);
-        Assert.AreEqual(mb.field1, 1);
-
-        Object.DestroyImmediate(obj);
     }
 
     [Test]

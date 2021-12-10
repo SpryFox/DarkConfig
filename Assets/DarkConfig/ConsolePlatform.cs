@@ -12,49 +12,47 @@ namespace DarkConfig {
             CanDoImmediatePreload = false;
         }
 
-        public override ConfigSource GetDefaultSource() {
+        public override IConfigSource GetDefaultSource() {
             return new FileSource(AppDomain.CurrentDomain.BaseDirectory + "Configs");
         }
 
-        public override void Log(string msg) {
+        protected override void Log(string msg) {
             Console.WriteLine(msg);
         }
 
-        public override void LogError(string msg) {
+        protected override void LogError(string msg) {
             Console.WriteLine("Error: " + msg);
         }
 
         void FinishCoro(Coro coro, ref int index) {
             if (coro.parent != null) {
                 // parent swaps in for the child
-                m_coroutines[index] = coro.parent;
+                coroutines[index] = coro.parent;
             } else {
                 // remove without disturbing the order
-                m_coroutines.RemoveAt(index);
+                coroutines.RemoveAt(index);
                 index--;
             }
         }
 
-        /// <summary>
         /// The ConsolePlatform needs this to be called repeatedly in order to
         /// run its coroutines.  The currentTime argument should be the
         /// current time in seconds, measured relative to whatever epoch you
         /// like (except negative infinity).
-        /// </summary>
         public void Update(float currentTime) {
-            m_coroutines.AddRange(m_newCoroutines);
-            m_newCoroutines.Clear();
+            coroutines.AddRange(newCoroutines);
+            newCoroutines.Clear();
 
-            m_stoppedCoroutines.AddRange(m_newStoppedCoroutines);
-            m_newStoppedCoroutines.Clear();
+            stoppedCoroutines.AddRange(newStoppedCoroutines);
+            newStoppedCoroutines.Clear();
 
-            for (int i = 0; i < m_coroutines.Count; i++) {
-                var coro = m_coroutines[i];
+            for (int i = 0; i < coroutines.Count; i++) {
+                var coro = coroutines[i];
 
                 // check if the current coro is stopped
                 Coro coroStopped = null;
-                for (int s = 0; s < m_stoppedCoroutines.Count && coroStopped == null; s++) {
-                    var stopped = m_stoppedCoroutines[s];
+                for (int s = 0; s < stoppedCoroutines.Count && coroStopped == null; s++) {
+                    var stopped = stoppedCoroutines[s];
                     var tmpCoro = coro;
                     do {
                         if (tmpCoro.iter == stopped) {
@@ -92,20 +90,20 @@ namespace DarkConfig {
                         var childCoro = stepResult as Coro;
                         childCoro.parent = coro;
                         // it replaces the parent in the updates; when it's done we'll swap the parent back
-                        m_coroutines[i] = childCoro;
-                        m_newCoroutines.Remove(childCoro);
+                        coroutines[i] = childCoro;
+                        newCoroutines.Remove(childCoro);
                     } else {
                         // it's anything else, including null, so execute as soon as possible
                         coro.resumeAt = float.MinValue;
                     }
                 } catch (Exception e) {
                     LogError("Caught coroutine error" + e);
-                    m_coroutines.Remove(coro);
+                    coroutines.Remove(coro);
                     i--;
                 }
             }
 
-            m_stoppedCoroutines.Clear();
+            stoppedCoroutines.Clear();
         }
 
         public override object WaitForSeconds(float seconds) {
@@ -120,13 +118,13 @@ namespace DarkConfig {
                 resumeAt = float.MinValue,
                 parent = null
             };
-            m_newCoroutines.Add(startedCoro);
+            newCoroutines.Add(startedCoro);
             return startedCoro;
         }
 
         public override void StopCoroutine(IEnumerator coro) {
             if (coro == null) return;
-            m_newStoppedCoroutines.Add(coro);
+            newStoppedCoroutines.Add(coro);
         }
 
         class Coro {
@@ -135,10 +133,10 @@ namespace DarkConfig {
             public Coro parent;
         }
 
-        List<Coro> m_coroutines = new List<Coro>();
-        List<Coro> m_newCoroutines = new List<Coro>();
+        List<Coro> coroutines = new List<Coro>();
+        List<Coro> newCoroutines = new List<Coro>();
 
-        List<IEnumerator> m_stoppedCoroutines = new List<IEnumerator>();
-        List<IEnumerator> m_newStoppedCoroutines = new List<IEnumerator>();
+        List<IEnumerator> stoppedCoroutines = new List<IEnumerator>();
+        List<IEnumerator> newStoppedCoroutines = new List<IEnumerator>();
     }
 }
