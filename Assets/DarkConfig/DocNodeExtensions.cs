@@ -1,10 +1,6 @@
-using System.Collections.Generic;
-
 namespace DarkConfig {
-    /// <summary>
     /// Extension methods for DocNode implementations that make accessing their contents 
     /// more convenient.
-    /// </summary>
     public static class DocNodeExtensions {
         public static int AsInt(this DocNode doc) {
             return As<int>(doc);
@@ -23,9 +19,9 @@ namespace DarkConfig {
         }
 
         public static T As<T>(this DocNode doc) {
-            T retval = default(T);
-            ConfigReifier.Reify<T>(ref retval, doc);
-            return retval;
+            var result = default(T);
+            ConfigReifier.Reify(ref result, doc);
+            return result;
         }
 
         public static bool Contains(this DocNode doc, string item) {

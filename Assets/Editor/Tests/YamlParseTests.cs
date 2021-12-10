@@ -1,8 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
 using NUnit.Framework;
 using System.IO;
 using YamlDotNet.RepresentationModel;
-using UnityEngine;
 using DarkConfig;
 
 [TestFixture]
@@ -73,9 +72,9 @@ key:
                 Assert.Fail("Should not succeed at indexing dictionary " + x);
             } catch (DocNodeAccessException e) {
                 // verify that there's a line number in the exception
-                Assert.True(e.Message.IndexOf("Line: 4") > 0, e.Message);
+                Assert.True(e.Message.IndexOf("Line: 4", StringComparison.Ordinal) > 0, e.Message);
                 // verify that the dummy filename that we passed in shows up in the exception message
-                Assert.True(e.Message.IndexOf("testfilename") > 0, e.Message);
+                Assert.True(e.Message.IndexOf("testfilename", StringComparison.Ordinal) > 0, e.Message);
             }
         }
     }

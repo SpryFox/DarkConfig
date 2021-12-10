@@ -1,17 +1,14 @@
-﻿using UnityEngine;
-using DarkConfig;
+﻿using DarkConfig;
 using NUnit.Framework;
-using System.Collections.Generic;
 using System.IO;
-
 
 [TestFixture]
 class FileSourceTests {
     string m_tmpDir;
 
-
     [SetUp]
     public void SetUp() {
+        FileSource.ConfigFileExtension = ".bytes";
         m_tmpDir = Path.Combine(Path.GetTempPath(), "FileSourceTests");
         Directory.CreateDirectory(m_tmpDir);
     }
@@ -30,7 +27,6 @@ class FileSourceTests {
     void DeleteFile(string filename) {
         File.Delete(Path.Combine(m_tmpDir, filename));
     }
-
 
     [Test]
     public void CanLoadIndex() {
@@ -79,7 +75,6 @@ class FileSourceTests {
         Assert.AreEqual("index", files[0].Name);
         Assert.AreEqual("derp", files[1].Name);
     }
-
 
     [Test]
     public void Hotload_ExistingFile() {

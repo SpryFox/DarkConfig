@@ -23,39 +23,39 @@ class PostDocTests {
             };
         }
 
-        public int baseKey = 0;
+        public int baseKey;
     }
 
-    const string c_filename = "PostDocTests_TestFilename";
+    const string FILENAME = "PostDocTests_TestFilename";
 
     static T ReifyString<T>(string str) where T : new() {
-        var doc = Config.LoadDocFromString(str, c_filename);
-        T tc = default(T);
-        ConfigReifier.Reify(ref tc, doc);
-        return tc;
+        var doc = Config.LoadDocFromString(str, FILENAME);
+        var result = default(T);
+        ConfigReifier.Reify(ref result, doc);
+        return result;
     }
 
     [Test]
     public void PostDoc_IsCalled() {
-        var tc = ReifyString<PostDocClass>("baseKey: 10");
-        Assert.AreEqual(tc.baseKey, 11);
+        var instance = ReifyString<PostDocClass>("baseKey: 10");
+        Assert.AreEqual(instance.baseKey, 11);
     }
 
     [Test]
     public void PostDoc_DoesntExist() {
-        var doc = Config.LoadDocFromString("baseKey: 10", c_filename);
-        PostDocClass2 tc = null;
-        ConfigReifier.Reify(ref tc, doc);
-        Assert.NotNull(tc);
-        Assert.AreEqual(tc.baseKey, 10);
+        var doc = Config.LoadDocFromString("baseKey: 10", FILENAME);
+        PostDocClass2 instance = null;
+        ConfigReifier.Reify(ref instance, doc);
+        Assert.NotNull(instance);
+        Assert.AreEqual(instance.baseKey, 10);
     }
 
     [Test]
     public void PostDoc_CanReplaceWithReturnValue() {
-        var doc = Config.LoadDocFromString("baseKey: 10", c_filename);
-        PostDocClass3 tc = null;
-        ConfigReifier.Reify(ref tc, doc);
-        Assert.NotNull(tc);
-        Assert.AreEqual(tc.baseKey, 99);
+        var doc = Config.LoadDocFromString("baseKey: 10", FILENAME);
+        PostDocClass3 instance = null;
+        ConfigReifier.Reify(ref instance, doc);
+        Assert.NotNull(instance);
+        Assert.AreEqual(instance.baseKey, 99);
     }
 }

@@ -1,4 +1,3 @@
-using UnityEngine;
 using NUnit.Framework;
 using DarkConfig;
 using System.Collections.Generic;
@@ -7,8 +6,8 @@ using System.Collections.Generic;
 class DocNodeExtensionTests {
     [SetUp]
     public void DoSetup() {
-        DefaultFromDocs.RegisterAll();
-        UnityFromDocs.RegisterAll();
+        BuildInTypeRefiers.RegisterAll();
+        UnityTypeReifiers.RegisterAll();
     }
 
     DocNode GetDocNode(string str) {
@@ -91,16 +90,5 @@ class DocNodeExtensionTests {
         Assert.AreEqual(list[1], "quick");
         Assert.AreEqual(list[2], "brown");
         Assert.AreEqual(list[3], "fox");
-    }
-
-    [Test]
-    public void As_DictOfVector3() {
-        var doc = GetDocNode(@"---
-            parry: [1, 2, 0.5]
-            swerve: [1]
-            ");
-        var dict = doc.As<Dictionary<string, Vector3>>();
-        Assert.AreEqual(dict["parry"], new Vector3(1, 2, 0.5f));
-        Assert.AreEqual(dict["swerve"], new Vector3(1, 1, 1));
     }
 }

@@ -1,15 +1,20 @@
-public enum ConfigOptions {
-    None = 0x0,
+using System;
 
-    // extra fields in the YAML document are allowed
-    AllowExtraFields = 0x1,
+namespace DarkConfig {
+    [Flags]
+    public enum ConfigOptions {
+        None = 0,
 
-    // fields present on object but not in YAML document are allowed
-    AllowMissingFields = 0x2,
+        /// extra fields in the YAML document are allowed
+        AllowExtraFields = 1 << 0,
 
-    // both missing and extra fields are allowed
-    AllowMissingExtraFields = 0x3,
+        /// fields present on object but not in YAML document are allowed
+        AllowMissingFields = 1 << 1,
 
-    // properties care about case
-    CaseSensitive = 0x4
+        /// both missing and extra fields are allowed
+        AllowMissingExtraFields = AllowExtraFields | AllowMissingFields,
+
+        /// properties care about case
+        CaseSensitive = 1 << 2
+    }
 }

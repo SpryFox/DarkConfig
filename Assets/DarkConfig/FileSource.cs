@@ -1,47 +1,53 @@
 using System;
 using System.IO;
-using System.Collections;
 using System.Collections.Generic;
 
 namespace DarkConfig {
-#if !UNITY_WEBPLAYER
-
     /// Loads configs from loose files in a directory.  Uses timestamps to decide whether it should hotload or not.
-    public class FileSource : ConfigSource {
-        public FileSource(string baseDir, bool hotload = false) {
-            if (string.IsNullOrEmpty(baseDir)) throw new ArgumentException("FileSource needs non-null baseDir");
-            m_baseDir = baseDir;
-            m_hotload = hotload;
+    public class FileSource : IConfigSource {
+        /// Some platforms like Unity require that text files have a specific extension e.g. ".bytes"
+        /// Also, some files use ".yml" instead of ".yaml"
+        public static string ConfigFileExtension = ".yaml";
+        
+        public FileSource(string dir, bool hotload = false) {
+            if (string.IsNullOrEmpty(dir)) {
+                throw new ArgumentException("FileSource needs non-null dir");
+            }
+            baseDir = dir;
+            hotloadingEnabled = hotload;
         }
 
         public bool CanLoadNow() {
-            return File.Exists(m_baseDir + "/index.bytes");
+            return File.Exists(baseDir + "/index" + ConfigFileExtension);
         }
 
         public bool CanHotload() {
-            return m_hotload;
+            return hotloadingEnabled;
         }
 
-        public void Preload(System.Action callback) {
+        public void Preload(Action callback) {
             // load index file
-            var indexInfo = ReadFile(m_baseDir + "/index", "index");
+            var indexInfo = ReadFile(baseDir + "/index", "index");
 
-            m_files = new List<ConfigFileInfo>();
-            m_files.Add(indexInfo);
+            files = new List<ConfigFileInfo> {
+                indexInfo
+            };
             var indexNode = indexInfo.Parsed;
-            m_index = new List<string>(indexNode.Count);
+            index = new List<string>(indexNode.Count);
             for (int i = 0; i < indexNode.Count; i++) {
-                m_index.Add(indexNode[i].StringValue);
+                index.Add(indexNode[i].StringValue);
             }
 
-            for (int i = 0; i < m_index.Count; i++) {
-                var filename = m_index[i];
-                if (filename == "index") continue;
-                try {
-                    var finfo = ReadFile(m_baseDir + "/" + filename, filename);
-                    m_files.Add(finfo);
-                } catch (Exception) {
+            foreach (string filename in index) {
+                if (filename == "index") {
                     continue;
+                }
+
+                string filePath = baseDir + "/" + filename;
+                try {
+                    files.Add(ReadFile(filePath, filename));
+                } catch (Exception e) {
+                    Platform.Log(LogVerbosity.Error, "Failed to load file at path", filePath, "with exception:", e);
                 }
             }
 
@@ -49,46 +55,44 @@ namespace DarkConfig {
         }
 
         public void ReceivePreloaded(List<ConfigFileInfo> files) {
-            Config.Log(LogVerbosity.Info, "ReceivePreloaded", files.Count);
-            m_files = new List<ConfigFileInfo>(files);
-            m_index = new List<string>();
-            for (int i = 0; i < m_files.Count; i++) {
-                m_index.Add(m_files[i].Name);
+            Platform.Log(LogVerbosity.Info, "ReceivePreloaded", files.Count);
+            
+            // Copy the list
+            this.files = new List<ConfigFileInfo>(files);
+            
+            index = new List<string>(files.Count);
+            foreach (var file in this.files) {
+                index.Add(file.Name);
             }
         }
 
-        public ConfigFileInfo ReadFile(string fname, string shortName) {
+        public ConfigFileInfo ReadFile(string filePath, string shortName) {
+            string pathWithExtension = filePath + ConfigFileExtension;
             try {
-                var filename = fname + ".bytes";
-                using (var fileStream = File.Open(filename, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)) {
-                    var checksum = ConfigFileManager.Checksum(fileStream);
+                using (var fileStream = File.Open(pathWithExtension, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)) {
+                    int checksum = ConfigFileManager.Checksum(fileStream);
                     fileStream.Seek(0, SeekOrigin.Begin);
 
-                    var parsed = Config.LoadDocFromStream(fileStream, fname);
                     return new ConfigFileInfo {
                         Name = shortName,
                         Size = (int) fileStream.Length,
-                        Modified = File.GetLastWriteTimeUtc(filename),
+                        Modified = File.GetLastWriteTimeUtc(pathWithExtension),
                         Checksum = checksum,
-                        Parsed = parsed
+                        Parsed = Config.LoadDocFromStream(fileStream, filePath)
                     };
                 }
             } catch (Exception e) {
-                Config.Log(LogVerbosity.Error, "Exception loading file", fname, e);
-                throw e;
+                Platform.Log(LogVerbosity.Error, "Exception loading file at path", pathWithExtension, "exception:", e);
+                throw;
             }
         }
 
-        public bool AreTimestampsEquivalent(DateTime a, DateTime b) {
-            // https://blogs.msdn.microsoft.com/oldnewthing/20140903-00/?p=83
-            // I'm using 3 seconds to be more generous in case I overlooked something
-            return System.Math.Abs((a - b).TotalSeconds) < 3f;
-        }
-
         public ConfigFileInfo TryHotload(ConfigFileInfo finfo) {
-            var filename = m_baseDir + "/" + finfo.Name + ".bytes";
-            if (!File.Exists(filename)) return null;
-            var systemInfo = new System.IO.FileInfo(filename);
+            var filename = baseDir + "/" + finfo.Name + ConfigFileExtension;
+            if (!File.Exists(filename)) {
+                return null;
+            }
+            var systemInfo = new FileInfo(filename);
             var modifiedTime = File.GetLastWriteTimeUtc(filename);
             var fileLength = systemInfo.Length;
 
@@ -99,16 +103,15 @@ namespace DarkConfig {
             // size and modified time differ; have to open the whole file to see if it's actually different
             using (var fileStream = File.Open(filename, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)) {
                 var size = (int) fileStream.Length;
-                var checksum = ConfigFileManager.Checksum(fileStream);
+                int checksum = ConfigFileManager.Checksum(fileStream);
                 if (checksum == finfo.Checksum) {
                     if (!AreTimestampsEquivalent(modifiedTime, finfo.Modified)) {
                         // set the mtime on the file so that we don't have to re-check it later
-                        Config.Log(LogVerbosity.Info, "Setting mtime on file", finfo, "prev", modifiedTime, "new",
-                            finfo.Modified);
+                        Platform.Log(LogVerbosity.Info, "Setting mtime on file", finfo, "prev", modifiedTime, "new", finfo.Modified);
                         try {
                             File.SetLastWriteTimeUtc(filename, finfo.Modified);
                         } catch (Exception e) {
-                            Config.Log(LogVerbosity.Info, "Error setting mtime on file", finfo, e.ToString());
+                            Platform.Log(LogVerbosity.Info, "Error setting mtime on file", finfo, e.ToString());
                             // if we can't modify the file then let's at least store the mtime in memory for next time
                             finfo.Modified = modifiedTime;
                         }
@@ -116,37 +119,58 @@ namespace DarkConfig {
 
                     if (fileLength != finfo.Size) {
                         // for some reason the file's length is different, but the checksum is the same, so let's remember the size so next time we won't have to reload
-                        Config.Log(LogVerbosity.Info, "Saving size of file", finfo, "prev", finfo.Size, "new",
-                            fileLength);
+                        Platform.Log(LogVerbosity.Info, "Saving size of file", finfo, "prev", finfo.Size, "new", fileLength);
                         finfo.Size = (int) fileLength;
                     }
 
                     return null; // checksum same, can skip parsing/hotloading this file
                 }
-
+                
                 fileStream.Seek(0, SeekOrigin.Begin);
-
-                var parsed = Config.LoadDocFromStream(fileStream, finfo.Name);
 
                 var newInfo = new ConfigFileInfo {
                     Name = finfo.Name,
                     Size = size,
                     Modified = modifiedTime,
                     Checksum = checksum,
-                    Parsed = parsed
+                    Parsed = Config.LoadDocFromStream(fileStream, finfo.Name)
                 };
+                
                 if (newInfo.Name == "index") {
-                    HotloadIndex(newInfo); // index loading should trigger loading other files
+                    // index loading should trigger loading other files
+                    HotloadIndex(newInfo);
                 }
 
                 return newInfo;
             }
         }
 
+        public List<ConfigFileInfo> GetFiles() {
+            return files;
+        }
 
-        public void HotloadIndex(ConfigFileInfo indexInfo) {
-            if (m_index == null) {
-                Config.Log(LogVerbosity.Warn, "Null m_index");
+        public override string ToString() {
+            return $"FileSource({baseDir})";
+        }
+        
+        ////////////////////////////////////////////
+
+        readonly bool hotloadingEnabled;
+        readonly string baseDir;
+        List<string> index;
+        List<ConfigFileInfo> files;
+        
+        ////////////////////////////////////////////
+
+        bool AreTimestampsEquivalent(DateTime a, DateTime b) {
+            // https://blogs.msdn.microsoft.com/oldnewthing/20140903-00/?p=83
+            // I'm using 3 seconds to be more generous in case I overlooked something
+            return Math.Abs((a - b).TotalSeconds) < 3f;
+        }
+
+        void HotloadIndex(ConfigFileInfo indexInfo) {
+            if (index == null) {
+                Platform.Log(LogVerbosity.Warn, "Null m_index");
                 return;
             }
 
@@ -155,53 +179,37 @@ namespace DarkConfig {
             var newFiles = new List<string>(10);
             var removedFiles = new List<string>(10);
             for (int i = 0; i < indexNode.Count; i++) {
-                var fname = indexNode[i].StringValue;
-                if (!m_index.Contains(fname)) {
-                    newFiles.Add(fname);
+                string filename = indexNode[i].StringValue;
+                if (!index.Contains(filename)) {
+                    newFiles.Add(filename);
                 }
             }
 
-            for (int i = 0; i < m_index.Count; i++) {
-                if (!indexNode.Contains(m_index[i])) {
-                    removedFiles.Add(m_index[i]);
+            foreach (string filename in index) {
+                if (!indexNode.Contains(filename)) {
+                    removedFiles.Add(filename);
                 }
             }
 
-            for (int i = 0; i < newFiles.Count; i++) {
-                var filename = newFiles[i];
-                m_index.Add(filename);
+            foreach (string filename in newFiles) {
+                index.Add(filename);
                 if (filename == "index") continue;
                 try {
-                    var finfo = ReadFile(m_baseDir + "/" + filename, filename);
-                    m_files.Add(finfo);
+                    var finfo = ReadFile(baseDir + "/" + filename, filename);
+                    files.Add(finfo);
                 } catch (Exception) {
                     continue;
                 }
             }
 
             for (int i = 0; i < removedFiles.Count; i++) {
-                m_index.Remove(removedFiles[i]);
-                for (int j = 0; j < m_files.Count; j++) {
-                    if (m_files[j].Name == removedFiles[i]) {
-                        m_files.RemoveAt(j);
+                index.Remove(removedFiles[i]);
+                for (int j = 0; j < files.Count; j++) {
+                    if (files[j].Name == removedFiles[i]) {
+                        files.RemoveAt(j);
                     }
                 }
             }
         }
-
-
-        public List<ConfigFileInfo> GetFiles() {
-            return m_files;
-        }
-
-        public override string ToString() {
-            return string.Format("FileSource({0})", m_baseDir);
-        }
-
-        string m_baseDir;
-        List<string> m_index;
-        bool m_hotload;
-        List<ConfigFileInfo> m_files;
     }
-#endif
 }
