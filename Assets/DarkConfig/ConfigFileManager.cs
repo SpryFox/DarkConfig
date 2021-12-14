@@ -6,8 +6,6 @@ using System.Text.RegularExpressions;
 
 namespace DarkConfig {
     public class ConfigFileManager {
-        delegate void SimpleLoadDelegate(DocNode d);
-
         /// If true (the default), DarkConfig will scan files for changes every 
         /// *HotloadCheckInterval* seconds.  Setting it to false stops hotloading;
         /// recommended for production games.
@@ -37,7 +35,7 @@ namespace DarkConfig {
         public readonly Dictionary<string, ConfigFileInfo> FileInfos = new Dictionary<string, ConfigFileInfo>();
 
         /// This event is called for every file that gets hotloaded.
-        public Action<string> OnHotloadFile;
+        public event Action<string> OnHotloadFile;
         
         /////////////////////////////////////////////////   
 
@@ -200,12 +198,6 @@ namespace DarkConfig {
             return GetFilesByGlobImpl(glob, Files);
         }
 
-        /// Returns a list of files in the index that match a regular expression.
-        public List<string> GetFilesByRegex(Regex pattern) {
-            CheckPreload();
-            return GetFilesByRegexImpl(pattern, Files);
-        }
-
         /// Don't call directly, used for tests.
         public List<string> GetFilesByGlobImpl(string glob, List<string> files) {
             var restring = Regex.Escape(glob)
@@ -216,6 +208,12 @@ namespace DarkConfig {
             return GetFilesByRegexImpl(re, files);
         }
 
+        /// Returns a list of files in the index that match a regular expression.
+        public List<string> GetFilesByRegex(Regex pattern) {
+            CheckPreload();
+            return GetFilesByRegexImpl(pattern, Files);
+        }
+        
         /// Don't call directly, used for tests.
         public List<string> GetFilesByRegexImpl(Regex pattern, List<string> files) {
             var result = new List<string>();
@@ -256,33 +254,6 @@ namespace DarkConfig {
             CallCallbacks(modified);
         }
 
-        void CheckPreload() {
-#if UNITY_EDITOR
-            UnityPlatform.Setup();
-#endif
-
-            if (!Platform.Instance.CanDoImmediatePreload) {
-                Platform.Assert(IsPreloaded, "Can't use configs in any way in a built game, before preloading is complete");
-                return;
-            }
-
-            // we can preload immediately; this means that the developer doesn't have to go through a loading screen for every scene; just hit play
-            if (IsPreloaded || isPreloading) {
-                return;
-            }
-
-            if (sources.Count == 0) {
-                LoadFromSourceImmediately(Platform.Instance.ConfigSource);
-            } else {
-                bool preloadWasImmediate = false;
-                Preload(() => { preloadWasImmediate = true; }); // note: all preloading is immediate
-                Platform.Log(LogVerbosity.Info, "Done immediate-loading, IsHotloadingFiles: ", IsHotloadingFiles);
-                Platform.Assert(preloadWasImmediate, "Did not preload immediately");
-            }
-
-            Config.PreloadComplete();
-        }
-
         /// Loads all files from the source immediately.  For editor tooling.
         public void LoadFromSourceImmediately(IConfigSource source) {
             Platform.Assert(Platform.Instance.CanDoImmediatePreload, "Trying to load immediately on a platform that doesn't support it");
@@ -298,18 +269,6 @@ namespace DarkConfig {
 
             isPreloading = false;
             IsPreloaded = true;
-        }
-
-        DocNode ParseAndStoreFile(string configName, string contents, int checksum) {
-            var doc = Config.LoadDocFromString(contents, configName);
-            Files.Add(configName);
-            FileInfos.Add(configName, new ConfigFileInfo {
-                Name = configName,
-                Size = contents.Length,
-                Parsed = doc,
-                Checksum = checksum
-            });
-            return doc;
         }
 
         /// Utility function that returns an integer checksum of a string.
@@ -335,7 +294,7 @@ namespace DarkConfig {
         /// when it's complete every file will have been checked and hotloaded
         /// if necessary.  Calls callback when done.
         public void CheckHotloadImmediate(Action callback = null) {
-            // deliberately ignore value of m_isCheckingHotloadNow
+            // deliberately ignore value of isCheckingHotloadNow
             var iter = CheckHotloadCoro(callback, 100);
             while (iter.MoveNext()) { }
         }
@@ -349,39 +308,6 @@ namespace DarkConfig {
                 return;
             }
             Platform.Instance.StartCoroutine(CheckHotloadCoro(callback, filesPerFrame));
-        }
-
-        IEnumerator CheckHotloadCoro(Action cb = null, int filesPerLoop = 1) {
-            isCheckingHotloadNow = true;
-
-            try {
-                // kind of a brute-force implementation for now: look at each file and see whether it changed
-                List<string> modifiedFiles = new List<string>();
-
-                for (int k = 0; k < Files.Count; k++) {
-                    if (!IsHotloadingFiles) yield break;
-                    var configName = Files[k];
-                    try {
-                        var newInfo = CheckHotload(configName);
-                        if (newInfo != null) {
-                            modifiedFiles.Add(configName);
-                            FileInfos[configName] = newInfo;
-                        }
-                    } catch (Exception e) {
-                        Platform.Log(LogVerbosity.Error, "Exception loading file", configName, e);
-                    }
-
-                    if ((k % filesPerLoop) == 0) {
-                        // throttle how many files we check per frame to control the performance impact
-                        yield return null;
-                    }
-                }
-
-                CallCallbacks(modifiedFiles);
-                cb?.Invoke();
-            } finally {
-                isCheckingHotloadNow = false;
-            }
         }
 
         internal ConfigFileInfo CheckHotload(string configName) {
@@ -411,6 +337,54 @@ namespace DarkConfig {
             }
 
             return null;
+        }
+
+        /////////////////////////////////////////////////
+
+        internal bool IsPreloaded { get; private set; }
+        
+        bool isPreloading;
+        bool isHotloadingFiles = true;
+        IEnumerator watchFilesCoro;
+        bool isCheckingHotloadNow;
+        readonly List<IConfigSource> sources = new List<IConfigSource>();
+        readonly Dictionary<string, List<ReloadDelegate>> reloadCallbacks = new Dictionary<string, List<ReloadDelegate>>();
+        readonly Dictionary<string, CombinerData> combiners = new Dictionary<string, CombinerData>();
+        readonly Dictionary<string, List<CombinerData>> combinersBySubfile = new Dictionary<string, List<CombinerData>>();
+
+        class CombinerData {
+            public string[] Filenames;
+            public string DestinationFilename;
+            public Func<List<DocNode>, DocNode> Combiner;
+        }
+        
+        /////////////////////////////////////////////////
+
+        void CheckPreload() {
+#if UNITY_EDITOR
+            UnityPlatform.Setup();
+#endif
+
+            if (!Platform.Instance.CanDoImmediatePreload) {
+                Platform.Assert(IsPreloaded, "Can't use configs in any way in a built game, before preloading is complete");
+                return;
+            }
+
+            // we can preload immediately; this means that the developer doesn't have to go through a loading screen for every scene; just hit play
+            if (IsPreloaded || isPreloading) {
+                return;
+            }
+
+            if (sources.Count == 0) {
+                LoadFromSourceImmediately(Platform.Instance.ConfigSource);
+            } else {
+                bool preloadWasImmediate = false;
+                Preload(() => { preloadWasImmediate = true; }); // note: all preloading is immediate
+                Platform.Log(LogVerbosity.Info, "Done immediate-loading, IsHotloadingFiles: ", IsHotloadingFiles);
+                Platform.Assert(preloadWasImmediate, "Did not preload immediately");
+            }
+
+            Config.PreloadComplete();
         }
 
         void HotloadIndex(IConfigSource source) {
@@ -492,24 +466,51 @@ namespace DarkConfig {
                 }
             }
         }
-
-        /////////////////////////////////////////////////
-
-        internal bool IsPreloaded { get; private set; }
         
-        bool isPreloading;
-        bool isHotloadingFiles = true;
-        IEnumerator watchFilesCoro;
-        bool isCheckingHotloadNow;
-        readonly List<IConfigSource> sources = new List<IConfigSource>();
-        readonly Dictionary<string, List<ReloadDelegate>> reloadCallbacks = new Dictionary<string, List<ReloadDelegate>>();
-        readonly Dictionary<string, CombinerData> combiners = new Dictionary<string, CombinerData>();
-        readonly Dictionary<string, List<CombinerData>> combinersBySubfile = new Dictionary<string, List<CombinerData>>();
+        IEnumerator CheckHotloadCoro(Action cb = null, int filesPerLoop = 1) {
+            isCheckingHotloadNow = true;
 
-        class CombinerData {
-            public string[] Filenames;
-            public string DestinationFilename;
-            public Func<List<DocNode>, DocNode> Combiner;
+            try {
+                // kind of a brute-force implementation for now: look at each file and see whether it changed
+                List<string> modifiedFiles = new List<string>();
+
+                for (int k = 0; k < Files.Count; k++) {
+                    if (!IsHotloadingFiles) yield break;
+                    var configName = Files[k];
+                    try {
+                        var newInfo = CheckHotload(configName);
+                        if (newInfo != null) {
+                            modifiedFiles.Add(configName);
+                            FileInfos[configName] = newInfo;
+                        }
+                    } catch (Exception e) {
+                        Platform.Log(LogVerbosity.Error, "Exception loading file", configName, e);
+                    }
+
+                    if ((k % filesPerLoop) == 0) {
+                        // throttle how many files we check per frame to control the performance impact
+                        yield return null;
+                    }
+                }
+
+                CallCallbacks(modifiedFiles);
+                cb?.Invoke();
+            } finally {
+                isCheckingHotloadNow = false;
+            }
         }
+        
+        DocNode ParseAndStoreFile(string configName, string contents, int checksum) {
+            var doc = Config.LoadDocFromString(contents, configName);
+            Files.Add(configName);
+            FileInfos.Add(configName, new ConfigFileInfo {
+                Name = configName,
+                Size = contents.Length,
+                Parsed = doc,
+                Checksum = checksum
+            });
+            return doc;
+        }
+
     }
 }
