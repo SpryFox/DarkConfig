@@ -15,13 +15,13 @@ namespace DarkConfig {
 
         public bool CanDoImmediatePreload = false;
 
-        public abstract IConfigSource GetDefaultSource();
+        public abstract IConfigSource ConfigSource { get; }
 
         public virtual void Clear() { }
 
         public abstract object WaitForSeconds(float seconds);
-        public abstract object StartCoroutine(IEnumerator coro);
-        public abstract void StopCoroutine(IEnumerator coro);
+        public abstract object StartCoroutine(IEnumerator coroutine);
+        public abstract void StopCoroutine(IEnumerator coroutine);
         
         protected virtual void Log(string msg) { Console.Out.WriteLine(msg); }
         protected virtual void LogError(string msg) { Console.Error.WriteLine(msg); }

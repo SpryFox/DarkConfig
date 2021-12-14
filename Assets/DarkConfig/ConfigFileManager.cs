@@ -272,7 +272,7 @@ namespace DarkConfig {
             }
 
             if (sources.Count == 0) {
-                LoadFromSourceImmediately(Platform.Instance.GetDefaultSource());
+                LoadFromSourceImmediately(Platform.Instance.ConfigSource);
             } else {
                 bool preloadWasImmediate = false;
                 Preload(() => { preloadWasImmediate = true; }); // note: all preloading is immediate
