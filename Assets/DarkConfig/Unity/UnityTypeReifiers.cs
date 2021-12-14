@@ -20,7 +20,7 @@ namespace DarkConfig {
             // Parse a scalar float and use that for both components of the vector.
             // 3 => new Vector2(3,3)
             if (parsedType == DocNodeType.Scalar) {
-                var single = value.AsFloat();
+                var single = value.As<float>();
                 return new Vector2(single, single);
             } 
 
@@ -29,10 +29,10 @@ namespace DarkConfig {
             // [1] => Vector2(1,1)
             // [1,2] => new Vector2(1,2);
             // [1,2,3,4,5,6] => new Vector2(1,2);
-            float x = value[0].AsFloat();
+            float x = value[0].As<float>();
             float y = x;
             if (value.Count > 1) {
-                y = value[1].AsFloat();
+                y = value[1].As<float>();
             }
 
             return new Vector2(x, y);
@@ -44,21 +44,21 @@ namespace DarkConfig {
 
             var parsedType = value.Type;
             if (parsedType == DocNodeType.Scalar) { // Vector3, 3 => new Vector3(3,3, 3);
-                float single = value.AsFloat();
+                float single = value.As<float>();
                 return new Vector3(single, single, single);
             }
             
             // Vector3, [1,2,3] => new Vector2(1,2,3);
-            float x = value[0].AsFloat();
+            float x = value[0].As<float>();
             float y = x;
             float z = x;
             if (value.Count > 1) {
-                y = value[1].AsFloat();
+                y = value[1].As<float>();
                 z = 0;
             }
 
             if (value.Count > 2) {
-                z = value[2].AsFloat();
+                z = value[2].As<float>();
             }
 
             return new Vector3(x, y, z);
@@ -117,7 +117,7 @@ namespace DarkConfig {
 
             var colorValues = new List<float>();
             foreach (var docValue in value.Values) {
-                colorValues.Add(docValue.AsFloat());
+                colorValues.Add(docValue.As<float>());
             }
 
             // see if any of the values are over 1; if so, treat each as if they're in the range 0-255 instead of 0-1
