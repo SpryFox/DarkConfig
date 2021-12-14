@@ -1,10 +1,4 @@
-﻿#define DC_ERROR_SOURCE_INFO
-
-#if !DC_DISABLE_LOGGING
-    #define DC_LOGGING_ENABLED
-#endif
-
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System;
 using System.IO;
 using YamlDotNet.RepresentationModel;
