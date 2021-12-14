@@ -5,16 +5,14 @@ namespace DarkConfig {
     public class UnityPlatform : Platform {
         public static void Setup() {
             Instance = new UnityPlatform();
-            UnityTypeReifiers.RegisterAll();
         }
 
         UnityPlatform() {
             CanDoImmediatePreload = Application.isEditor;
+            UnityTypeReifiers.RegisterAll();
         }
 
-        public override IConfigSource GetDefaultSource() {
-            return new ResourcesSource();
-        }
+        public override IConfigSource ConfigSource => new ResourcesSource();
 
         protected override void Log(string msg) {
             Debug.Log(msg);
@@ -40,12 +38,12 @@ namespace DarkConfig {
             return new WaitForSeconds(seconds);
         }
 
-        public override object StartCoroutine(IEnumerator coro) {
-            return TokenMonoBehaviour.StartCoroutine(coro);
+        public override object StartCoroutine(IEnumerator coroutine) {
+            return TokenMonoBehaviour.StartCoroutine(coroutine);
         }
 
-        public override void StopCoroutine(IEnumerator coro) {
-            TokenMonoBehaviour.StopCoroutine(coro);
+        public override void StopCoroutine(IEnumerator coroutine) {
+            TokenMonoBehaviour.StopCoroutine(coroutine);
         }
 
         /// instance of MonoBehaviour used only for its StartCoroutine functionality

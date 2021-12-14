@@ -5,16 +5,14 @@ using System.Collections.Generic;
 namespace DarkConfig {
     public class ConsolePlatform : Platform {
         public static void Setup() {
-            Platform.Instance = new ConsolePlatform();
+            Instance = new ConsolePlatform();
         }
 
         public ConsolePlatform() {
             CanDoImmediatePreload = false;
         }
 
-        public override IConfigSource GetDefaultSource() {
-            return new FileSource(AppDomain.CurrentDomain.BaseDirectory + "Configs");
-        }
+        public override IConfigSource ConfigSource => new FileSource(AppDomain.CurrentDomain.BaseDirectory + "Configs");
 
         protected override void Log(string msg) {
             Console.WriteLine(msg);
