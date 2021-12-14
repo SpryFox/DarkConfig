@@ -5,6 +5,23 @@ using System.Reflection;
 
 namespace DarkConfig {
     public delegate object FromDocDelegate(object obj, DocNode doc);
+    
+    [Flags]
+    public enum ConfigOptions {
+        None = 0,
+
+        /// extra fields in the YAML document are allowed
+        AllowExtraFields = 1 << 0,
+
+        /// fields present on object but not in YAML document are allowed
+        AllowMissingFields = 1 << 1,
+
+        /// both missing and extra fields are allowed
+        AllowMissingExtraFields = AllowExtraFields | AllowMissingFields,
+
+        /// properties care about case
+        CaseSensitive = 1 << 2
+    }
 
     public class ConfigReifier {
         /// Default options for refication.  Change this if you want to change
