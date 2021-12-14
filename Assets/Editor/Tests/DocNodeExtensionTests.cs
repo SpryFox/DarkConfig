@@ -20,7 +20,7 @@ class DocNodeExtensionTests {
         var doc = GetDocNode(@"---
             10
             ");
-        Assert.AreEqual(doc.AsInt(), 10);
+        Assert.AreEqual(doc.As<int>(), 10);
     }
 
     [Test]
@@ -28,7 +28,7 @@ class DocNodeExtensionTests {
         var doc = GetDocNode(@"---
             not_an_int
             ");
-        Assert.Throws<ParseException>(() => { doc.AsInt(); });
+        Assert.Throws<ParseException>(() => { doc.As<int>(); });
     }
 
     [Test]
@@ -36,7 +36,7 @@ class DocNodeExtensionTests {
         var doc = GetDocNode(@"---
             1.45
             ");
-        Assert.AreEqual(doc.AsFloat(), 1.45f);
+        Assert.AreEqual(doc.As<float>(), 1.45f);
     }
 
     [Test]
@@ -44,7 +44,7 @@ class DocNodeExtensionTests {
         var doc = GetDocNode(@"---
             derpy horse
             ");
-        Assert.AreEqual(doc.AsString(), "derpy horse");
+        Assert.AreEqual(doc.As<string>(), "derpy horse");
     }
 
     [Test]
@@ -52,7 +52,7 @@ class DocNodeExtensionTests {
         var doc = GetDocNode(@"---
             true
             ");
-        Assert.AreEqual(doc.AsBool(), true);
+        Assert.AreEqual(doc.As<bool>(), true);
     }
 
     [Test]
@@ -62,7 +62,7 @@ class DocNodeExtensionTests {
                 nested:
                     final: 123
             ");
-        Assert.AreEqual(doc["key"]["nested"]["final"].AsInt(), 123);
+        Assert.AreEqual(doc["key"]["nested"]["final"].As<int>(), 123);
     }
 
     [Test]
@@ -73,8 +73,8 @@ class DocNodeExtensionTests {
                 - 8.8
                 - 7.1
             ");
-        Assert.AreEqual(doc["key"][1].AsFloat(), 8.8f);
-        Assert.AreEqual(doc["key"][2].AsFloat(), 7.1f);
+        Assert.AreEqual(doc["key"][1].As<float>(), 8.8f);
+        Assert.AreEqual(doc["key"][2].As<float>(), 7.1f);
     }
 
     [Test]

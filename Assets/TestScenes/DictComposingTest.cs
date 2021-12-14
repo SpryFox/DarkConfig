@@ -33,8 +33,8 @@ public class DictComposingTest : IntegrationTestBase {
         });
 
         Assert(MixedDict.Count == 5, "Expecting 5 properties in merged Dict, was", MixedDict.Count);
-        Assert(MixedDict["Beetles"].AsInt() == 12, "Expected 12 beetles, was", MixedDict["Beetles"].AsInt());
-        Assert(MixedDict["Version"].AsFloat() == 1.3f, "Version should be overwritten to 1.3, was", MixedDict["Version"].AsFloat());
+        Assert(MixedDict["Beetles"].As<int>() == 12, "Expected 12 beetles, was", MixedDict["Beetles"].As<int>());
+        Assert(MixedDict["Version"].As<float>() == 1.3f, "Version should be overwritten to 1.3, was", MixedDict["Version"].As<float>());
         Assert(MixedDict["Treehouse"].AsBool(), "Treehouse should be true, was", MixedDict["Treehouse"].AsBool());
 
 
@@ -57,7 +57,7 @@ public class DictComposingTest : IntegrationTestBase {
 
         Assert(MixedDict.Count == 5, "Should load all 5 items, got", MixedDict.Count);
         Assert(!MixedDict.ContainsKey("Treehouse"), "Treehouse should not be present");
-        Assert(MixedDict["Chitin"].AsInt() == 1000, "Chitin should be 1000, is", MixedDict["Chitin"].AsInt());
+        Assert(MixedDict["Chitin"].As<int>() == 1000, "Chitin should be 1000, is", MixedDict["Chitin"].As<int>());
 
         // restore the old content
         writer = new StreamWriter(itemsPath, false);

@@ -44,6 +44,26 @@ namespace DarkConfig {
 
         /// String describing the position and context in the source format (e.g. line number).
         public abstract string SourceInformation { get; }
+        
+        public T As<T>() {
+            var result = default(T);
+            ConfigReifier.Reify(ref result, this);
+            return result;
+        }
+
+        public bool Contains(string item) {
+            if (Type != DocNodeType.List) {
+                throw new DocNodeAccessException("Expected List, is " + Type);
+            }
+
+            for (int i = 0; i < Count; i++) {
+                if (this[i].StringValue == item) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
 
         public bool Equals(DocNode other) {
             if (other == null) {

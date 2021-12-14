@@ -970,7 +970,7 @@ class ConfigReifierTests {
         DocNode d = null;
         ConfigReifier.Reify(ref d, doc);
         Assert.True(d.ContainsKey("ugh"));
-        Assert.AreEqual(d["ugh"].AsString(), "bugh");
+        Assert.AreEqual(d["ugh"].As<string>(), "bugh");
     }
 
     [Test]
