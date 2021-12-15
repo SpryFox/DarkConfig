@@ -11,18 +11,26 @@ namespace DarkConfig {
     /// bottom.  It's a bit more readable, and most importantly the line
     /// numbers in the config files are much more prominent.
     public class ParseException : Exception {
-        Exception privateInner;
-
-        public ParseException(string message)
-            : base(message) {
-            privateInner = null;
+        public ParseException(string message) : base(message) {
+            wrappedException = null;
         }
 
-        public ParseException(string message, Exception inner)
-            : base((inner != null ? inner.Message : "") + "\n" + message) {
-            privateInner = inner;
+        public ParseException(string message, Exception inner) : base((inner != null ? inner.Message : "") + "\n" + message) {
+            wrappedException = inner;
         }
 
-        public override string StackTrace => privateInner == null ? base.StackTrace : privateInner.StackTrace + "\n-----\n" + base.StackTrace;
+        public override string StackTrace => wrappedException == null ? base.StackTrace : wrappedException.StackTrace + "\n-----\n" + base.StackTrace;
+        
+        readonly Exception wrappedException;
+    }
+
+    public class MissingFieldsException : ParseException {
+        public MissingFieldsException(string message) : base(message) { }
+        public MissingFieldsException(string message, Exception inner) : base(message, inner) { }
+    }
+
+    public class ExtraFieldsException : ParseException {
+        public ExtraFieldsException(string message) : base(message) { }
+        public ExtraFieldsException(string message, Exception inner) : base(message, inner) { }
     }
 }

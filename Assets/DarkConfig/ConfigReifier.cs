@@ -90,13 +90,13 @@ namespace DarkConfig {
         }
 
         public static void Register(Type t, FromDocDelegate del) {
-            s_fromDocs[t] = del;
+            CustomReifiers[t] = del;
         }
         
         /// Create an instance of an object and immediately set fields on it from the document. 
         /// The type of instance is supplied via the generic parameter.
         public static T CreateInstance<T>(DocNode dict, ConfigOptions? options = null) where T : new() {
-            var obj = (object) System.Activator.CreateInstance<T>();
+            object obj = Activator.CreateInstance<T>();
             SetFieldsOnObject(ref obj, dict, DefaultedOptions(options));
             return (T) obj;
         }
@@ -112,8 +112,7 @@ namespace DarkConfig {
 
         /// Sets all members on the object *obj* (which must not be null) from *dict*.
         /// Expects *obj* to be a plain class, but if it's a boxed struct it will work as well.
-        public static void SetFieldsOnObject<T>(ref T obj, DocNode dict, ConfigOptions? options = null)
-            where T : class {
+        public static void SetFieldsOnObject<T>(ref T obj, DocNode dict, ConfigOptions? options = null) where T : class {
             Platform.Assert(obj != null, "Can't SetFields on null");
             Type type = typeof(T);
             if (type == typeof(object)) {
@@ -135,17 +134,18 @@ namespace DarkConfig {
             obj = (T) setCopy;
         }
 
-        public static bool IsDelegate(Type type) {
-            // http://mikehadlow.blogspot.com/2010/03/how-to-tell-if-type-is-delegate.html
-            return typeof(MulticastDelegate).IsAssignableFrom(type.BaseType);
-        }
 
         /////////////////////////////////////////////////
 
-        protected static Dictionary<Type, FromDocDelegate> s_fromDocs = new Dictionary<Type, FromDocDelegate>();
+        protected static Dictionary<Type, FromDocDelegate> CustomReifiers = new Dictionary<Type, FromDocDelegate>();
         
         /////////////////////////////////////////////////
 
+        static bool IsDelegateType(Type type) {
+            // http://mikehadlow.blogspot.com/2010/03/how-to-tell-if-type-is-delegate.html
+            return typeof(MulticastDelegate).IsAssignableFrom(type.BaseType);
+        }
+        
         static Type GetFirstNonObjectBaseClass(Type t) {
             var curr = t;
             while (curr.BaseType != null && curr.BaseType != typeof(System.Object)) {
@@ -157,141 +157,150 @@ namespace DarkConfig {
 
         /// Sets all members on the object *obj* based on the appropriate key from *doc*
         static void SetFieldsOnObject(Type type, ref object obj, DocNode doc, ConfigOptions options) {
-            if (doc == null) return;
+            if (doc == null) {
+                return;
+            }
 
-            bool caseInsensitive = (options & ConfigOptions.CaseSensitive) != ConfigOptions.CaseSensitive;
-            bool checkMissing = (options & ConfigOptions.AllowMissingFields) != ConfigOptions.AllowMissingFields;
-            bool checkExtra = (options & ConfigOptions.AllowExtraFields) != ConfigOptions.AllowExtraFields;
-            var classAttrs = ReflectionCache.GetCustomAttributes(type);
-            for (int i = 0; i < classAttrs.Length; i++) {
-                if (classAttrs[i] is ConfigMandatoryAttribute) {
-                    checkMissing = true;
-                    continue;
-                }
-
-                if (classAttrs[i] is ConfigAllowMissingAttribute) {
-                    checkMissing = false;
-                    continue;
-                }
+            // Grab global settings
+            bool ignoreCase = (options & ConfigOptions.CaseSensitive) != ConfigOptions.CaseSensitive;
+            bool checkForMissingFields = (options & ConfigOptions.AllowMissingFields) != ConfigOptions.AllowMissingFields;
+            bool checkForExtraFields = (options & ConfigOptions.AllowExtraFields) != ConfigOptions.AllowExtraFields;
+            
+            // Override global settings with type-specific settings
+            var typeSpecificSettings = Internal.ReflectionCache.GetClassAttributeFlags(type);
+            if (typeSpecificSettings.HasConfigMandatoryAttribute) {
+                checkForMissingFields = true;
+            }
+            if (typeSpecificSettings.HasConfigAllowMissingAttribute) {
+                checkForMissingFields = false;
             }
 
             if (GetFirstNonObjectBaseClass(type).ToString() == "UnityEngine.Object") {
                 // Unity Objects have a lot of fields, it never makes sense to set most of them from configs
-                checkMissing = false;
+                checkForMissingFields = false;
             }
 
             var setCopy = obj;
             if (doc.Type != DocNodeType.Dictionary) {
-                // special-case behavior, set the first instance field on it from the doc
-                var allFields = ReflectionCache.GetInstanceFields(type);
-                Platform.Assert(allFields.Length == 1, "Trying to set a field of type: ",
-                    type, allFields.Length, "from value of wrong type:",
+                // ==== Special Case ====
+                // Allow specifying object types with a single property or field as a scalar value in configs.
+                // This is syntactic sugar that lets us wrap values in classes.
+                var typeMemberMetadata = Internal.ReflectionCache.GetTypeMemberMetadata(type);
+                Platform.Assert(typeMemberMetadata.Count == 1, "Trying to set a field of type: ",
+                    type, typeMemberMetadata.Count, "from value of wrong type:",
                     doc.Type == DocNodeType.Scalar ? doc.StringValue : doc.Type.ToString(),
                     "at",
                     doc.SourceInformation);
-                SetField(allFields[0], ref setCopy, doc, options);
+                var memberMetadata = typeMemberMetadata[0];
+                SetMember(memberMetadata.Info, memberMetadata.IsField, ref setCopy, doc, options);
                 obj = setCopy;
                 return;
             }
 
-            var typeFields = new HashSet<string>();
-            var usedFields = new HashSet<string>();
-            var lowercasedDocKeys = new Dictionary<string, string>();
-            if (caseInsensitive) {
-                foreach (var kv in doc.Pairs) lowercasedDocKeys[kv.Key.ToLower()] = kv.Key;
-            }
+            var requiredMembers = new List<string>();
+            var setMembers = new List<string>();
 
-            bool anyFieldMandatory = false;
+            bool isAnyFieldMandatory = false;
 
-            foreach (ReflectionCache.CachedFieldInfo cf in ReflectionCache.GetStrippedFields(type, caseInsensitive)) {
-                var f = cf.field;
-                // get attributes for the field
-                bool isMandatory = false;
-                bool allowMissing = false;
-                bool ignore = false;
-                var attrs = ReflectionCache.GetCustomAttributes(f);
-                for (int i = 0; i < attrs.Length; i++) {
-                    if (attrs[i] is ConfigMandatoryAttribute) {
-                        isMandatory = true;
-                        anyFieldMandatory = true;
-                        continue;
-                    }
+            // Set the fields on the object.
+            foreach (var memberMetadata in Internal.ReflectionCache.GetTypeMemberMetadata(type)) {
+                var memberInfo = memberMetadata.Info;
+                
+                // Override global and class settings per-field.
+                bool memberIsMandatory = memberMetadata.HasConfigMandatoryAttribute;
+                bool memberAllowMissing = memberMetadata.HasConfigAllowMissingAttribute;
+                bool memberIgnore = memberMetadata.HasConfigIgnoreAttribute;
+                isAnyFieldMandatory |= memberIsMandatory;
 
-                    if (attrs[i] is ConfigAllowMissingAttribute) {
-                        allowMissing = true;
-                        continue;
-                    }
+                // never report delegates or events as present or missing
+                memberIgnore |= IsDelegateType(memberMetadata.Type); 
 
-                    if (attrs[i] is ConfigIgnoreAttribute) {
-                        ignore = true;
-                        continue;
-                    }
-                }
-
-                if (IsDelegate(f.FieldType)) ignore = true; // never report postdocs as present or missing
-
-                // figure out the canonical name for the field
-                string strippedName = cf.strippedName;
-
-                // do meta stuff based on attributes/validation
-                if (ignore) {
-                    usedFields.Add(strippedName); // pretend like we set it
+                if (memberIgnore) {
                     continue;
                 }
 
-                if (checkMissing || isMandatory) typeFields.Add(strippedName);
+                // do meta stuff based on attributes/validation
+                string fieldName = memberMetadata.ShortName;
 
-                string docKey = null;
-                if (caseInsensitive) lowercasedDocKeys.TryGetValue(strippedName, out docKey);
-                if (docKey == null) docKey = strippedName;
-                if (doc.ContainsKey(docKey)) {
-                    usedFields.Add(strippedName);
-                    SetField(f, ref setCopy, doc[docKey], options);
-                } else if (allowMissing) {
-                    usedFields.Add(strippedName); // pretend like we set it
+                if (checkForMissingFields || memberIsMandatory) {
+                    requiredMembers.Add(fieldName);
+                }
+
+                if (doc.TryGetValue(fieldName, ignoreCase, out var node)) {
+                    SetMember(memberInfo, memberMetadata.IsField, ref setCopy, node, options);
+                    setMembers.Add(fieldName);
+                } else if (memberAllowMissing) {
+                    // pretend like we set it
+                    setMembers.Add(fieldName);
                 }
             }
 
-            // validation ---------
-            if (checkExtra) {
-                // check whether any fields in the doc were unused
-                var extra = new List<string>();
+            // Check whether any fields in the doc were unused 
+            if (checkForExtraFields) {
+                var extraDocFields = new List<string>();
+                
                 foreach (var kv in doc.Pairs) {
-                    var key = kv.Key;
-                    if (caseInsensitive) key = ReflectionCache.GetLowercase(key);
-                    if (!usedFields.Contains(key)) extra.Add(key);
+                    string docKey = kv.Key;
+
+                    bool wasSet = false;
+                    foreach (var setMember in setMembers) {
+                        if (string.Equals(setMember, docKey, ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal)) {
+                            wasSet = true;
+                            break;
+                        }
+                    }
+                    
+                    if (!wasSet) {
+                        extraDocFields.Add(docKey);
+                    }
                 }
 
-                if (extra.Count > 0) {
-                    throw new ParseException("Extra doc fields: " + JoinList(extra, ", ") + " " + doc.SourceInformation,
-                        null);
+                if (extraDocFields.Count > 0) {
+                    throw new ExtraFieldsException($"Extra doc fields: {JoinList(extraDocFields, ", ")} {doc.SourceInformation}");
                 }
             }
 
-            if (checkMissing || anyFieldMandatory) {
+            if (checkForMissingFields || isAnyFieldMandatory) {
                 // check whether any fields in the class were unset
                 var missing = new List<string>();
-                foreach (var typeField in typeFields) {
-                    if (!usedFields.Contains(typeField)) missing.Add(typeField);
+                foreach (var typeField in requiredMembers) {
+                    if (!setMembers.Contains(typeField)) {
+                        missing.Add(typeField);
+                    }
                 }
 
                 if (missing.Count > 0) {
-                    throw new ParseException(
-                        "Missing doc fields: " + JoinList(missing, ", ") + " " + doc.SourceInformation, null);
+                    throw new MissingFieldsException($"Missing doc fields: {JoinList(missing, ", ")} {doc.SourceInformation}");
                 }
             }
 
             obj = setCopy;
         }
 
-        static void SetField(FieldInfo f, ref object obj, DocNode value, ConfigOptions? options) {
-            if (obj == null && !f.IsStatic) return; // silently don't set non-static fields
-            Type fieldType = f.FieldType;
-            var existing = f.GetValue(obj);
-            var updated = ValueOfType(fieldType, existing, value, options);
-            var setCopy = obj; // needed for structs
-            f.SetValue(setCopy, updated);
-            obj = setCopy;
+        static void SetMember(MemberInfo memberInfo, bool isField, ref object obj, DocNode value, ConfigOptions? options) {
+            if (isField) {
+                var fieldInfo = (FieldInfo)memberInfo;
+                if (obj == null && !fieldInfo.IsStatic) {
+                    // silently don't set non-static fields
+                    return;
+                }
+                object existing = fieldInfo.GetValue(obj);
+                object updated = ValueOfType(fieldInfo.FieldType, existing, value, options);
+                object setCopy = obj; // needed for structs
+                fieldInfo.SetValue(setCopy, updated);
+                obj = setCopy;                
+            } else {
+                var propertyInfo = (PropertyInfo)memberInfo;
+                if (obj == null && !propertyInfo.CanWrite) {
+                    // silently don't set non-static fields
+                    return;
+                }
+                object existing = propertyInfo.GetValue(obj);
+                object updated = ValueOfType(propertyInfo.PropertyType, existing, value, options);
+                object setCopy = obj; // needed for structs
+                propertyInfo.SetValue(setCopy, updated);
+                obj = setCopy;
+            }
         }
 
         /// convenience method to parse an enum value out of a string
@@ -317,7 +326,7 @@ namespace DarkConfig {
         }
 
         static object CallPostDoc(Type serializedType, object obj) {
-            var postDoc = ReflectionCache.GetPostDoc(serializedType);
+            var postDoc = Internal.ReflectionCache.GetPostDocMethod(serializedType);
             if (postDoc != null) {
                 try {
                     obj = postDoc.Invoke(null, new[] {obj});
@@ -403,8 +412,8 @@ namespace DarkConfig {
                     return ValueOfType(innerType, existing, value, options);
                 }
 
-                if (s_fromDocs.ContainsKey(fieldType)) {
-                    existing = s_fromDocs[fieldType](existing, value);
+                if (CustomReifiers.ContainsKey(fieldType)) {
+                    existing = CustomReifiers[fieldType](existing, value);
                     return CallPostDoc(fieldType, existing);
                 }
 
@@ -521,14 +530,14 @@ namespace DarkConfig {
                     }
                 }
 
-                var fromDocMethod = ReflectionCache.GetFromDoc(fieldType);
+                var fromDocMethod = Internal.ReflectionCache.GetFromDocMethod(fieldType);
                 if (fromDocMethod != null) {
                     // if there's a custom parser method on the class, delegate all work to that
                     // TODO: this doesn't do inherited FromDoc methods properly, but it should
                     try {
                         existing = fromDocMethod.Invoke(null, new[] {existing, value});
                         return CallPostDoc(fieldType, existing);
-                    } catch (System.Reflection.TargetInvocationException e) {
+                    } catch (TargetInvocationException e) {
                         throw e.InnerException;
                     }
                 }
@@ -555,10 +564,10 @@ namespace DarkConfig {
                     }
                 }
             } catch (Exception e) {
-                throw new ParseException("Exception based on document starting at: " + value.SourceInformation, e);
+                throw new ParseException($"Exception based on document starting at: {value.SourceInformation}", e);
             }
 
-            throw new System.NotSupportedException("Don't know how to update value of type " + fieldType.ToString());
+            throw new NotSupportedException($"Don't know how to update value of type {fieldType}");
         }
     }
 }

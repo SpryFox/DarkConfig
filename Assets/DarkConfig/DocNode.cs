@@ -34,7 +34,9 @@ namespace DarkConfig {
         public abstract string StringValue { get; set; }
 
         /// Returns true if the key is in the dictionary
-        public abstract bool ContainsKey(string key);
+        public abstract bool ContainsKey(string key, bool ignoreCase = false);
+
+        public abstract bool TryGetValue(string key, bool ignoreCase, out DocNode result);
 
         /// Iterates over the values of the list
         public abstract IEnumerable<DocNode> Values { get; }

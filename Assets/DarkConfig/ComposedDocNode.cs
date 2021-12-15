@@ -62,9 +62,27 @@ namespace DarkConfig {
             }
         }
 
-        public override bool ContainsKey(string key) {
+        public override bool ContainsKey(string key, bool ignoreCase = false) {
             AssertTypeIs(DocNodeType.Dictionary);
-            return dictionary.ContainsKey(key);
+            foreach (var dictKey in dictionary.Keys) {
+                if (string.Equals(dictKey, key, ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public override bool TryGetValue(string key, bool ignoreCase, out DocNode result) {
+            AssertTypeIs(DocNodeType.Dictionary);
+            foreach (var kvp in dictionary) {
+                if (string.Equals(kvp.Key, key, ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal)) {
+                    result = kvp.Value;
+                    return true;
+                }
+            }
+
+            result = null;
+            return false;
         }
 
         public override IEnumerable<DocNode> Values {
