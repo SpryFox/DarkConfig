@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using YamlDotNet.RepresentationModel;
 
@@ -26,16 +27,7 @@ namespace DarkConfig {
             }
         }
 
-        public void AssertTypeIs(DocNodeType type) {
-            if (Type != type) {
-                ThrowAccessException(type.ToString(), Type.ToString());
-            }
-        }
-
-        public override string SourceInformation =>
-            // NOTE: the End never appears to differ from the Start, so let's just not even show it
-            //m_node.Start + " - " + m_node.End;
-            node.Start.ToString();
+        public override string SourceInformation => node.Start.ToString();
 
         // access the node as if it was a list
         public override DocNode this[int index] {
@@ -44,7 +36,7 @@ namespace DarkConfig {
                 var seqNode = (YamlSequenceNode) node;
                 return new YamlDocNode(seqNode.Children[index]);
             }
-            set => throw new System.NotSupportedException();
+            set => throw new NotSupportedException();
         }
 
         // access the node as if it was a Dictionary
@@ -55,30 +47,59 @@ namespace DarkConfig {
                 var scalarAccessor = new YamlScalarNode(key);
                 return new YamlDocNode(mapNode.Children[scalarAccessor]);
             }
-            set => throw new System.NotSupportedException();
+            set => throw new NotSupportedException();
         }
 
         public override int Count {
             get {
-                if (Type != DocNodeType.Dictionary && Type != DocNodeType.List) {
-                    ThrowAccessException("Countable (Dictionary or List)", Type.ToString());
-                }
-
                 if (Type == DocNodeType.Dictionary) {
-                    return ((YamlMappingNode) node).Children.Count;
+                    return ((YamlMappingNode)node).Children.Count;
                 }
-
+                
                 if (Type == DocNodeType.List) {
-                    return ((YamlSequenceNode) node).Children.Count;
+                    return ((YamlSequenceNode)node).Children.Count;
                 }
 
-                throw new System.NotImplementedException();
+                throw new DocNodeAccessException(GenerateAccessExceptionMessage("Countable (Dictionary or List)", Type.ToString()));
             }
         }
 
-        public override bool ContainsKey(string key) {
+        public override bool ContainsKey(string key, bool ignoreCase = false) {
             AssertTypeIs(DocNodeType.Dictionary);
-            return ((YamlMappingNode) node).Children.ContainsKey(new YamlScalarNode(key));
+            IDictionary<YamlNode, YamlNode> children = ((YamlMappingNode)node).Children;
+
+            foreach (var yamlKey in children.Keys) {
+                var scalarKey = yamlKey as YamlScalarNode; 
+                if (scalarKey != null) {
+                    if (string.Equals(scalarKey.Value, key,
+                            ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal)) {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+            // return ((YamlMappingNode) node).Children.ContainsKey(new YamlScalarNode(key));
+        }
+
+        public override bool TryGetValue(string key, bool ignoreCase, out DocNode result) {
+            AssertTypeIs(DocNodeType.Dictionary);
+            IDictionary<YamlNode, YamlNode> children = ((YamlMappingNode)node).Children;
+
+            foreach (var kvp in children) {
+                var scalarKey = kvp.Key as YamlScalarNode; 
+                if (scalarKey != null) {
+                    if (string.Equals(scalarKey.Value, key,
+                            ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal)) {
+                        result = new YamlDocNode(kvp.Value);
+                        return true;
+                    }
+                }
+            }
+
+            result = null;
+            return false;
+            // return ((YamlMappingNode) node).Children.ContainsKey(new YamlScalarNode(key));
         }
 
         public struct ValuesIterator : IEnumerable<DocNode> {
@@ -149,8 +170,14 @@ namespace DarkConfig {
         
         ////////////////////////////////////////////
         
-        void ThrowAccessException(string expectedType, string actualType) {
-            throw new DocNodeAccessException($"Accessing YamlDocNode as {expectedType} but is {actualType}. {SourceInformation}");
+        void AssertTypeIs(DocNodeType type) {
+            if (Type != type) {
+                throw new DocNodeAccessException(GenerateAccessExceptionMessage(type.ToString(), Type.ToString()));
+            }
+        }
+
+        string GenerateAccessExceptionMessage(string expectedType, string actualType) {
+            return $"Accessing YamlDocNode as {expectedType} but is {actualType}. {SourceInformation}";
         }
     }
 }

@@ -117,7 +117,7 @@ namespace DarkConfig {
         /// Cleans up DarkConfig's state, removing all listeners, loaded files, and so on, as if Preload had never been called.
         public static void Clear() {
             OnPreloadInvoker = null;
-            s_fromDocs = new Dictionary<Type, FromDocDelegate>();
+            CustomReifiers = new Dictionary<Type, FromDocDelegate>();
             Platform.Instance.Clear();
             configFileManager = null;
         }
