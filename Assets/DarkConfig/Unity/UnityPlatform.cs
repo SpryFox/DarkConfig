@@ -12,7 +12,7 @@ namespace DarkConfig {
             UnityTypeReifiers.RegisterAll();
         }
 
-        public override IConfigSource ConfigSource => new ResourcesSource();
+        public override ConfigSource ConfigSource => new ResourcesSource();
 
         protected override void Log(string msg) {
             Debug.Log(msg);

@@ -12,7 +12,7 @@ namespace DarkConfig {
             CanDoImmediatePreload = false;
         }
 
-        public override IConfigSource ConfigSource => new FileSource(AppDomain.CurrentDomain.BaseDirectory + "Configs");
+        public override ConfigSource ConfigSource => new FileSource(AppDomain.CurrentDomain.BaseDirectory + "Configs");
 
         protected override void Log(string msg) {
             Console.WriteLine(msg);

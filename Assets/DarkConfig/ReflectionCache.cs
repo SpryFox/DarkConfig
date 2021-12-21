@@ -108,7 +108,7 @@ namespace DarkConfig.Internal {
 
         /// Removes one letter hungarian notation prefixes from field names.
         static string RemoveHungarianPrefix(string name) {
-            return name[1] == '_' ? name.Substring(2) : name;
+            return name.Length > 1 && name[1] == '_' ? name.Substring(2) : name;
         }
 
         static void SetMemberAttributeFlags(PropertyMetadata metadata) {

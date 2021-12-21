@@ -72,7 +72,8 @@ namespace DarkConfig {
             ReifyStatic(typeof(T), doc, options);
         }
 
-        /// Same as ReifyStatic<T>, but with a type argument instead of a generic.  Static classes can't be used in generics, so use this version instead.
+        /// Same as ReifyStatic<T>, but with a type argument instead of a generic.
+        /// Static classes can't be used in generics, so use this version instead.
         public static void ReifyStatic(Type type, DocNode doc, ConfigOptions? options = null) {
             object dummyObj = null;
             SetFieldsOnObject(type, ref dummyObj, doc, DefaultedOptions(options));

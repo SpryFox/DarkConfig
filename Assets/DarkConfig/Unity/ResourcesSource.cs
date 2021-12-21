@@ -7,26 +7,21 @@ namespace DarkConfig {
     /// 
     /// since we can't check the timestamp on the files, it has to read them in in their
     /// entirety to see whether to hotload them
-    public class ResourcesSource : IConfigSource {
-        public ResourcesSource(string baseDir = "Configs", bool hotload = false) {
+    public class ResourcesSource : ConfigSource {
+        public ResourcesSource(string baseDir = "Configs", bool hotload = false) : base(hotload && Application.isEditor) {
             this.baseDir = baseDir;
-            this.hotload = hotload;
         }
 
-        public bool CanLoadNow() {
+        public override bool CanLoadNow() {
             return true;
         }
 
-        public bool CanHotload() {
-            return Application.isEditor && hotload;
-        }
-
-        public void Preload(Action callback) {
+        public override void Preload(Action callback) {
             // load index file
             var indexInfo = ReadFile(baseDir + "/index", "index");
             
-            files.Clear();
-            files.Add(indexInfo);
+            LoadedFiles.Clear();
+            LoadedFiles.Add(indexInfo);
             
             var indexNode = indexInfo.Parsed;
             
@@ -42,7 +37,7 @@ namespace DarkConfig {
                     continue;
                 }
                 try {
-                    files.Add(ReadFile(baseDir + "/" + filename, filename));
+                    LoadedFiles.Add(ReadFile(baseDir + "/" + filename, filename));
                 } catch (Exception) {
                     // ignored
                 }
@@ -51,17 +46,17 @@ namespace DarkConfig {
             callback();
         }
 
-        public void ReceivePreloaded(List<ConfigFileInfo> files) {
-            this.files.Clear();
-            this.files.AddRange(files);
+        public override void ReceivePreloaded(List<ConfigFileInfo> files) {
+            LoadedFiles.Clear();
+            LoadedFiles.AddRange(files);
 
             index.Clear();
-            foreach (var file in this.files) {
+            foreach (var file in LoadedFiles) {
                 index.Add(file.Name);
             }
         }
 
-        public ConfigFileInfo TryHotload(ConfigFileInfo finfo) {
+        public override ConfigFileInfo TryHotload(ConfigFileInfo finfo) {
             var filename = baseDir + "/" + finfo.Name;
             filename = System.IO.Path.ChangeExtension(filename, null);
             var asset = Resources.Load<TextAsset>(filename);
@@ -86,20 +81,13 @@ namespace DarkConfig {
             };
         }
 
-        public List<ConfigFileInfo> GetFiles() {
-            return files;
-        }
-
         public override string ToString() {
             return $"ResourcesSource({baseDir})";
         }
         
         /////////////////////////////////////////////////
 
-        readonly bool hotload;
         readonly string baseDir;
-        readonly List<string> index = new List<string>();
-        readonly List<ConfigFileInfo> files = new List<ConfigFileInfo>();
         
         /////////////////////////////////////////////////
         

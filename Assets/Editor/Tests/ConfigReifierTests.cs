@@ -141,8 +141,9 @@ class ConfigReifierTests {
 
     [SetUp]
     public void DoSetup() {
-        BuildInTypeRefiers
-            .RegisterAll(); // needs to be called here because we can't be sure whether preload has been called before or not
+        // needs to be called here because we can't be sure whether preload has been called before or not
+        DarkConfig.Internal.BuiltInTypeRefiers.RegisterAll(); 
+        
         UnityTypeReifiers.RegisterAll();
         defaults = Config.DefaultOptions;
         Config.DefaultOptions = ConfigOptions.AllowMissingExtraFields;

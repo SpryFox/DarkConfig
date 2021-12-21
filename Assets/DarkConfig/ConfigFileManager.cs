@@ -7,7 +7,7 @@ using System.Text.RegularExpressions;
 namespace DarkConfig {
     public class ConfigFileManager {
         /// If true (the default), DarkConfig will scan files for changes every 
-        /// *HotloadCheckInterval* seconds.  Setting it to false stops hotloading;
+        /// <c>HotloadCheckInterval<c> seconds.  Setting it to false stops hotloading;
         /// recommended for production games.
         public bool IsHotloadingFiles {
             get => isHotloadingFiles;
@@ -64,7 +64,7 @@ namespace DarkConfig {
                     isPreloading = false;
                     IsPreloaded = true;
 
-                    var files = source1.GetFiles();
+                    var files = source1.LoadedFiles;
                     foreach (var finfo in files) {
                         Files.Add(finfo.Name);
                         FileInfos.Add(finfo.Name, finfo);
@@ -90,7 +90,7 @@ namespace DarkConfig {
         }
 
         /// Adds a source of config files, to be consulted when loading or hotloading.
-        public void AddSource(IConfigSource source) {
+        public void AddSource(ConfigSource source) {
             sources.Add(source);
         }
 
@@ -225,43 +225,14 @@ namespace DarkConfig {
             return result;
         }
 
-        internal void RegisterReload(string filename, ReloadDelegate cb) {
-            List<ReloadDelegate> delegates;
-            if (!reloadCallbacks.TryGetValue(filename, out delegates)) {
-                delegates = new List<ReloadDelegate>();
-                reloadCallbacks[filename] = delegates;
-            }
-
-            if (!delegates.Contains(cb)) {
-                delegates.Add(cb);
-            }
-        }
-
-        internal int GetReloadDelegateCount() {
-            int count = 0;
-            foreach (var callback in reloadCallbacks) {
-                count += callback.Value.Count;
-            }
-            return count;
-        }
-
-        internal void CallAllDelegates() {
-            List<string> modified = new List<string>();
-            foreach (var kv in reloadCallbacks) {
-                modified.Add(kv.Key);
-            }
-
-            CallCallbacks(modified);
-        }
-
         /// Loads all files from the source immediately.  For editor tooling.
-        public void LoadFromSourceImmediately(IConfigSource source) {
+        public void LoadFromSourceImmediately(ConfigSource source) {
             Platform.Assert(Platform.Instance.CanDoImmediatePreload, "Trying to load immediately on a platform that doesn't support it");
             isPreloading = true;
             Platform.Log(LogVerbosity.Info, "Immediate-loading " + source);
 
             source.Preload(() => { }); // assume that this is immediate
-            var files = source.GetFiles();
+            var files = source.LoadedFiles;
             foreach (var finfo in files) {
                 Files.Add(finfo.Name);
                 FileInfos.Add(finfo.Name, finfo);
@@ -310,6 +281,35 @@ namespace DarkConfig {
             Platform.Instance.StartCoroutine(CheckHotloadCoro(callback, filesPerFrame));
         }
 
+        internal void RegisterReload(string filename, ReloadDelegate cb) {
+            List<ReloadDelegate> delegates;
+            if (!reloadCallbacks.TryGetValue(filename, out delegates)) {
+                delegates = new List<ReloadDelegate>();
+                reloadCallbacks[filename] = delegates;
+            }
+
+            if (!delegates.Contains(cb)) {
+                delegates.Add(cb);
+            }
+        }
+
+        internal int GetReloadDelegateCount() {
+            int count = 0;
+            foreach (var callback in reloadCallbacks) {
+                count += callback.Value.Count;
+            }
+            return count;
+        }
+
+        internal void CallAllDelegates() {
+            List<string> modified = new List<string>();
+            foreach (var kv in reloadCallbacks) {
+                modified.Add(kv.Key);
+            }
+
+            CallCallbacks(modified);
+        }
+
         internal ConfigFileInfo CheckHotload(string configName) {
             ConfigFileInfo finfo;
             lock (FileInfos) {
@@ -317,7 +317,7 @@ namespace DarkConfig {
             }
 
             foreach (var source in sources) {
-                if (!source.CanHotload()) {
+                if (!source.CanHotload) {
                     continue;
                 }
 
@@ -347,7 +347,7 @@ namespace DarkConfig {
         bool isHotloadingFiles = true;
         IEnumerator watchFilesCoro;
         bool isCheckingHotloadNow;
-        readonly List<IConfigSource> sources = new List<IConfigSource>();
+        readonly List<ConfigSource> sources = new List<ConfigSource>();
         readonly Dictionary<string, List<ReloadDelegate>> reloadCallbacks = new Dictionary<string, List<ReloadDelegate>>();
         readonly Dictionary<string, CombinerData> combiners = new Dictionary<string, CombinerData>();
         readonly Dictionary<string, List<CombinerData>> combinersBySubfile = new Dictionary<string, List<CombinerData>>();
@@ -387,8 +387,8 @@ namespace DarkConfig {
             Config.PreloadComplete();
         }
 
-        void HotloadIndex(IConfigSource source) {
-            var files = source.GetFiles();
+        void HotloadIndex(ConfigSource source) {
+            var files = source.LoadedFiles;
             foreach (var finfo in files) {
                 if (!Files.Contains(finfo.Name)) {
                     Files.Add(finfo.Name);
