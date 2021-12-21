@@ -195,34 +195,13 @@ namespace DarkConfig {
         ///   '**' matches any sequence of characters, including slashes
         public List<string> GetFilesByGlob(string glob) {
             CheckPreload();
-            return GetFilesByGlobImpl(glob, Files);
-        }
-
-        /// Don't call directly, used for tests.
-        public List<string> GetFilesByGlobImpl(string glob, List<string> files) {
-            var restring = Regex.Escape(glob)
-                .Replace(@"\*\*", @".*")
-                .Replace(@"\*", @"[^/]*")
-                .Replace(@"\?", @"[^/]");
-            var re = new Regex("^" + restring + "$", RegexOptions.IgnoreCase | RegexOptions.Singleline);
-            return GetFilesByRegexImpl(re, files);
+            return Internal.RegexUtils.FilterMatchingGlob(glob, Files);
         }
 
         /// Returns a list of files in the index that match a regular expression.
         public List<string> GetFilesByRegex(Regex pattern) {
             CheckPreload();
-            return GetFilesByRegexImpl(pattern, Files);
-        }
-        
-        /// Don't call directly, used for tests.
-        public List<string> GetFilesByRegexImpl(Regex pattern, List<string> files) {
-            var result = new List<string>();
-            foreach (string file in files) {
-                if (pattern.IsMatch(file)) {
-                    result.Add(file);
-                }
-            }
-            return result;
+            return Internal.RegexUtils.FilterMatching(pattern, Files);
         }
 
         /// Loads all files from the source immediately.  For editor tooling.
@@ -240,24 +219,6 @@ namespace DarkConfig {
 
             isPreloading = false;
             IsPreloaded = true;
-        }
-
-        /// Utility function that returns an integer checksum of a string.
-        /// Used to compare file bodies to know whether they've been hotloaded
-        /// or not.
-        public static int Checksum(string body) {
-            byte[] input = System.Text.Encoding.UTF8.GetBytes(body);
-            using (MemoryStream stream = new MemoryStream(input)) {
-                int hash = MurMurHash3.Hash(stream);
-                return hash;
-            }
-        }
-
-        /// Utility function that returns an integer checksum of a stream.
-        /// Used to compare file bodies to know whether they've been hotloaded
-        /// or not.
-        public static int Checksum(Stream stream) {
-            return MurMurHash3.Hash(stream);
         }
 
         /// Immediately checks all config files to see whether they can be

@@ -82,7 +82,7 @@ namespace DarkConfig {
             // size and modified time differ; have to open the whole file to see if it's actually different
             using (var fileStream = File.Open(filename, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)) {
                 var size = (int) fileStream.Length;
-                int checksum = ConfigFileManager.Checksum(fileStream);
+                int checksum = Internal.ChecksumUtils.Checksum(fileStream);
                 if (checksum == loadedFileInfo.Checksum) {
                     if (!AreTimestampsEquivalent(modifiedTime, loadedFileInfo.Modified)) {
                         // set the mtime on the file so that we don't have to re-check it later
@@ -188,7 +188,7 @@ namespace DarkConfig {
             string pathWithExtension = filePath + ConfigFileExtension;
             try {
                 using (var fileStream = File.Open(pathWithExtension, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)) {
-                    int checksum = ConfigFileManager.Checksum(fileStream);
+                    int checksum = Internal.ChecksumUtils.Checksum(fileStream);
                     fileStream.Seek(0, SeekOrigin.Begin);
 
                     return new ConfigFileInfo {
