@@ -66,7 +66,7 @@ namespace DarkConfig {
             }
 
             var contents = asset.text;
-            var checksum = ConfigFileManager.Checksum(contents);
+            var checksum = Internal.ChecksumUtils.Checksum(contents);
             if (checksum == finfo.Checksum) {
                 // early-out with a false result
                 return null;
@@ -107,7 +107,7 @@ namespace DarkConfig {
                 return new ConfigFileInfo {
                     Name = shortName,
                     Size = contents.Length,
-                    Checksum = ConfigFileManager.Checksum(contents),
+                    Checksum = Internal.ChecksumUtils.Checksum(contents),
                     Parsed = parsed
                 };
             } catch (Exception e) {
