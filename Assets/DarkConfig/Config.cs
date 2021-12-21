@@ -12,6 +12,7 @@ namespace DarkConfig {
 
     public class Config : ConfigReifier {
         public static ConfigFileManager FileManager => configFileManager = configFileManager ?? new ConfigFileManager();
+        static ConfigFileManager configFileManager;
         
         /// True if preloading is complete, false otherwise.
         public static bool IsPreloaded => FileManager.IsPreloaded;
@@ -100,20 +101,6 @@ namespace DarkConfig {
             });
         }
         
-        /// Utility function to find all subclasses of a class
-        public static Dictionary<string, Type> FindSubclasses(Type t) {
-            var subclasses = new Dictionary<string, Type>();
-            foreach (var asm in AppDomain.CurrentDomain.GetAssemblies()) {
-                foreach (var type in asm.GetTypes()) {
-                    if (type.IsAbstract == false && t.IsAssignableFrom(type)) {
-                        subclasses[type.Name.ToLower()] = type;
-                    }
-                }
-            }
-
-            return subclasses;
-        }
-
         /// Cleans up DarkConfig's state, removing all listeners, loaded files, and so on, as if Preload had never been called.
         public static void Clear() {
             OnPreloadInvoker = null;
@@ -130,7 +117,7 @@ namespace DarkConfig {
         /// whenever any of the matching files changes.
         public static void LoadFilesAsList(string glob, ReloadDelegate cb) {
             var matchingFiles = FileManager.GetFilesByGlob(glob);
-            var destFile = glob + "_file";
+            string destFile = glob + "_file";
             FileManager.RegisterCombinedFile(matchingFiles, destFile, CombineList);
             FileManager.LoadConfig(destFile, cb);
         }
@@ -206,13 +193,12 @@ namespace DarkConfig {
 
         /////////////////////////////////////////////////
         
-        static ConfigFileManager configFileManager;
         static Action OnPreloadInvoker;
         
         /////////////////////////////////////////////////
 
         internal static void PreloadComplete() {
-            BuildInTypeRefiers.RegisterAll();
+            Internal.BuiltInTypeRefiers.RegisterAll();
         }
 
         static DocNode LoadDocFromTextReader(TextReader reader, string filename) {

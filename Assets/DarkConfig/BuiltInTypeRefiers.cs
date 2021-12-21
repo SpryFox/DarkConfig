@@ -1,7 +1,7 @@
 using System;
 
-namespace DarkConfig {
-    public static class BuildInTypeRefiers {
+namespace DarkConfig.Internal {
+    public static class BuiltInTypeRefiers {
         public static void RegisterAll() {
             ConfigReifier.Register<DateTime>(FromDateTime);
             ConfigReifier.Register<TimeSpan>(FromTimeSpan);

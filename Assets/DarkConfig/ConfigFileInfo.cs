@@ -1,5 +1,4 @@
-using System;
-using System.Collections.Generic;
+﻿using System;
 
 namespace DarkConfig {
     public class ConfigFileInfo {
@@ -12,19 +11,5 @@ namespace DarkConfig {
         public override string ToString() {
             return $"[{Name} {Checksum:X16} {Size} {(Parsed == null ? "unparsed" : "parsed")}]";
         }
-    }
-
-    public interface IConfigSource {
-        bool CanLoadNow();
-
-        bool CanHotload();
-
-        List<ConfigFileInfo> GetFiles();
-
-        void Preload(Action callback);
-
-        void ReceivePreloaded(List<ConfigFileInfo> files);
-
-        ConfigFileInfo TryHotload(ConfigFileInfo configFileInfo);
     }
 }

@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System;
 
 namespace DarkConfig {
-    public class LoadUtils {
+    public static class LoadUtils {
         public static void SetParentDefaults<K, V>(ref Dictionary<K, V> container, DocNode doc, Func<V, K> getBasedOn, string[] unparentableFieldNames = null) {
             // clear existing values before the reify; because later we bake them
             var fields = typeof(V).GetFields();

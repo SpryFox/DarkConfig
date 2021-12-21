@@ -15,7 +15,7 @@ namespace DarkConfig {
 
         public bool CanDoImmediatePreload = false;
 
-        public abstract IConfigSource ConfigSource { get; }
+        public abstract ConfigSource ConfigSource { get; }
 
         public virtual void Clear() { }
 
