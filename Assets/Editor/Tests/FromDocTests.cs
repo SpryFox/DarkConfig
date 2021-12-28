@@ -1,5 +1,6 @@
 using NUnit.Framework;
 using DarkConfig;
+using DarkConfig.Internal;
 using System.Collections.Generic;
 using System;
 

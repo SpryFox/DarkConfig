@@ -6,9 +6,9 @@ namespace DarkConfig {
     /// Config reifiers for built-in Unity types.
     public static class UnityTypeReifiers {
         public static void RegisterAll() {
-            ConfigReifier.Register<Vector2>(FromVector2);
-            ConfigReifier.Register<Vector3>(FromVector3);
-            ConfigReifier.Register<Color>(FromColor);
+            Config.Register<Vector2>(FromVector2);
+            Config.Register<Vector3>(FromVector3);
+            Config.Register<Color>(FromColor);
         }
 
         static object FromVector2(object obj, DocNode value) {

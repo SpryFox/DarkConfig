@@ -1,4 +1,5 @@
 using DarkConfig;
+using DarkConfig.Internal;
 using NUnit.Framework;
 
 [TestFixture]
