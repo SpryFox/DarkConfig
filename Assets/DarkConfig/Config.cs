@@ -255,8 +255,9 @@ namespace DarkConfig {
             Register(typeof(T), del);
         }
 
+        /// Register a handler for loading a particular type.
         public static void Register(Type t, FromDocDelegate del) {
-            Internal.ConfigReifier.Register(t, del);
+            Internal.ConfigReifier.CustomReifiers[t] = del;
         }
         
         /// Create an instance of an object and immediately set fields on it from the document. 
