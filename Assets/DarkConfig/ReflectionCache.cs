@@ -3,17 +3,20 @@ using System.Collections.Generic;
 using System.Reflection;
 
 namespace DarkConfig.Internal {
+    /// Cached type reflection data.
+    /// Reflection is quite expensive especially on consoles
+    /// so it's worth trying to reduce how much we need to do it as much as possible.
     static class ReflectionCache {
         internal class TypeInfo {
             public ClassAttributesFlags AttributeFlags = ClassAttributesFlags.None;
-            public readonly List<MemberMetadata> Members = new List<MemberMetadata>();
+            public MemberMetadata[] Members;
             
             public MethodInfo FromDoc;
             public MethodInfo PostDoc;
         }
         
         /// Information about either a field or property on a particular type. 
-        internal class MemberMetadata {
+        internal struct MemberMetadata {
             public string ShortName;
             public MemberInfo Info;
             public Type Type;
@@ -63,19 +66,38 @@ namespace DarkConfig.Internal {
             var memberBindingFlags = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static;
             var properties = type.GetProperties(memberBindingFlags);
             var fields = type.GetFields(memberBindingFlags);
+
+            // Count the members.
+            int memberCount = 0;
+            foreach (var propertyInfo in properties) {
+                if (!propertyInfo.IsSpecialName && propertyInfo.CanWrite && propertyInfo.CanRead) {
+                    memberCount++;
+                }
+            }
+            foreach (var fieldInfo in fields) {
+                if (!fieldInfo.IsSpecialName && fieldInfo.Name[0] != '<') {
+                    memberCount++;
+                }
+            }
+            info.Members = new MemberMetadata[memberCount];
+
+            int currentMemberIndex = 0;
             
             // Read all properties from the type.
             foreach (var propertyInfo in properties) {
-                if (!propertyInfo.IsSpecialName && propertyInfo.CanWrite && propertyInfo.CanRead) {
-                    var metadata = new MemberMetadata {
-                        Info = propertyInfo,
-                        ShortName = RemoveHungarianPrefix(propertyInfo.Name),
-                        IsField = false,
-                        Type = propertyInfo.PropertyType
-                    };
-                    SetMemberAttributeFlags(metadata);
-                    info.Members.Add(metadata);
+                if (propertyInfo.IsSpecialName || !propertyInfo.CanWrite || !propertyInfo.CanRead) {
+                    continue;
                 }
+                
+                var metadata = new MemberMetadata {
+                    Info = propertyInfo,
+                    ShortName = RemoveHungarianPrefix(propertyInfo.Name),
+                    IsField = false,
+                    Type = propertyInfo.PropertyType
+                };
+                SetMemberAttributeFlags(ref metadata);
+                info.Members[currentMemberIndex] = metadata;
+                currentMemberIndex++;
             }
 
             // Read all fields from the type.
@@ -93,8 +115,9 @@ namespace DarkConfig.Internal {
                     IsField = true,
                     Type = fieldInfo.FieldType
                 };
-                SetMemberAttributeFlags(metadata);
-                info.Members.Add(metadata);
+                SetMemberAttributeFlags(ref metadata);
+                info.Members[currentMemberIndex] = metadata;
+                currentMemberIndex++;
             }
 
             cachedTypeInfo[type] = info;
@@ -106,7 +129,7 @@ namespace DarkConfig.Internal {
             return name.Length > 1 && name[1] == '_' ? name.Substring(2) : name;
         }
 
-        static void SetMemberAttributeFlags(MemberMetadata metadata) {
+        static void SetMemberAttributeFlags(ref MemberMetadata metadata) {
             foreach (var attribute in metadata.Info.GetCustomAttributes(true)) {
                 if (attribute is ConfigMandatoryAttribute) {
                     metadata.HasConfigMandatoryAttribute = true;

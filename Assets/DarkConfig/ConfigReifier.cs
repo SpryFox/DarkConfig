@@ -51,7 +51,6 @@ namespace DarkConfig.Internal {
             obj = (T) setCopy;
         }
 
-
         /////////////////////////////////////////////////
 
         static bool IsDelegateType(Type type) {
@@ -99,13 +98,13 @@ namespace DarkConfig.Internal {
                 // ==== Special Case ====
                 // Allow specifying object types with a single property or field as a scalar value in configs.
                 // This is syntactic sugar that lets us wrap values in classes.
-                Platform.Assert(typeInfo.Members.Count == 1, "Trying to set a field of type: ",
-                    type, typeInfo.Members.Count, "from value of wrong type:",
+                Platform.Assert(typeInfo.Members.Length == 1, "Trying to set a field of type: ",
+                    type, typeInfo.Members.Length, "from value of wrong type:",
                     doc.Type == DocNodeType.Scalar ? doc.StringValue : doc.Type.ToString(),
                     "at",
                     doc.SourceInformation);
                 
-                var memberMetadata = typeInfo.Members[0];
+                ref var memberMetadata = ref typeInfo.Members[0];
                 SetMember(memberMetadata.Info, memberMetadata.IsField, ref setCopy, doc, options);
                 obj = setCopy;
                 return;
@@ -117,8 +116,8 @@ namespace DarkConfig.Internal {
             bool isAnyFieldMandatory = false;
 
             // Set the fields on the object.
-            foreach (var memberMetadata in typeInfo.Members) {
-                var memberInfo = memberMetadata.Info;
+            for (var memberIndex = 0; memberIndex < typeInfo.Members.Length; memberIndex++) {
+                ref var memberMetadata = ref typeInfo.Members[memberIndex];
                 
                 // Override global and class settings per-field.
                 bool memberIsMandatory = memberMetadata.HasConfigMandatoryAttribute;
@@ -141,7 +140,7 @@ namespace DarkConfig.Internal {
                 }
 
                 if (doc.TryGetValue(fieldName, ignoreCase, out var node)) {
-                    SetMember(memberInfo, memberMetadata.IsField, ref setCopy, node, options);
+                    SetMember(memberMetadata.Info, memberMetadata.IsField, ref setCopy, node, options);
                     setMembers.Add(fieldName);
                 } else if (memberAllowMissing) {
                     // pretend like we set it
