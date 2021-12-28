@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using NUnit.Framework;
 using DarkConfig;
+using DarkConfig.Internal;
 
 public class UnityTestFixture {
     protected T ReifyString<T>(string str) where T : new() {

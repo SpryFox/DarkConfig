@@ -4,9 +4,10 @@ using System.IO;
 using YamlDotNet.RepresentationModel;
 
 namespace DarkConfig {
+    public delegate object FromDocDelegate(object obj, DocNode doc);
     public delegate bool ReloadDelegate(DocNode d);
 
-    public class Config : ConfigReifier {
+    public static class Config {
         public static ConfigFileManager FileManager => configFileManager = configFileManager ?? new ConfigFileManager();
         static ConfigFileManager configFileManager;
         
@@ -100,7 +101,7 @@ namespace DarkConfig {
         /// Cleans up DarkConfig's state, removing all listeners, loaded files, and so on, as if Preload had never been called.
         public static void Clear() {
             OnPreloadInvoker = null;
-            CustomReifiers = new Dictionary<Type, FromDocDelegate>();
+            Internal.ConfigReifier.CustomReifiers.Clear();
             Platform.Instance.Clear();
             configFileManager = null;
         }
@@ -187,10 +188,97 @@ namespace DarkConfig {
             return LoadDocFromTextReader(new StreamReader(stream), filename);
         }
 
+        /// Sets up *obj* based on the contents of the parsed document *doc*
+        /// So if obj is a Thing:
+        ///   public class Thing {
+        ///      float m1;
+        ///      string m2;
+        ///   }
+        ///
+        /// You can create a new instance, or set an existing instance's fields with this parsed document:
+        ///  {"m1":1.0, "m2":"test"}
+        ///
+        /// *obj* can be null; if it is it gets assigned a new instance based on its type and the contents of *doc* (this is why the parameter is a ref)
+        /// 
+        /// Works on static and private variables, too.
+        public static void Reify<T>(ref T obj, DocNode doc, ConfigOptions? options = null) {
+            Internal.ConfigReifier.Reify<T>(ref obj, doc, options);
+        }
+
+        /// Sets up *obj* based on the contents of the parsed document *doc* with a type override.
+        /// Useful for (eg) instantiating concrete classes of an interface based on a keyword.
+        /// So if obj is a Thing:
+        ///   public class Thing {
+        ///      float m1;
+        ///      string m2;
+        ///   }
+        ///
+        /// You can create a new instance, or set an existing instance's fields with this parsed document:
+        ///  {"m1":1.0, "m2":"test"}
+        ///
+        /// *obj* can be null; if it is it gets assigned a new instance based on its type and the contents of *doc* (this is why the parameter is a ref)
+        /// 
+        /// Works on static and private variables, too.
+        public static void Reify<T>(ref T obj, Type objType, DocNode doc, ConfigOptions? options = null) {
+            Internal.ConfigReifier.Reify<T>(ref obj, objType, doc, options);
+        }
+
+        /// Sets up static variables (and only static variables) on type *T* based on the contents of the parsed document *doc*
+        ///
+        /// Ignores any fields in *doc* that are for non-static fields.
+        public static void ReifyStatic<T>(DocNode doc, ConfigOptions? options = null) {
+            Internal.ConfigReifier.ReifyStatic<T>(doc, options);
+        }
+
+        /// Same as ReifyStatic<T>, but with a type argument instead of a generic.
+        /// Static classes can't be used in generics, so use this version instead.
+        public static void ReifyStatic(Type type, DocNode doc, ConfigOptions? options = null) {
+            Internal.ConfigReifier.ReifyStatic(type, doc, options);
+        }
+
+        /// Register a handler for loading a particular type.
+        /// 
+        /// The delegate accepts two parameters: the existing object (if any), and the 
+        /// DocNode that is meant to update the object.  It should attempt to update
+        /// the object in-place, or if that's not possible, to return a new instance
+        /// of the correct type.
+        /// The return value is the updated/created object.
+        public static void Register<T>(FromDocDelegate del) {
+            Internal.ConfigReifier.Register<T>(del);
+        }
+
+        public static void Register(Type t, FromDocDelegate del) {
+            Internal.ConfigReifier.Register(t, del);
+        }
+        
+        /// Create an instance of an object and immediately set fields on it from the document. 
+        /// The type of instance is supplied via the generic parameter.
+        public static T CreateInstance<T>(DocNode dict, ConfigOptions? options = null) where T : new() {
+            return Internal.ConfigReifier.CreateInstance<T>(dict, options);
+        }
+
+        /// Create an instance of an object and immediately set fields on it from the document. 
+        /// The type of instance is supplied explicitly as the first argument.
+        /// Requires a zero-args constructor on the type though it doesn't enforce that.
+        public static object CreateInstance(Type t, DocNode dict, ConfigOptions? options = null) {
+            return Internal.ConfigReifier.CreateInstance(t, dict, options);
+        }
+
+        /// Sets all members on the object *obj* (which must not be null) from *dict*.
+        /// Expects *obj* to be a plain class, but if it's a boxed struct it will work as well.
+        public static void SetFieldsOnObject<T>(ref T obj, DocNode dict, ConfigOptions? options = null) where T : class {
+            Internal.ConfigReifier.SetFieldsOnObject<T>(ref obj, dict, options);
+        }
+
+        /// Sets all members on the struct *obj* (which must not be null) from *dict*.
+        public static void SetFieldsOnStruct<T>(ref T obj, DocNode dict, ConfigOptions? options = null) where T : struct {
+            Internal.ConfigReifier.SetFieldsOnStruct<T>(ref obj, dict, options);
+        }
+
         /////////////////////////////////////////////////
-        
+
         static Action OnPreloadInvoker;
-        
+
         /////////////////////////////////////////////////
 
         internal static void PreloadComplete() {

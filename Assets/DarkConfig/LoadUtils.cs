@@ -14,7 +14,7 @@ namespace DarkConfig {
                 }
             }
 
-            ConfigReifier.Reify(ref container, doc);
+            Config.Reify(ref container, doc);
 
             var parentRelationships = new Dictionary<V, V>();
 

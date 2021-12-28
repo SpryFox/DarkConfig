@@ -49,7 +49,7 @@ namespace DarkConfig {
         
         public T As<T>() {
             var result = default(T);
-            ConfigReifier.Reify(ref result, this);
+            Config.Reify(ref result, this);
             return result;
         }
 

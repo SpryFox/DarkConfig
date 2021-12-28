@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
-namespace DarkConfig {
-    public delegate object FromDocDelegate(object obj, DocNode doc);
-
+namespace DarkConfig.Internal {
     public class ConfigReifier {
+        public static readonly Dictionary<Type, FromDocDelegate> CustomReifiers = new Dictionary<Type, FromDocDelegate>();
+        
+        /////////////////////////////////////////////////
+
         /// Sets up *obj* based on the contents of the parsed document *doc*
         /// So if obj is a Thing:
         ///   public class Thing {
@@ -113,10 +115,6 @@ namespace DarkConfig {
         }
 
 
-        /////////////////////////////////////////////////
-
-        protected static Dictionary<Type, FromDocDelegate> CustomReifiers = new Dictionary<Type, FromDocDelegate>();
-        
         /////////////////////////////////////////////////
 
         static bool IsDelegateType(Type type) {
