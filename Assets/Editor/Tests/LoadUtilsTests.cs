@@ -15,10 +15,10 @@ class LoadUtilsTests {
         }
     }
 
-    const string c_filename = "LoadUtilsTests_TestFileName";
+    const string FILENAME = "LoadUtilsTests_TestFileName";
 
     DocNode FromString(string s) {
-        return Config.LoadDocFromString(s, c_filename);
+        return Config.LoadDocFromString(s, FILENAME);
     }
 
     [SetUp]
@@ -85,7 +85,6 @@ class LoadUtilsTests {
         Assert.AreEqual("a", d["deeper"].stringKey);
     }
 
-
     [Test]
     public void LoadUtils_SetParentDefaults_LoadNullableRecursive() {
         var doc = FromString(@"
@@ -132,7 +131,6 @@ class LoadUtilsTests {
         Assert.AreEqual(1, d["basic"].intKey.Value);
         Assert.AreEqual("b", d["basic"].stringKey);
     }
-
 
     [Test]
     public void LoadUtils_SetParentDefaults_IgnoreFields() {
