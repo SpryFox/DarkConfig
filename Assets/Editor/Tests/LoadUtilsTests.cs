@@ -23,12 +23,12 @@ class LoadUtilsTests {
 
     [SetUp]
     public void SetUp() {
-        Config.DefaultOptions = ConfigOptions.AllowMissingFields;
+        Settings.DefaultReifierOptions = ConfigOptions.AllowMissingFields;
     }
 
     [TearDown]
     public void TearDown() {
-        Config.DefaultOptions = ConfigOptions.AllowMissingExtraFields | ConfigOptions.CaseSensitive;
+        Settings.DefaultReifierOptions = ConfigOptions.AllowMissingExtraFields | ConfigOptions.CaseSensitive;
     }
 
     [Test]
