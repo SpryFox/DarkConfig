@@ -158,13 +158,13 @@ class ConfigReifierTests {
     T ReifyString<T>(string str) where T : new() {
         var doc = Config.LoadDocFromString(str, "ConfigReifierTests_ReifyString_TestFilename");
         T tc = default(T);
-        ConfigReifier.Reify(ref tc, doc);
+        Config.Reify(ref tc, doc);
         return tc;
     }
 
     T UpdateFromString<T>(ref T obj, string str) {
         var doc = Config.LoadDocFromString(str, "ConfigReifierTests_UpdateFromString_TestFilename");
-        ConfigReifier.Reify(ref obj, doc);
+        Config.Reify(ref obj, doc);
         return obj;
     }
 
@@ -711,7 +711,7 @@ class ConfigReifierTests {
             intKey: 10   # test non-static fields
             "
             , "ConfigReifierTests_ReifyString_TestFilename");
-        ConfigReifier.ReifyStatic<TestClass>(doc);
+        Config.ReifyStatic<TestClass>(doc);
         Assert.AreEqual(TestClass.staticStringKey, "arbitrage");
         Assert.AreEqual(TestClass.staticIntArrKey, new int[] {4, 4, 0, 0});
     }
@@ -725,7 +725,7 @@ class ConfigReifierTests {
             , "ConfigReifierTests_ReifyString_TestFilename");
 
         // passes if there are no exceptions
-        ConfigReifier.ReifyStatic<TestClass>(doc);
+        Config.ReifyStatic<TestClass>(doc);
     }
 
     [Test]
@@ -735,7 +735,7 @@ class ConfigReifierTests {
             staticIntKey: 3049
             "
             , "ConfigReifierTests_ReifyString_TestFilename");
-        ConfigReifier.ReifyStatic<ChildStruct>(doc);
+        Config.ReifyStatic<ChildStruct>(doc);
         Assert.AreEqual(ChildStruct.staticIntKey, 3049);
     }
 
@@ -746,7 +746,7 @@ class ConfigReifierTests {
             staticStringList: [herp, derp]
             "
             , "ConfigReifierTests_ReifyString_TestFilename");
-        ConfigReifier.ReifyStatic(typeof(PureStatic), doc);
+        Config.ReifyStatic(typeof(PureStatic), doc);
         Assert.AreEqual(PureStatic.staticStringList[0], "herp");
         Assert.AreEqual(PureStatic.staticStringList[1], "derp");
     }
@@ -1023,7 +1023,7 @@ class ConfigReifierTests {
         ", "ConfigReifier_DocNode_TestFilename");
 
         DocNode d = null;
-        ConfigReifier.Reify(ref d, doc);
+        Config.Reify(ref d, doc);
         Assert.True(d.ContainsKey("ugh"));
         Assert.AreEqual(d["ugh"].As<string>(), "bugh");
     }

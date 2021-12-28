@@ -1,16 +1,14 @@
 ﻿#if UNITY_EDITOR
-
 using System.Collections.Generic;
 using UnityEngine;
 using NUnit.Framework;
 using DarkConfig;
-using DarkConfig.Internal;
 
 public class UnityTestFixture {
     protected T ReifyString<T>(string str) where T : new() {
         var doc = Config.LoadDocFromString(str, "UnityTypesConfigReifierTests_ReifyString_TestFilename");
         var result = default(T);
-        ConfigReifier.Reify(ref result, doc);
+        Config.Reify(ref result, doc);
         return result;
     }
 }
@@ -112,7 +110,7 @@ public class UnityMonoBehaviourReifyTests : UnityTestFixture {
 
         var obj = new GameObject("Test_ReifierAttributes");
         var mb = obj.AddComponent<MonoBehaviourSubclass>();
-        ConfigReifier.Reify(ref mb, doc, ConfigOptions.None);
+        Config.Reify(ref mb, doc, ConfigOptions.None);
         Assert.AreEqual(mb.field1, 1);
 
         Object.DestroyImmediate(obj);

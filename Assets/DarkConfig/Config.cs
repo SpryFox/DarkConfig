@@ -202,7 +202,7 @@ namespace DarkConfig {
         /// 
         /// Works on static and private variables, too.
         public static void Reify<T>(ref T obj, DocNode doc, ConfigOptions? options = null) {
-            Internal.ConfigReifier.Reify<T>(ref obj, doc, options);
+            Reify(ref obj, typeof(T), doc, options);
         }
 
         /// Sets up *obj* based on the contents of the parsed document *doc* with a type override.
@@ -220,20 +220,21 @@ namespace DarkConfig {
         /// 
         /// Works on static and private variables, too.
         public static void Reify<T>(ref T obj, Type objType, DocNode doc, ConfigOptions? options = null) {
-            Internal.ConfigReifier.Reify<T>(ref obj, objType, doc, options);
+            obj = (T) Internal.ConfigReifier.ValueOfType(objType, obj, doc, options);
         }
 
         /// Sets up static variables (and only static variables) on type *T* based on the contents of the parsed document *doc*
         ///
         /// Ignores any fields in *doc* that are for non-static fields.
         public static void ReifyStatic<T>(DocNode doc, ConfigOptions? options = null) {
-            Internal.ConfigReifier.ReifyStatic<T>(doc, options);
+            ReifyStatic(typeof(T), doc, options);
         }
 
         /// Same as ReifyStatic<T>, but with a type argument instead of a generic.
         /// Static classes can't be used in generics, so use this version instead.
         public static void ReifyStatic(Type type, DocNode doc, ConfigOptions? options = null) {
-            Internal.ConfigReifier.ReifyStatic(type, doc, options);
+            object dummyObj = null;
+            Internal.ConfigReifier.SetFieldsOnObject(type, ref dummyObj, doc, options ?? Settings.DefaultReifierOptions);
         }
 
         /// Register a handler for loading a particular type.

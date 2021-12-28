@@ -9,55 +9,6 @@ namespace DarkConfig.Internal {
         
         /////////////////////////////////////////////////
 
-        /// Sets up *obj* based on the contents of the parsed document *doc*
-        /// So if obj is a Thing:
-        ///   public class Thing {
-        ///      float m1;
-        ///      string m2;
-        ///   }
-        ///
-        /// You can create a new instance, or set an existing instance's fields with this parsed document:
-        ///  {"m1":1.0, "m2":"test"}
-        ///
-        /// *obj* can be null; if it is it gets assigned a new instance based on its type and the contents of *doc* (this is why the parameter is a ref)
-        /// 
-        /// Works on static and private variables, too.
-        public static void Reify<T>(ref T obj, DocNode doc, ConfigOptions? options = null) {
-            obj = (T) ValueOfType(typeof(T), obj, doc, options);
-        }
-
-        /// Sets up *obj* based on the contents of the parsed document *doc* with a type override.
-        /// Useful for (eg) instantiating concrete classes of an interface based on a keyword.
-        /// So if obj is a Thing:
-        ///   public class Thing {
-        ///      float m1;
-        ///      string m2;
-        ///   }
-        ///
-        /// You can create a new instance, or set an existing instance's fields with this parsed document:
-        ///  {"m1":1.0, "m2":"test"}
-        ///
-        /// *obj* can be null; if it is it gets assigned a new instance based on its type and the contents of *doc* (this is why the parameter is a ref)
-        /// 
-        /// Works on static and private variables, too.
-        public static void Reify<T>(ref T obj, Type objType, DocNode doc, ConfigOptions? options = null) {
-            obj = (T) ValueOfType(objType, obj, doc, options);
-        }
-
-        /// Sets up static variables (and only static variables) on type *T* based on the contents of the parsed document *doc*
-        ///
-        /// Ignores any fields in *doc* that are for non-static fields.
-        public static void ReifyStatic<T>(DocNode doc, ConfigOptions? options = null) {
-            ReifyStatic(typeof(T), doc, options);
-        }
-
-        /// Same as ReifyStatic<T>, but with a type argument instead of a generic.
-        /// Static classes can't be used in generics, so use this version instead.
-        public static void ReifyStatic(Type type, DocNode doc, ConfigOptions? options = null) {
-            object dummyObj = null;
-            SetFieldsOnObject(type, ref dummyObj, doc, options ?? Settings.DefaultReifierOptions);
-        }
-
         /// Register a handler for loading a particular type.
         /// 
         /// The delegate accepts two parameters: the existing object (if any), and the 
@@ -132,7 +83,7 @@ namespace DarkConfig.Internal {
         }
 
         /// Sets all members on the object *obj* based on the appropriate key from *doc*
-        static void SetFieldsOnObject(Type type, ref object obj, DocNode doc, ConfigOptions options) {
+        public static void SetFieldsOnObject(Type type, ref object obj, DocNode doc, ConfigOptions options) {
             if (doc == null) {
                 return;
             }
@@ -309,7 +260,7 @@ namespace DarkConfig.Internal {
             return obj;
         }
 
-        static object ValueOfType(Type fieldType, object existing, DocNode value, ConfigOptions? options) {
+        public static object ValueOfType(Type fieldType, object existing, DocNode value, ConfigOptions? options) {
             try {
                 if (fieldType == typeof(bool)) {
                     return Convert.ToBoolean(value.StringValue, System.Globalization.CultureInfo.InvariantCulture);
