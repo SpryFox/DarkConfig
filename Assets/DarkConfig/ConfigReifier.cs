@@ -10,10 +10,6 @@ namespace DarkConfig.Internal {
         /////////////////////////////////////////////////
 
         /// Register a handler for loading a particular type.
-        public static void Register<T>(FromDocDelegate del) {
-            Register(typeof(T), del);
-        }
-
         public static void Register(Type t, FromDocDelegate del) {
             CustomReifiers[t] = del;
         }

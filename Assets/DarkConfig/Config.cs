@@ -252,7 +252,7 @@ namespace DarkConfig {
 
         /// Register a handler for loading a particular type.
         public static void Register<T>(FromDocDelegate del) {
-            Internal.ConfigReifier.Register<T>(del);
+            Register(typeof(T), del);
         }
 
         public static void Register(Type t, FromDocDelegate del) {
