@@ -221,6 +221,7 @@ namespace DarkConfig.Internal {
             return (T) Enum.Parse(typeof(T), v);
         }
 
+        /// Used for logging errors
         static string JoinList(List<string> args, string joinStr) {
             var sb = new System.Text.StringBuilder();
             for (int i = 0; i < args.Count; i++) {
@@ -233,6 +234,13 @@ namespace DarkConfig.Internal {
             return sb.ToString();
         }
 
+        /// <summary>
+        /// Call a PostDoc method for the given object if one exists.  Returns the modified instance.
+        /// </summary>
+        /// <param name="serializedType"></param>
+        /// <param name="obj"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
         static object CallPostDoc(Type serializedType, object obj) {
             var postDoc = Internal.ReflectionCache.GetPostDocMethod(serializedType);
             if (postDoc != null) {
@@ -246,6 +254,17 @@ namespace DarkConfig.Internal {
             return obj;
         }
 
+        /// <summary>
+        /// Reads the given doc node and converts it to an instance of the given type.
+        /// </summary>
+        /// <param name="fieldType"></param>
+        /// <param name="existing"></param>
+        /// <param name="value"></param>
+        /// <param name="options"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        /// <exception cref="ParseException"></exception>
+        /// <exception cref="NotSupportedException"></exception>
         public static object ValueOfType(Type fieldType, object existing, DocNode value, ConfigOptions? options) {
             try {
                 if (fieldType == typeof(bool)) {
