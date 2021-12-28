@@ -30,7 +30,9 @@ namespace DarkConfig.Internal {
         internal enum ClassAttributesFlags {
             None = 0,
             HasConfigMandatoryAttribute = 1 << 0,
-            HasConfigAllowMissingAttribute = 1 << 1
+            HasConfigAllowMissingAttribute = 1 << 1,
+            
+            Invalid = HasConfigMandatoryAttribute | HasConfigAllowMissingAttribute
         }
         
         ////////////////////////////////////////////
@@ -59,9 +61,7 @@ namespace DarkConfig.Internal {
                 }
             }
             
-            Platform.Assert((info.AttributeFlags & ClassAttributesFlags.HasConfigMandatoryAttribute) == 0 || (info.AttributeFlags & ClassAttributesFlags.HasConfigAllowMissingAttribute) == 0, 
-                "Type", type.Name, "has both ConfigAllowMissing and ConfigMandatory attributes.");
-            
+            Platform.Assert(info.AttributeFlags != ClassAttributesFlags.Invalid, "Type", type.Name, "has both ConfigAllowMissing and ConfigMandatory attributes.");
             
             var memberBindingFlags = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static;
             var properties = type.GetProperties(memberBindingFlags);
