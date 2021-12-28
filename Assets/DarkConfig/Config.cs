@@ -4,7 +4,19 @@ using System.IO;
 using YamlDotNet.RepresentationModel;
 
 namespace DarkConfig {
+    /// <summary>
+    /// A custom method for a specific type that takes a parsed config doc
+    /// and sets the fields on an instance of that type.
+    /// 
+    /// It should attempt to update the object in-place, 
+    /// or if that's not possible, to return a new instance
+    /// of the correct type.
+    /// </summary>
+    /// <param name="obj">the existing object (if any)</param>
+    /// <param name="doc">the DocNode that is meant to update the object</param>
+    /// <returns>The updated/created object</returns>
     public delegate object FromDocDelegate(object obj, DocNode doc);
+
     public delegate bool ReloadDelegate(DocNode d);
 
     public static class Config {
@@ -98,7 +110,8 @@ namespace DarkConfig {
             });
         }
         
-        /// Cleans up DarkConfig's state, removing all listeners, loaded files, and so on, as if Preload had never been called.
+        /// Cleans up DarkConfig's state, removing all listeners, loaded files, 
+        /// and so on, as if Preload had never been called.
         public static void Clear() {
             OnPreloadInvoker = null;
             Internal.ConfigReifier.CustomReifiers.Clear();
@@ -238,12 +251,6 @@ namespace DarkConfig {
         }
 
         /// Register a handler for loading a particular type.
-        /// 
-        /// The delegate accepts two parameters: the existing object (if any), and the 
-        /// DocNode that is meant to update the object.  It should attempt to update
-        /// the object in-place, or if that's not possible, to return a new instance
-        /// of the correct type.
-        /// The return value is the updated/created object.
         public static void Register<T>(FromDocDelegate del) {
             Internal.ConfigReifier.Register<T>(del);
         }

@@ -10,12 +10,6 @@ namespace DarkConfig.Internal {
         /////////////////////////////////////////////////
 
         /// Register a handler for loading a particular type.
-        /// 
-        /// The delegate accepts two parameters: the existing object (if any), and the 
-        /// DocNode that is meant to update the object.  It should attempt to update
-        /// the object in-place, or if that's not possible, to return a new instance
-        /// of the correct type.
-        /// The return value is the updated/created object.
         public static void Register<T>(FromDocDelegate del) {
             Register(typeof(T), del);
         }
