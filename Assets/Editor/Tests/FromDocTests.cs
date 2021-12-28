@@ -46,7 +46,7 @@ class FromDocTests {
     T ReifyString<T>(string str) where T : new() {
         var doc = Config.LoadDocFromString(str, "FromDocTests_ReifyString_TestFileName");
         T tc = default(T);
-        ConfigReifier.Reify(ref tc, doc);
+        Config.Reify(ref tc, doc);
         return tc;
     }
 
@@ -68,7 +68,7 @@ class FromDocTests {
         var tc = new TestClass {baseKey = 15};
         var saved = tc;
         var doc = Config.LoadDocFromString("[\"Base\", 99]", c_filename);
-        ConfigReifier.Reify(ref tc, doc);
+        Config.Reify(ref tc, doc);
         Assert.AreSame(tc, saved);
         Assert.AreEqual(tc.baseKey, 99);
     }
@@ -78,7 +78,7 @@ class FromDocTests {
         TestClass tc = new TestClassDerived {baseKey = 1, derivedKey = 2};
         var saved = tc;
         var doc = Config.LoadDocFromString("[\"Derived\", 66]", c_filename);
-        ConfigReifier.Reify(ref tc, doc);
+        Config.Reify(ref tc, doc);
         Assert.AreSame(tc, saved);
         Assert.AreEqual(tc.baseKey, 1);
         Assert.AreEqual(((TestClassDerived) tc).derivedKey, 66);
@@ -89,7 +89,7 @@ class FromDocTests {
         TestClass tc = new TestClassDerived {baseKey = 4, derivedKey = 5};
         var saved = tc;
         var doc = Config.LoadDocFromString("[\"Base\", 123]", c_filename);
-        ConfigReifier.Reify(ref tc, doc);
+        Config.Reify(ref tc, doc);
         Assert.AreSame(tc, saved);
         Assert.AreEqual(tc.baseKey, 123);
         Assert.AreEqual(((TestClassDerived) tc).derivedKey, 5);
@@ -100,7 +100,7 @@ class FromDocTests {
         TestClass tc = new TestClass {baseKey = 19};
         var saved = tc;
         var doc = Config.LoadDocFromString("[\"Derived\", 321]", c_filename);
-        ConfigReifier.Reify(ref tc, doc);
+        Config.Reify(ref tc, doc);
         Assert.IsFalse(object.ReferenceEquals(tc, saved));
         Assert.IsTrue(tc is TestClassDerived);
         Assert.AreEqual(((TestClassDerived) tc).derivedKey, 321);
@@ -123,7 +123,7 @@ class FromDocTests {
     public void FromDoc_CalledWhenReifyingNullClass() {
         TestClass tc = null;
         var doc = Config.LoadDocFromString("[\"Base\", 451]", c_filename);
-        ConfigReifier.Reify(ref tc, doc);
+        Config.Reify(ref tc, doc);
         Assert.IsNotNull(tc);
         Assert.AreEqual(tc.baseKey, 451);
     }
@@ -132,7 +132,7 @@ class FromDocTests {
     public void FromDoc_CalledWhenReifyingEmptyList() {
         List<TestClass> lst = new List<TestClass>();
         var doc = Config.LoadDocFromString("[[\"Base\", 451]]", c_filename);
-        ConfigReifier.Reify(ref lst, doc);
+        Config.Reify(ref lst, doc);
         Assert.AreEqual(1, lst.Count);
         Assert.AreEqual(lst[0].baseKey, 451);
     }
