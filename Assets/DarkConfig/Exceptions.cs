@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 
 namespace DarkConfig {
     /// The reason for this strange structure is that when Unity prints
@@ -32,5 +33,9 @@ namespace DarkConfig {
     public class ExtraFieldsException : ParseException {
         public ExtraFieldsException(string message) : base(message) { }
         public ExtraFieldsException(string message, Exception inner) : base(message, inner) { }
+    }
+    
+    public class ConfigFileNotFoundException : FileNotFoundException {
+        public ConfigFileNotFoundException(string filename) : base("Couldn't find file " + filename + ". Perhaps it isn't in the index, or wasn't preloaded.", filename) { }
     }
 }
