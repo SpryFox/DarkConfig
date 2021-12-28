@@ -6,7 +6,7 @@ using System.Text.RegularExpressions;
 namespace DarkConfig {
     public class ConfigFileManager {
         /// If true (the default), DarkConfig will scan files for changes every 
-        /// <c>HotloadCheckInterval<c> seconds.  Setting it to false stops hotloading;
+        /// HotloadCheckInterval seconds.  Setting it to false stops hotloading;
         /// recommended for production games.
         public bool IsHotloadingFiles {
             get => isHotloadingFiles;
