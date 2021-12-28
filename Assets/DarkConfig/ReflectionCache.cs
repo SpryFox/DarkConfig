@@ -4,7 +4,16 @@ using System.Reflection;
 
 namespace DarkConfig.Internal {
     static class ReflectionCache {
-        internal class PropertyMetadata {
+        internal class TypeInfo {
+            public ClassAttributesFlags AttributeFlags = ClassAttributesFlags.None;
+            public readonly List<MemberMetadata> Members = new List<MemberMetadata>();
+            
+            public MethodInfo FromDoc;
+            public MethodInfo PostDoc;
+        }
+        
+        /// Information about either a field or property on a particular type. 
+        internal class MemberMetadata {
             public string ShortName;
             public MemberInfo Info;
             public Type Type;
@@ -13,105 +22,91 @@ namespace DarkConfig.Internal {
             public bool HasConfigAllowMissingAttribute;
             public bool HasConfigIgnoreAttribute;
         }
-        
-        internal class ClassAttributeFlags {
-            public bool HasConfigMandatoryAttribute;
-            public bool HasConfigAllowMissingAttribute;
+
+        [Flags]
+        internal enum ClassAttributesFlags {
+            None = 0,
+            HasConfigMandatoryAttribute = 1 << 0,
+            HasConfigAllowMissingAttribute = 1 << 1
         }
         
-        internal static ClassAttributeFlags GetClassAttributeFlags(Type type) {
-            ClassAttributeFlags flags;
-            if (!classAttributes.TryGetValue(type, out flags)) {
-                flags = new ClassAttributeFlags();
-                foreach (var attribute in type.GetCustomAttributes(true)) {
-                    switch (attribute) {
-                        case ConfigMandatoryAttribute _: flags.HasConfigMandatoryAttribute = true; break;
-                        case ConfigAllowMissingAttribute _: flags.HasConfigAllowMissingAttribute = true; break;
-                    }
+        ////////////////////////////////////////////
+
+        internal static TypeInfo GetTypeInfo(Type type) {
+            return cachedTypeInfo.TryGetValue(type, out var info) ? info : CacheTypeInfo(type);
+        }
+        
+        ////////////////////////////////////////////
+        
+        static readonly Dictionary<Type, TypeInfo> cachedTypeInfo = new Dictionary<Type, TypeInfo>();
+        
+        ////////////////////////////////////////////
+
+        static TypeInfo CacheTypeInfo(Type type) {
+            var info = new TypeInfo {
+                FromDoc = type.GetMethod("FromDoc", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static),
+                PostDoc = type.GetMethod("PostDoc", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static)
+            };
+
+            // Read class attributes
+            foreach (var attribute in type.GetCustomAttributes(true)) {
+                switch (attribute) {
+                    case ConfigMandatoryAttribute _: info.AttributeFlags |= ClassAttributesFlags.HasConfigMandatoryAttribute; break;
+                    case ConfigAllowMissingAttribute _: info.AttributeFlags |= ClassAttributesFlags.HasConfigAllowMissingAttribute; break;
                 }
-                Platform.Assert(!flags.HasConfigMandatoryAttribute || !flags.HasConfigAllowMissingAttribute, 
-                    "Type", type.Name, "has both ConfigAllowMissing and ConfigMandatory attributes.");
-                classAttributes.Add(type, flags);
             }
-            return flags;
-        }
+            
+            Platform.Assert((info.AttributeFlags & ClassAttributesFlags.HasConfigMandatoryAttribute) == 0 || (info.AttributeFlags & ClassAttributesFlags.HasConfigAllowMissingAttribute) == 0, 
+                "Type", type.Name, "has both ConfigAllowMissing and ConfigMandatory attributes.");
+            
+            
+            var memberBindingFlags = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static;
+            var properties = type.GetProperties(memberBindingFlags);
+            var fields = type.GetFields(memberBindingFlags);
+            
+            // Read all properties from the type.
+            foreach (var propertyInfo in properties) {
+                if (!propertyInfo.IsSpecialName && propertyInfo.CanWrite && propertyInfo.CanRead) {
+                    var metadata = new MemberMetadata {
+                        Info = propertyInfo,
+                        ShortName = RemoveHungarianPrefix(propertyInfo.Name),
+                        IsField = false,
+                        Type = propertyInfo.PropertyType
+                    };
+                    SetMemberAttributeFlags(metadata);
+                    info.Members.Add(metadata);
+                }
+            }
 
-        internal static MethodInfo GetPostDocMethod(Type type) {
-            MethodInfo postDoc;
-            if (!typePostDocs.TryGetValue(type, out postDoc)) {
-                postDoc = type.GetMethod("PostDoc", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
-                typePostDocs.Add(type, postDoc);
-            }
-            return postDoc;
-        }
-
-        internal static MethodInfo GetFromDocMethod(Type type) {
-            MethodInfo fromDoc;
-            if (!typeFromDocs.TryGetValue(type, out fromDoc)) {
-                fromDoc = type.GetMethod("FromDoc", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
-                typeFromDocs.Add(type, fromDoc);
-            }
-            return fromDoc;
-        }
-        
-        /// Get property and field info about the type
-        internal static List<PropertyMetadata> GetTypeMemberMetadata(Type type) {
-            List<PropertyMetadata> props;
-            if (!typeProperties.TryGetValue(type, out props)) {
-                props = new List<PropertyMetadata>();
-                var flags = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static;
+            // Read all fields from the type.
+            foreach (var fieldInfo in fields) {
+                // Compiler-generated property backing fields have the name "<propertyName>k_BackingField" so 
+                // ignore any fields with names that start with '<'.  Apparently IsSpecialName doesn't cover
+                // this case.
+                if (fieldInfo.IsSpecialName || fieldInfo.Name[0] == '<') {
+                    continue;
+                }
                 
-                foreach (var propertyInfo in type.GetProperties(flags)) {
-                    if (!propertyInfo.IsSpecialName && propertyInfo.CanWrite && propertyInfo.CanRead) {
-                        var metadata = new PropertyMetadata {
-                            Info = propertyInfo,
-                            ShortName = RemoveHungarianPrefix(propertyInfo.Name),
-                            IsField = false,
-                            Type = propertyInfo.PropertyType
-                        };
-                        SetMemberAttributeFlags(metadata);
-                        props.Add(metadata);
-                    }
-                }
-
-                foreach (var fieldInfo in type.GetFields(flags)) {
-                    // Compiler-generated property backing fields have the name "<propertyName>k_BackingField" so 
-                    // ignore any fields with names that start with '<'.  Apparently IsSpecialName doesn't cover
-                    // this case.
-                    if (!fieldInfo.IsSpecialName && fieldInfo.Name[0] != '<') {
-                        var metadata = new PropertyMetadata {
-                            Info = fieldInfo,
-                            ShortName = RemoveHungarianPrefix(fieldInfo.Name),
-                            IsField = true,
-                            Type = fieldInfo.FieldType
-                        };
-                        SetMemberAttributeFlags(metadata);
-                        props.Add(metadata);
-                    }
-                }
-
-                typeProperties[type] = props;
+                var metadata = new MemberMetadata {
+                    Info = fieldInfo,
+                    ShortName = RemoveHungarianPrefix(fieldInfo.Name),
+                    IsField = true,
+                    Type = fieldInfo.FieldType
+                };
+                SetMemberAttributeFlags(metadata);
+                info.Members.Add(metadata);
             }
 
-            return props;
+            cachedTypeInfo[type] = info;
+            return info;
         }
         
-        ////////////////////////////////////////////
-        
-        
-        static readonly Dictionary<Type, List<PropertyMetadata>> typeProperties = new Dictionary<Type, List<PropertyMetadata>>();
-        static readonly Dictionary<Type, ClassAttributeFlags> classAttributes = new Dictionary<Type, ClassAttributeFlags>();
-        static readonly Dictionary<Type, MethodInfo> typePostDocs = new Dictionary<Type, MethodInfo>();
-        static readonly Dictionary<Type, MethodInfo> typeFromDocs = new Dictionary<Type, MethodInfo>();
-        
-        ////////////////////////////////////////////
-
         /// Removes one letter hungarian notation prefixes from field names.
         static string RemoveHungarianPrefix(string name) {
             return name.Length > 1 && name[1] == '_' ? name.Substring(2) : name;
         }
 
-        static void SetMemberAttributeFlags(PropertyMetadata metadata) {
+        static void SetMemberAttributeFlags(MemberMetadata metadata) {
             foreach (var attribute in metadata.Info.GetCustomAttributes(true)) {
                 if (attribute is ConfigMandatoryAttribute) {
                     metadata.HasConfigMandatoryAttribute = true;
