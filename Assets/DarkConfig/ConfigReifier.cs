@@ -324,8 +324,8 @@ namespace DarkConfig.Internal {
                     return ValueOfType(innerType, existing, value, options);
                 }
 
-                if (CustomReifiers.ContainsKey(fieldType)) {
-                    existing = CustomReifiers[fieldType](existing, value);
+                if (CustomReifiers.TryGetValue(fieldType, out var del)) {
+                    existing = del(existing, value);
                     return CallPostDoc(fieldType, existing);
                 }
 
