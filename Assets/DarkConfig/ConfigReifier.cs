@@ -74,17 +74,18 @@ namespace DarkConfig.Internal {
                 return;
             }
 
+            var typeInfo = ReflectionCache.GetTypeInfo(type);
+
             // Grab global settings
             bool ignoreCase = (options & ConfigOptions.CaseSensitive) != ConfigOptions.CaseSensitive;
             bool checkForMissingFields = (options & ConfigOptions.AllowMissingFields) != ConfigOptions.AllowMissingFields;
             bool checkForExtraFields = (options & ConfigOptions.AllowExtraFields) != ConfigOptions.AllowExtraFields;
             
             // Override global settings with type-specific settings
-            var typeSpecificSettings = Internal.ReflectionCache.GetClassAttributeFlags(type);
-            if (typeSpecificSettings.HasConfigMandatoryAttribute) {
+            if ((typeInfo.AttributeFlags & ReflectionCache.ClassAttributesFlags.HasConfigMandatoryAttribute) != 0) {
                 checkForMissingFields = true;
             }
-            if (typeSpecificSettings.HasConfigAllowMissingAttribute) {
+            if ((typeInfo.AttributeFlags & ReflectionCache.ClassAttributesFlags.HasConfigAllowMissingAttribute) != 0) {
                 checkForMissingFields = false;
             }
 
@@ -98,13 +99,13 @@ namespace DarkConfig.Internal {
                 // ==== Special Case ====
                 // Allow specifying object types with a single property or field as a scalar value in configs.
                 // This is syntactic sugar that lets us wrap values in classes.
-                var typeMemberMetadata = Internal.ReflectionCache.GetTypeMemberMetadata(type);
-                Platform.Assert(typeMemberMetadata.Count == 1, "Trying to set a field of type: ",
-                    type, typeMemberMetadata.Count, "from value of wrong type:",
+                Platform.Assert(typeInfo.Members.Count == 1, "Trying to set a field of type: ",
+                    type, typeInfo.Members.Count, "from value of wrong type:",
                     doc.Type == DocNodeType.Scalar ? doc.StringValue : doc.Type.ToString(),
                     "at",
                     doc.SourceInformation);
-                var memberMetadata = typeMemberMetadata[0];
+                
+                var memberMetadata = typeInfo.Members[0];
                 SetMember(memberMetadata.Info, memberMetadata.IsField, ref setCopy, doc, options);
                 obj = setCopy;
                 return;
@@ -116,7 +117,7 @@ namespace DarkConfig.Internal {
             bool isAnyFieldMandatory = false;
 
             // Set the fields on the object.
-            foreach (var memberMetadata in Internal.ReflectionCache.GetTypeMemberMetadata(type)) {
+            foreach (var memberMetadata in typeInfo.Members) {
                 var memberInfo = memberMetadata.Info;
                 
                 // Override global and class settings per-field.
@@ -242,16 +243,20 @@ namespace DarkConfig.Internal {
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
         static object CallPostDoc(Type serializedType, object obj) {
-            var postDoc = Internal.ReflectionCache.GetPostDocMethod(serializedType);
-            if (postDoc != null) {
-                try {
-                    obj = postDoc.Invoke(null, new[] {obj});
-                } catch (System.Reflection.TargetInvocationException e) {
-                    throw e.InnerException;
-                }
+            var postDoc = ReflectionCache.GetTypeInfo(serializedType).PostDoc;
+            
+            if (postDoc == null) {
+                return obj;
             }
-
-            return obj;
+            
+            try {
+                return postDoc.Invoke(null, new[] {obj});
+            } catch (TargetInvocationException e) {
+                if (e.InnerException == null) {
+                    throw;
+                }
+                throw e.InnerException;
+            }
         }
 
         /// <summary>
@@ -457,7 +462,7 @@ namespace DarkConfig.Internal {
                     }
                 }
 
-                var fromDocMethod = Internal.ReflectionCache.GetFromDocMethod(fieldType);
+                var fromDocMethod = ReflectionCache.GetTypeInfo(fieldType).FromDoc;
                 if (fromDocMethod != null) {
                     // if there's a custom parser method on the class, delegate all work to that
                     // TODO: this doesn't do inherited FromDoc methods properly, but it should
