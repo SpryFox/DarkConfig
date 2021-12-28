@@ -2,11 +2,16 @@
 
 namespace DarkConfig {
     public class ConfigFileInfo {
-        public string Name; // short filename
-        public int Checksum; // checksum of YAML source
-        public int Size; // number of byes in YAML source
-        public DateTime Modified; // date YAML source was last modified
-        public DocNode Parsed; // parsed contents, may be null
+        /// short filename
+        public string Name;
+        /// checksum of source file
+        public int Checksum;
+        /// number of byes in source file
+        public int Size;
+        /// date source file was last modified
+        public DateTime Modified;
+        /// parsed contents, may be null
+        public DocNode Parsed;
 
         public override string ToString() {
             return $"[{Name} {Checksum:X16} {Size} {(Parsed == null ? "unparsed" : "parsed")}]";
