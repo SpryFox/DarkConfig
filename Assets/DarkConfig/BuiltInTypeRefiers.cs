@@ -3,8 +3,8 @@ using System;
 namespace DarkConfig.Internal {
     public static class BuiltInTypeRefiers {
         public static void RegisterAll() {
-            ConfigReifier.Register<DateTime>(FromDateTime);
-            ConfigReifier.Register<TimeSpan>(FromTimeSpan);
+            Config.Register<DateTime>(FromDateTime);
+            Config.Register<TimeSpan>(FromTimeSpan);
         }
 
         static object FromDateTime(object existing, DocNode doc) {
