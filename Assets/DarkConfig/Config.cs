@@ -6,10 +6,6 @@ using YamlDotNet.RepresentationModel;
 namespace DarkConfig {
     public delegate bool ReloadDelegate(DocNode d);
 
-    public class ConfigFileNotFoundException : FileNotFoundException {
-        public ConfigFileNotFoundException(string filename) : base("Couldn't find file " + filename + ". Perhaps it isn't in the index, or wasn't preloaded.", filename) { }
-    }
-
     public class Config : ConfigReifier {
         public static ConfigFileManager FileManager => configFileManager = configFileManager ?? new ConfigFileManager();
         static ConfigFileManager configFileManager;
