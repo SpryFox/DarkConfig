@@ -4,15 +4,11 @@ using System.Linq;
 using System.Reflection;
 
 namespace DarkConfig.Internal {
-    public class ConfigReifier {
+    public static class ConfigReifier {
+        /// User-defined type reifiers
         public static readonly Dictionary<Type, FromDocDelegate> CustomReifiers = new Dictionary<Type, FromDocDelegate>();
         
         /////////////////////////////////////////////////
-
-        /// Register a handler for loading a particular type.
-        public static void Register(Type t, FromDocDelegate del) {
-            CustomReifiers[t] = del;
-        }
         
         /// Create an instance of an object and immediately set fields on it from the document. 
         /// The type of instance is supplied via the generic parameter.
