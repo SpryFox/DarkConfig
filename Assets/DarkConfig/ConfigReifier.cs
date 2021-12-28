@@ -55,7 +55,7 @@ namespace DarkConfig.Internal {
         /// Static classes can't be used in generics, so use this version instead.
         public static void ReifyStatic(Type type, DocNode doc, ConfigOptions? options = null) {
             object dummyObj = null;
-            SetFieldsOnObject(type, ref dummyObj, doc, DefaultedOptions(options));
+            SetFieldsOnObject(type, ref dummyObj, doc, options ?? Settings.DefaultReifierOptions);
         }
 
         /// Register a handler for loading a particular type.
@@ -77,7 +77,7 @@ namespace DarkConfig.Internal {
         /// The type of instance is supplied via the generic parameter.
         public static T CreateInstance<T>(DocNode dict, ConfigOptions? options = null) where T : new() {
             object obj = Activator.CreateInstance<T>();
-            SetFieldsOnObject(ref obj, dict, DefaultedOptions(options));
+            SetFieldsOnObject(ref obj, dict, options ?? Settings.DefaultReifierOptions);
             return (T) obj;
         }
 
@@ -85,8 +85,8 @@ namespace DarkConfig.Internal {
         /// The type of instance is supplied explicitly as the first argument.
         /// Requires a zero-args constructor on the type though it doesn't enforce that.
         public static object CreateInstance(Type t, DocNode dict, ConfigOptions? options = null) {
-            var obj = Activator.CreateInstance(t);
-            SetFieldsOnObject(ref obj, dict, DefaultedOptions(options));
+            object obj = Activator.CreateInstance(t);
+            SetFieldsOnObject(ref obj, dict, options ?? Settings.DefaultReifierOptions);
             return obj;
         }
 
@@ -101,7 +101,7 @@ namespace DarkConfig.Internal {
             }
 
             var setCopy = (object) obj;
-            SetFieldsOnObject(type, ref setCopy, dict, DefaultedOptions(options));
+            SetFieldsOnObject(type, ref setCopy, dict, options ?? Settings.DefaultReifierOptions);
             obj = (T) setCopy;
         }
 
@@ -110,7 +110,7 @@ namespace DarkConfig.Internal {
             where T : struct {
             Type type = typeof(T);
             var setCopy = (object) obj;
-            SetFieldsOnObject(type, ref setCopy, dict, DefaultedOptions(options));
+            SetFieldsOnObject(type, ref setCopy, dict, options ?? Settings.DefaultReifierOptions);
             obj = (T) setCopy;
         }
 
@@ -294,10 +294,6 @@ namespace DarkConfig.Internal {
             }
 
             return sb.ToString();
-        }
-        
-        static ConfigOptions DefaultedOptions(ConfigOptions? options) {
-            return options ?? Settings.DefaultReifierOptions;
         }
 
         static object CallPostDoc(Type serializedType, object obj) {
@@ -522,7 +518,7 @@ namespace DarkConfig.Internal {
                         existing = CreateInstance(fieldType, value, options);
                         return CallPostDoc(fieldType, existing);
                     } else {
-                        SetFieldsOnObject(fieldType, ref existing, value, DefaultedOptions(options));
+                        SetFieldsOnObject(fieldType, ref existing, value, options ?? Settings.DefaultReifierOptions);
                         return CallPostDoc(fieldType, existing);
                     }
                 }
@@ -534,7 +530,7 @@ namespace DarkConfig.Internal {
                         existing = CreateInstance(fieldType, value, options);
                         return CallPostDoc(fieldType, existing);
                     } else {
-                        SetFieldsOnObject(fieldType, ref existing, value, DefaultedOptions(options));
+                        SetFieldsOnObject(fieldType, ref existing, value, options ?? Settings.DefaultReifierOptions);
                         return CallPostDoc(fieldType, existing);
                     }
                 }
