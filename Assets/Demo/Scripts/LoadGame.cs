@@ -12,11 +12,11 @@ public class LoadGame : MonoBehaviour {
         // notified of any mistakes.  It will warn for any missing fields
         // (which haven't been annotated with ConfigAllowMissing) and for any
         // extra fields.
-        Config.DefaultOptions = ConfigOptions.None;
+        DarkConfig.Settings.DefaultReifierOptions = ConfigOptions.None;
 #else
         // In production mode, ignore missing/extra checks.  This makes the 
         // runtime faster.  ConfigMandatory fields are still checked.
-        Config.DefaultOptions = ConfigOptions.AllowMissingExtraFields;
+        DarkConfig.Settings.DefaultReifierOptions = ConfigOptions.AllowMissingExtraFields;
 #endif
 
         StartCoroutine(WaitAndStartGame());

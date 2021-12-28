@@ -145,13 +145,13 @@ class ConfigReifierTests {
         DarkConfig.Internal.BuiltInTypeRefiers.RegisterAll(); 
         
         UnityTypeReifiers.RegisterAll();
-        defaults = Config.DefaultOptions;
-        Config.DefaultOptions = ConfigOptions.AllowMissingExtraFields;
+        defaults = DarkConfig.Settings.DefaultReifierOptions;
+        DarkConfig.Settings.DefaultReifierOptions = ConfigOptions.AllowMissingExtraFields;
     }
 
     [TearDown]
     public void TearDown() {
-        Config.DefaultOptions = defaults;
+        DarkConfig.Settings.DefaultReifierOptions = defaults;
     }
 
     T ReifyString<T>(string str) where T : new() {
