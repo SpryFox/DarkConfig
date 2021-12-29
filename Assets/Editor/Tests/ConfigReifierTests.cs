@@ -1017,18 +1017,6 @@ class ConfigReifierTests {
     }
 
     [Test]
-    public void Reify_DocNode() {
-        var doc = Config.LoadDocFromString(@"---
-            ugh: bugh
-        ", "ConfigReifier_DocNode_TestFilename");
-
-        DocNode d = null;
-        Config.Reify(ref d, doc);
-        Assert.True(d.ContainsKey("ugh"));
-        Assert.AreEqual(d["ugh"].As<string>(), "bugh");
-    }
-
-    [Test]
     public void ParseException_EmptyEnum() {
         Assert.Throws<ParseException>(() => { ReifyString<TestClass>("enumKey: \"\""); });
     }
