@@ -32,7 +32,7 @@ namespace DarkConfig.Internal {
             obj = (T) setRef;
         }
 
-        /// Sets all members on the object obj based on the appropriate key from doc
+        /// Sets all members on the object obj based on the appropriate key from doc.
         public static void SetFieldsOnObject(Type type, ref object obj, DocNode doc, ConfigOptions? options = null) {
             if (doc == null) {
                 return;
@@ -418,7 +418,8 @@ namespace DarkConfig.Internal {
                     }
                 }
 
-                var fromDocMethod = ReflectionCache.GetTypeInfo(fieldType).FromDoc;
+                var typeInfo = ReflectionCache.GetTypeInfo(fieldType);
+                var fromDocMethod = typeInfo.FromDoc;
                 if (fromDocMethod != null) {
                     // if there's a custom parser method on the class, delegate all work to that
                     // TODO: this doesn't do inherited FromDoc methods properly, but it should
@@ -439,7 +440,7 @@ namespace DarkConfig.Internal {
                         existing = Activator.CreateInstance(fieldType);
                     }
                     SetFieldsOnObject(fieldType, ref existing, value, options ?? Settings.DefaultReifierOptions);
-                    CallPostDoc(fieldType, ref existing);
+                    CallPostDoc(fieldType, ref existing, typeInfo);
                     return existing;
                 }
 
@@ -449,7 +450,7 @@ namespace DarkConfig.Internal {
                         existing = Activator.CreateInstance(fieldType);
                     }
                     SetFieldsOnObject(fieldType, ref existing, value, options ?? Settings.DefaultReifierOptions);
-                    CallPostDoc(fieldType, ref existing);
+                    CallPostDoc(fieldType, ref existing, typeInfo);
                     return existing;
                 }
             } catch (Exception e) {
@@ -518,11 +519,16 @@ namespace DarkConfig.Internal {
         /// Call a PostDoc method for the given object if one exists.  Returns the modified instance.
         /// </summary>
         /// <param name="serializedType"></param>
-        /// <param name="obj"></param>
+        /// <param name="obj">the object to call postdoc on</param>
+        /// <param name="typeInfo">(optional) the reflection type info so we don't have to get it again from the reflection cache</param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        static void CallPostDoc(Type serializedType, ref object obj) {
-            var postDoc = ReflectionCache.GetTypeInfo(serializedType).PostDoc;
+        static void CallPostDoc(Type serializedType, ref object obj, ReflectionCache.TypeInfo typeInfo = null) {
+            if (typeInfo == null) {
+                typeInfo = ReflectionCache.GetTypeInfo(serializedType);
+            }
+            
+            var postDoc = typeInfo.PostDoc;
             if (postDoc == null) {
                 return;
             }
