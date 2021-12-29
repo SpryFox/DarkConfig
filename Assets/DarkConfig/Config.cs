@@ -259,19 +259,6 @@ namespace DarkConfig {
         public static void RegisterFromDoc(Type t, FromDocDelegate del) {
             Internal.ConfigReifier.CustomReifiers[t] = del;
         }
-        
-        /// Create an instance of an object and immediately set fields on it from the document. 
-        /// The type of instance is supplied via the generic parameter.
-        public static T CreateInstance<T>(DocNode dict, ConfigOptions? options = null) where T : new() {
-            return Internal.ConfigReifier.CreateInstance<T>(dict, options);
-        }
-
-        /// Create an instance of an object and immediately set fields on it from the document. 
-        /// The type of instance is supplied explicitly as the first argument.
-        /// Requires a zero-args constructor on the type though it doesn't enforce that.
-        public static object CreateInstance(Type t, DocNode dict, ConfigOptions? options = null) {
-            return Internal.ConfigReifier.CreateInstance(t, dict, options);
-        }
 
         /// Sets all members on the object *obj* (which must not be null) from *dict*.
         /// Expects *obj* to be a plain class, but if it's a boxed struct it will work as well.
