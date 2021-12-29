@@ -51,22 +51,6 @@ namespace DarkConfig.Internal {
             obj = (T) setCopy;
         }
 
-        /////////////////////////////////////////////////
-
-        static bool IsDelegateType(Type type) {
-            // http://mikehadlow.blogspot.com/2010/03/how-to-tell-if-type-is-delegate.html
-            return typeof(MulticastDelegate).IsAssignableFrom(type.BaseType);
-        }
-        
-        static Type GetFirstNonObjectBaseClass(Type t) {
-            var curr = t;
-            while (curr.BaseType != null && curr.BaseType != typeof(System.Object)) {
-                curr = curr.BaseType;
-            }
-
-            return curr;
-        }
-
         /// Sets all members on the object *obj* based on the appropriate key from *doc*
         public static void SetFieldsOnObject(Type type, ref object obj, DocNode doc, ConfigOptions options) {
             if (doc == null) {
@@ -188,74 +172,6 @@ namespace DarkConfig.Internal {
             }
 
             obj = setCopy;
-        }
-
-        static void SetMember(MemberInfo memberInfo, bool isField, ref object obj, DocNode value, ConfigOptions? options) {
-            if (isField) {
-                var fieldInfo = (FieldInfo)memberInfo;
-                if (obj == null && !fieldInfo.IsStatic) {
-                    // silently don't set non-static fields
-                    return;
-                }
-                object existing = fieldInfo.GetValue(obj);
-                object updated = ValueOfType(fieldInfo.FieldType, existing, value, options);
-                object setCopy = obj; // needed for structs
-                fieldInfo.SetValue(setCopy, updated);
-                obj = setCopy;                
-            } else {
-                var propertyInfo = (PropertyInfo)memberInfo;
-                if (obj == null && !propertyInfo.CanWrite) {
-                    // silently don't set non-static fields
-                    return;
-                }
-                object existing = propertyInfo.GetValue(obj);
-                object updated = ValueOfType(propertyInfo.PropertyType, existing, value, options);
-                object setCopy = obj; // needed for structs
-                propertyInfo.SetValue(setCopy, updated);
-                obj = setCopy;
-            }
-        }
-
-        /// convenience method to parse an enum value out of a string
-        static T GetEnum<T>(string v) {
-            return (T) Enum.Parse(typeof(T), v);
-        }
-
-        /// Used for logging errors
-        static string JoinList(List<string> args, string joinStr) {
-            var sb = new System.Text.StringBuilder();
-            for (int i = 0; i < args.Count; i++) {
-                sb.Append(args[i]);
-                if (i < args.Count - 1) {
-                    sb.Append(joinStr);
-                }
-            }
-
-            return sb.ToString();
-        }
-
-        /// <summary>
-        /// Call a PostDoc method for the given object if one exists.  Returns the modified instance.
-        /// </summary>
-        /// <param name="serializedType"></param>
-        /// <param name="obj"></param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
-        static object CallPostDoc(Type serializedType, object obj) {
-            var postDoc = ReflectionCache.GetTypeInfo(serializedType).PostDoc;
-            
-            if (postDoc == null) {
-                return obj;
-            }
-            
-            try {
-                return postDoc.Invoke(null, new[] {obj});
-            } catch (TargetInvocationException e) {
-                if (e.InnerException == null) {
-                    throw;
-                }
-                throw e.InnerException;
-            }
         }
 
         /// <summary>
@@ -499,6 +415,90 @@ namespace DarkConfig.Internal {
             }
 
             throw new NotSupportedException($"Don't know how to update value of type {fieldType}");
+        }
+        
+        /////////////////////////////////////////////////
+
+        static bool IsDelegateType(Type type) {
+            // http://mikehadlow.blogspot.com/2010/03/how-to-tell-if-type-is-delegate.html
+            return typeof(MulticastDelegate).IsAssignableFrom(type.BaseType);
+        }
+        
+        static Type GetFirstNonObjectBaseClass(Type t) {
+            var curr = t;
+            while (curr.BaseType != null && curr.BaseType != typeof(System.Object)) {
+                curr = curr.BaseType;
+            }
+
+            return curr;
+        }
+        
+        static void SetMember(MemberInfo memberInfo, bool isField, ref object obj, DocNode value, ConfigOptions? options) {
+            if (isField) {
+                var fieldInfo = (FieldInfo)memberInfo;
+                if (obj == null && !fieldInfo.IsStatic) {
+                    // silently don't set non-static fields
+                    return;
+                }
+                object existing = fieldInfo.GetValue(obj);
+                object updated = ValueOfType(fieldInfo.FieldType, existing, value, options);
+                object setCopy = obj; // needed for structs
+                fieldInfo.SetValue(setCopy, updated);
+                obj = setCopy;                
+            } else {
+                var propertyInfo = (PropertyInfo)memberInfo;
+                if (obj == null && !propertyInfo.CanWrite) {
+                    // silently don't set non-static fields
+                    return;
+                }
+                object existing = propertyInfo.GetValue(obj);
+                object updated = ValueOfType(propertyInfo.PropertyType, existing, value, options);
+                object setCopy = obj; // needed for structs
+                propertyInfo.SetValue(setCopy, updated);
+                obj = setCopy;
+            }
+        }
+
+        /// convenience method to parse an enum value out of a string
+        static T GetEnum<T>(string v) {
+            return (T) Enum.Parse(typeof(T), v);
+        }
+
+        /// Used for logging errors
+        static string JoinList(List<string> args, string joinStr) {
+            var sb = new System.Text.StringBuilder();
+            for (int i = 0; i < args.Count; i++) {
+                sb.Append(args[i]);
+                if (i < args.Count - 1) {
+                    sb.Append(joinStr);
+                }
+            }
+
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// Call a PostDoc method for the given object if one exists.  Returns the modified instance.
+        /// </summary>
+        /// <param name="serializedType"></param>
+        /// <param name="obj"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        static object CallPostDoc(Type serializedType, object obj) {
+            var postDoc = ReflectionCache.GetTypeInfo(serializedType).PostDoc;
+            
+            if (postDoc == null) {
+                return obj;
+            }
+            
+            try {
+                return postDoc.Invoke(null, new[] {obj});
+            } catch (TargetInvocationException e) {
+                if (e.InnerException == null) {
+                    throw;
+                }
+                throw e.InnerException;
+            }
         }
     }
 }
