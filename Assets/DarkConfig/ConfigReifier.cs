@@ -248,7 +248,8 @@ namespace DarkConfig.Internal {
                 // Custom reifier
                 if (CustomReifiers.TryGetValue(fieldType, out var fromDoc)) {
                     existing = fromDoc(existing, value);
-                    return CallPostDoc(fieldType, existing);
+                    CallPostDoc(fieldType, ref existing);
+                    return existing;
                 }
 
                 // Arrays
@@ -423,7 +424,8 @@ namespace DarkConfig.Internal {
                     // TODO: this doesn't do inherited FromDoc methods properly, but it should
                     try {
                         existing = fromDocMethod.Invoke(null, new[] {existing, value});
-                        return CallPostDoc(fieldType, existing);
+                        CallPostDoc(fieldType, ref existing);
+                        return existing;
                     } catch (TargetInvocationException e) {
                         if (e.InnerException != null) {
                             throw e.InnerException;                            
@@ -437,7 +439,8 @@ namespace DarkConfig.Internal {
                         existing = Activator.CreateInstance(fieldType);
                     }
                     SetFieldsOnObject(fieldType, ref existing, value, options ?? Settings.DefaultReifierOptions);
-                    return CallPostDoc(fieldType, existing);
+                    CallPostDoc(fieldType, ref existing);
+                    return existing;
                 }
 
                 if (fieldType.IsValueType) {
@@ -446,7 +449,8 @@ namespace DarkConfig.Internal {
                         existing = Activator.CreateInstance(fieldType);
                     }
                     SetFieldsOnObject(fieldType, ref existing, value, options ?? Settings.DefaultReifierOptions);
-                    return CallPostDoc(fieldType, existing);
+                    CallPostDoc(fieldType, ref existing);
+                    return existing;
                 }
             } catch (Exception e) {
                 throw new ParseException($"Exception based on document starting at: {value.SourceInformation}", e);
@@ -517,15 +521,14 @@ namespace DarkConfig.Internal {
         /// <param name="obj"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        static object CallPostDoc(Type serializedType, object obj) {
+        static void CallPostDoc(Type serializedType, ref object obj) {
             var postDoc = ReflectionCache.GetTypeInfo(serializedType).PostDoc;
-            
             if (postDoc == null) {
-                return obj;
+                return;
             }
             
             try {
-                return postDoc.Invoke(null, new[] {obj});
+                obj = postDoc.Invoke(null, new[] {obj});
             } catch (TargetInvocationException e) {
                 if (e.InnerException == null) {
                     throw;
