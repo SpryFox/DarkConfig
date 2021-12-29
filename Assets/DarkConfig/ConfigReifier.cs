@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 
 namespace DarkConfig.Internal {
@@ -252,46 +251,100 @@ namespace DarkConfig.Internal {
                     return CallPostDoc(fieldType, existing);
                 }
 
-                // Array
-                // [1,2,3,4,5] => new int[] { 1,2,3,4,5 }
+                // Arrays
                 if (fieldType.IsArray) { 
-                    Type arrTyp = fieldType.GetElementType();
-                    if (fieldType.GetArrayRank() == 2) {
-                        var firstList = value[0];
-                        var destArr = Array.CreateInstance(arrTyp, firstList.Count, value.Count);
-                        int j = 0;
-                        foreach (DocNode subList in value.Values) {
-                            int i = 0;
-                            foreach (var val in subList.Values.Select(item => ReadValueOfType(arrTyp, null, item, options))
-                            ) {
-                                destArr.SetValue(val, new int[] {i, j});
-                                i++;
+                    int rank = fieldType.GetArrayRank();
+                    var elementType = fieldType.GetElementType();
+                    var arrayValue = existing as Array;
+                    
+                    if (rank == 1) { // simple arrays
+                        if (value.Count == 0) {
+                            return Array.CreateInstance(elementType, 0);
+                        }
+                        
+                        if (arrayValue == null) {
+                            arrayValue = Array.CreateInstance(elementType, value.Count);
+                        } else if (arrayValue.Length != value.Count) {
+                            // Copy the existing values to the new array so we can feed them
+                            // in as existing values when reading array elements. 
+                            var oldArr = arrayValue;
+                            arrayValue = Array.CreateInstance(elementType, value.Count);
+                            int numToCopy = Math.Min(oldArr.Length, arrayValue.Length);
+                            Array.Copy(oldArr, arrayValue, numToCopy);
+                        }
+
+                        // Read the array values.
+                        for (int a = 0; a < arrayValue.Length; a++) {
+                            var existingElement = arrayValue.GetValue(a);
+                            var updatedElement = ReadValueOfType(elementType, existingElement, value[a], options);
+                            arrayValue.SetValue(updatedElement, a);
+                        }
+                    } else { // n-dimensional arrays
+                        if (value.Count == 0) {
+                            // Return a zero-length array of the correct dimensions. 
+                            return Array.CreateInstance(elementType, new int[rank]);
+                        }
+                    
+                        // Figure out the size of each dimension the array.
+                        var lengths = new int[rank];
+                        var currentArray = value;
+                        for (int dimensionIndex = 0; dimensionIndex < rank; ++dimensionIndex) {
+                            lengths[dimensionIndex] = currentArray.Count;
+                            currentArray = currentArray[0];
+                        }
+
+                        int[] currentIndex;
+                        
+                        // Copy existing array data so they can be fed into ReadValueOfType
+                        if (arrayValue != null) {
+                            // Is the existing array the correct dimensions that we're reading from the config?
+                            bool existingArrayDimensionsMatch = arrayValue.Rank == rank;
+                            for (int i = 0; i < rank && existingArrayDimensionsMatch; ++i) {
+                                if (arrayValue.GetLength(i) != lengths[i]) {
+                                    existingArrayDimensionsMatch = false;
+                                }
                             }
 
-                            j++;
-                        }
+                            // If the dimensions don't match, we need to copy values over.
+                            if (!existingArrayDimensionsMatch) {
+                                var newArray = Array.CreateInstance(elementType, lengths);
+                                currentIndex = new int[lengths.Length];
+                                void CopyMultiDimensionalArray(int currentRank) {
+                                    int numToCopy = Math.Min(arrayValue.GetLength(currentRank), newArray.GetLength(currentRank));
 
-                        return destArr;
-                    } else {
-                        var iexisting = (Array) existing;
-                        if (iexisting == null) {
-                            iexisting = Array.CreateInstance(arrTyp, value.Count);
-                        } else if (iexisting.Length != value.Count) {
-                            var oldArr = iexisting;
-                            iexisting = Array.CreateInstance(arrTyp, value.Count);
-                            for (int i = 0; i < iexisting.Length && i < oldArr.Length; i++) {
-                                iexisting.SetValue(oldArr.GetValue(i), i);
+                                    for (int i = 0; i < numToCopy; ++i) {
+                                        currentIndex[currentRank] = i;
+                                        if (currentRank == rank - 1) {
+                                            newArray.SetValue(arrayValue.GetValue(currentIndex), currentIndex);
+                                        } else {
+                                            CopyMultiDimensionalArray(currentRank + 1);
+                                        }
+                                    }
+                                }
+                                CopyMultiDimensionalArray(0);
+                                arrayValue = newArray;                                
+                            }
+                        } else {
+                            arrayValue = Array.CreateInstance(elementType, lengths);
+                        }
+                        
+                        currentIndex = new int[lengths.Length];
+                        void ReadArray(DocNode current, int currentRank) {
+                            for (int i = 0; i < current.Count; ++i) {
+                                currentIndex[currentRank] = i;
+                                if (currentRank == rank - 1) {
+                                    var existingElement = arrayValue.GetValue(currentIndex);
+                                    var updatedElement = ReadValueOfType(elementType, existingElement, current[i], options);
+                                    arrayValue.SetValue(updatedElement, currentIndex);
+                                } else {
+                                    ReadArray(current[i], currentRank + 1);
+                                }
                             }
                         }
-
-                        for (int i = 0; i < iexisting.Length; i++) {
-                            var existingElt = iexisting.GetValue(i);
-                            var updatedElt = ReadValueOfType(arrTyp, existingElt, value[i], options);
-                            iexisting.SetValue(updatedElt, i);
-                        }
-
-                        return iexisting;
+                        ReadArray(value, 0);
                     }
+                    
+                    return arrayValue;
                 }
 
                 if (fieldType.IsGenericType) {

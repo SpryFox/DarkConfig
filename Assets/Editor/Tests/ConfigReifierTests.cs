@@ -30,6 +30,7 @@ class ConfigReifierTests {
         public List<int> listIntKey = null;
         public int[] arrayIntKey = null;
         public float[,] array2dFloatKey = null;
+        public float[,,] array3dFloatKey = null;
 
         // static variables should work as well
         public static string staticStringKey = null;
@@ -303,91 +304,183 @@ class ConfigReifierTests {
 
     [Test]
     public void ConfigReifier_SetsListOfInts() {
-        var tc = ReifyString<TestClass>(@"---
+        var instance = ReifyString<TestClass>(@"---
             listIntKey: [0, 1, 2, 3, 4]
             ");
-        Assert.AreEqual(tc.listIntKey, new int[] {0, 1, 2, 3, 4});
+        Assert.AreEqual(instance.listIntKey, new[] {0, 1, 2, 3, 4});
     }
 
     [Test]
     public void ConfigReifier_SetsArrayOfInts() {
-        var tc = ReifyString<TestClass>(@"---
+        var instance = ReifyString<TestClass>(@"---
             arrayIntKey: [0, 1, 2, 3, 4]
             ");
-        Assert.AreEqual(tc.arrayIntKey, new int[] {0, 1, 2, 3, 4});
+        Assert.AreEqual(instance.arrayIntKey, new[] {0, 1, 2, 3, 4});
     }
 
     [Test]
     public void ConfigReifier_Array_UpdatesInPlace() {
-        var arr = new TestClass[] {
+        var array = new[] {
             new TestClass {intKey = 62, floatKey = 4.56f},
             new TestClass {intKey = 1234, floatKey = 8.98f}
         };
-        TestClass saved = arr[0];
-        UpdateFromString(ref arr, @"---
+        var saved = array[0];
+        UpdateFromString(ref array, @"---
             - intKey: 4404
             - floatKey: 5505
             ");
-        Assert.AreEqual(arr.Length, 2);
-        Assert.IsTrue(object.ReferenceEquals(arr[0], saved));
-        Assert.AreEqual(arr[0].intKey, 4404);
-        Assert.AreEqual(arr[0].floatKey, 4.56f);
-        Assert.AreEqual(arr[1].intKey, 1234);
-        Assert.AreEqual(arr[1].floatKey, 5505f);
+        Assert.AreEqual(array.Length, 2);
+        Assert.IsTrue(ReferenceEquals(array[0], saved));
+        Assert.AreEqual(array[0].intKey, 4404);
+        Assert.AreEqual(array[0].floatKey, 4.56f);
+        Assert.AreEqual(array[1].intKey, 1234);
+        Assert.AreEqual(array[1].floatKey, 5505f);
     }
 
     [Test]
     public void ConfigReifier_Array_UpdatesInPlace_AddItems() {
-        var arr = new TestClass[] {
+        var array = new[] {
             new TestClass {intKey = 62, floatKey = 4.56f},
             new TestClass {intKey = 1234, floatKey = 8.98f}
         };
-        var saved = arr[0];
-        UpdateFromString(ref arr, @"---
+        var saved = array[0];
+        UpdateFromString(ref array, @"---
             - intKey: 4404
             - floatKey: 5505
             - intKey: 1011
             ");
-        Assert.AreEqual(arr.Length, 3);
-        Assert.IsTrue(object.ReferenceEquals(arr[0], saved));
-        Assert.AreEqual(arr[0].intKey, 4404);
-        Assert.AreEqual(arr[0].floatKey, 4.56f);
-        Assert.AreEqual(arr[1].intKey, 1234);
-        Assert.AreEqual(arr[1].floatKey, 5505f);
-        Assert.AreEqual(arr[2].intKey, 1011);
-        Assert.AreEqual(arr[2].floatKey, -1f);
+        Assert.AreEqual(array.Length, 3);
+        Assert.IsTrue(ReferenceEquals(array[0], saved));
+        Assert.AreEqual(array[0].intKey, 4404);
+        Assert.AreEqual(array[0].floatKey, 4.56f);
+        Assert.AreEqual(array[1].intKey, 1234);
+        Assert.AreEqual(array[1].floatKey, 5505f);
+        Assert.AreEqual(array[2].intKey, 1011);
+        Assert.AreEqual(array[2].floatKey, -1f);
     }
 
     [Test]
     public void ConfigReifier_Array_UpdatesInPlace_RemoveItems() {
-        var arr = new TestClass[] {
+        var array = new[] {
             new TestClass {intKey = 62, floatKey = 4.56f},
             new TestClass {intKey = 1234, floatKey = 8.98f},
             new TestClass {intKey = 392, floatKey = 44.55f}
         };
-        var saved = arr[0];
-        UpdateFromString(ref arr, @"---
+        var saved = array[0];
+        UpdateFromString(ref array, @"---
             - intKey: 4404
             ");
-        Assert.AreEqual(arr.Length, 1);
-        Assert.IsTrue(object.ReferenceEquals(arr[0], saved));
-        Assert.AreEqual(arr[0].intKey, 4404);
-        Assert.AreEqual(arr[0].floatKey, 4.56f);
+        Assert.AreEqual(array.Length, 1);
+        Assert.IsTrue(ReferenceEquals(array[0], saved));
+        Assert.AreEqual(array[0].intKey, 4404);
+        Assert.AreEqual(array[0].floatKey, 4.56f);
     }
 
     [Test]
     public void ConfigReifier_SetsArray2DOfFloats() {
-        var tc = ReifyString<TestClass>(@"---
+        var instance = ReifyString<TestClass>(@"---
             array2dFloatKey:
                 - [9, 8, 7]
                 - [1, 2, 3]
             ");
-        Assert.AreEqual(tc.array2dFloatKey[0, 0], 9f);
-        Assert.AreEqual(tc.array2dFloatKey[1, 0], 8f);
-        Assert.AreEqual(tc.array2dFloatKey[2, 0], 7f);
-        Assert.AreEqual(tc.array2dFloatKey[0, 1], 1f);
-        Assert.AreEqual(tc.array2dFloatKey[1, 1], 2f);
-        Assert.AreEqual(tc.array2dFloatKey[2, 1], 3f);
+        Assert.AreEqual(instance.array2dFloatKey[0, 0], 9f);
+        Assert.AreEqual(instance.array2dFloatKey[0, 1], 8f);
+        Assert.AreEqual(instance.array2dFloatKey[0, 2], 7f);
+        Assert.AreEqual(instance.array2dFloatKey[1, 0], 1f);
+        Assert.AreEqual(instance.array2dFloatKey[1, 1], 2f);
+        Assert.AreEqual(instance.array2dFloatKey[1, 2], 3f);
+    }
+
+    [Test]
+    public void ConfigReifier_SetsArray3DOfFloats() {
+        var instance = ReifyString<TestClass>(@"---
+            array3dFloatKey: [
+                [
+                    [1, 2, 3],
+                    [4, 5, 6]
+                ],
+                [
+                    [7, 8, 9],
+                    [10, 11, 12]
+                ]
+            ]");
+        Assert.AreEqual(instance.array3dFloatKey[0,0,0], 1f);
+        Assert.AreEqual(instance.array3dFloatKey[0,0,1], 2f);
+        Assert.AreEqual(instance.array3dFloatKey[0,0,2], 3f);
+        Assert.AreEqual(instance.array3dFloatKey[0,1,0], 4f);
+        Assert.AreEqual(instance.array3dFloatKey[0,1,1], 5f);
+        Assert.AreEqual(instance.array3dFloatKey[0,1,2], 6f);
+        Assert.AreEqual(instance.array3dFloatKey[1,0,0], 7f);
+        Assert.AreEqual(instance.array3dFloatKey[1,0,1], 8f);
+        Assert.AreEqual(instance.array3dFloatKey[1,0,2], 9f);
+        Assert.AreEqual(instance.array3dFloatKey[1,1,0], 10f);
+        Assert.AreEqual(instance.array3dFloatKey[1,1,1], 11f);
+        Assert.AreEqual(instance.array3dFloatKey[1,1,2], 12f);
+    }
+    
+    [Test]
+    public void ConfigReifier_Array2D_UpdatesInPlace() {
+        var array = new TestClass[1, 2];
+        array[0, 0] = new TestClass { intKey = 62, floatKey = 4.56f };
+        array[0, 1] = new TestClass {intKey = 1234, floatKey = 8.98f};
+        
+        var saved = array[0, 0];
+        
+        UpdateFromString(ref array, @"---
+            - - intKey: 4404
+              - floatKey: 5505
+            ");
+        
+        Assert.AreEqual(array.GetLength(0), 1);
+        Assert.AreEqual(array.GetLength(1), 2);
+        
+        Assert.IsTrue(ReferenceEquals(array[0, 0], saved));
+        Assert.AreEqual(array[0, 0].intKey, 4404);
+        Assert.AreEqual(array[0, 0].floatKey, 4.56f);
+        Assert.AreEqual(array[0, 1].intKey, 1234);
+        Assert.AreEqual(array[0, 1].floatKey, 5505f);
+    }
+
+    [Test]
+    public void ConfigReifier_Array2D_UpdatesInPlace_AddItems() {
+        var array = new TestClass[1, 2];
+        array[0, 0] = new TestClass { intKey = 62, floatKey = 4.56f };
+        array[0, 1] = new TestClass { intKey = 1234, floatKey = 8.98f };
+        
+        var saved = array[0, 0];
+        UpdateFromString(ref array, @"---
+            - - intKey: 4404
+              - floatKey: 5505
+              - intKey: 1011
+            ");
+        
+        Assert.AreEqual(array.GetLength(0), 1);
+        Assert.AreEqual(array.GetLength(1), 3);
+        Assert.IsTrue(ReferenceEquals(array[0, 0], saved));
+        Assert.AreEqual(array[0, 0].intKey, 4404);
+        Assert.AreEqual(array[0, 0].floatKey, 4.56f);
+        Assert.AreEqual(array[0, 1].intKey, 1234);
+        Assert.AreEqual(array[0, 1].floatKey, 5505f);
+        Assert.AreEqual(array[0, 2].intKey, 1011);
+        Assert.AreEqual(array[0, 2].floatKey, -1f);
+    }
+
+    [Test]
+    public void ConfigReifier_Array2D_UpdatesInPlace_RemoveItems() {
+        var array = new TestClass[1, 3];
+        array[0, 0] = new TestClass { intKey = 62, floatKey = 4.56f };
+        array[0, 1] = new TestClass { intKey = 1234, floatKey = 8.98f };
+        array[0, 2] = new TestClass { intKey = 392, floatKey = 44.55f };
+        
+        var saved = array[0, 0];
+        UpdateFromString(ref array, @"---
+            - - intKey: 4404
+            ");
+        Assert.AreEqual(array.GetLength(0), 1);
+        Assert.AreEqual(array.GetLength(1), 1);
+        Assert.IsTrue(ReferenceEquals(array[0, 0], saved));
+        Assert.AreEqual(array[0, 0].intKey, 4404);
+        Assert.AreEqual(array[0, 0].floatKey, 4.56f);
     }
 
     [Test]
