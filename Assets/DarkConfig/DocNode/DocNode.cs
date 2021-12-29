@@ -36,6 +36,15 @@ namespace DarkConfig {
         /// Returns true if the key is in the dictionary
         public abstract bool ContainsKey(string key, bool ignoreCase = false);
 
+        /// <summary>
+        /// Only valid for dictionaries.
+        /// s
+        /// Try to get the value for the given key.
+        /// </summary>
+        /// <param name="key">Key of the value to retrieve</param>
+        /// <param name="ignoreCase">if true, does case-insensitive key comparison</param>
+        /// <param name="result">Set to the value if it's found, otherwise null</param>
+        /// <returns>True if the value was found, false otherwise.</returns>
         public abstract bool TryGetValue(string key, bool ignoreCase, out DocNode result);
 
         /// Iterates over the values of the list
@@ -53,6 +62,12 @@ namespace DarkConfig {
             return result;
         }
 
+        /// <summary>
+        /// Only works on lists.  Checks for the given doc node StringValue in the list.  
+        /// </summary>
+        /// <param name="item">String to search for</param>
+        /// <returns>True if the string exists in this list</returns>
+        /// <exception cref="DocNodeAccessException">Thrown if this is not a list</exception>
         public bool Contains(string item) {
             if (Type != DocNodeType.List) {
                 throw new DocNodeAccessException("Expected List, is " + Type);
@@ -119,7 +134,7 @@ namespace DarkConfig {
 
         /// combines hierarchies.
         /// lists are concatenated, but dicts are recursively DeepMerged. 
-        /// favours second node on any conflict.
+        /// favours rhs on any conflict.
         public static DocNode DeepMerge(DocNode lhs, DocNode rhs) {
             if (lhs.Type != rhs.Type) {
                 throw new ArgumentException("can not merge different types " + lhs.Type + " " + rhs.Type);

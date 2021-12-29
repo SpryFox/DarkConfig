@@ -52,48 +52,42 @@ namespace DarkConfig {
 
         public override int Count {
             get {
-                if (Type == DocNodeType.Dictionary) {
-                    return ((YamlMappingNode)node).Children.Count;
+                switch (Type) {
+                    case DocNodeType.Dictionary:
+                        return ((YamlMappingNode)node).Children.Count;
+                    case DocNodeType.List:
+                        return ((YamlSequenceNode)node).Children.Count;
+                    case DocNodeType.Invalid:
+                    case DocNodeType.Scalar:
+                    default:
+                        throw new DocNodeAccessException(GenerateAccessExceptionMessage("Countable (Dictionary or List)", Type.ToString()));
                 }
-                
-                if (Type == DocNodeType.List) {
-                    return ((YamlSequenceNode)node).Children.Count;
-                }
-
-                throw new DocNodeAccessException(GenerateAccessExceptionMessage("Countable (Dictionary or List)", Type.ToString()));
             }
         }
 
         public override bool ContainsKey(string key, bool ignoreCase = false) {
             AssertTypeIs(DocNodeType.Dictionary);
-            IDictionary<YamlNode, YamlNode> children = ((YamlMappingNode)node).Children;
-
+            
+            var children = ((YamlMappingNode)node).Children;
+            var comparison = ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
             foreach (var yamlKey in children.Keys) {
-                var scalarKey = yamlKey as YamlScalarNode; 
-                if (scalarKey != null) {
-                    if (string.Equals(scalarKey.Value, key,
-                            ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal)) {
-                        return true;
-                    }
+                if (yamlKey is YamlScalarNode scalarKey && string.Equals(scalarKey.Value, key, comparison)) {
+                    return true;
                 }
             }
 
             return false;
-            // return ((YamlMappingNode) node).Children.ContainsKey(new YamlScalarNode(key));
         }
 
         public override bool TryGetValue(string key, bool ignoreCase, out DocNode result) {
             AssertTypeIs(DocNodeType.Dictionary);
-            IDictionary<YamlNode, YamlNode> children = ((YamlMappingNode)node).Children;
-
+            
+            var children = ((YamlMappingNode)node).Children;
+            var comparison = ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal; 
             foreach (var kvp in children) {
-                var scalarKey = kvp.Key as YamlScalarNode; 
-                if (scalarKey != null) {
-                    if (string.Equals(scalarKey.Value, key,
-                            ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal)) {
-                        result = new YamlDocNode(kvp.Value);
-                        return true;
-                    }
+                if (kvp.Key is YamlScalarNode scalarKey && string.Equals(scalarKey.Value, key, comparison)) {
+                    result = new YamlDocNode(kvp.Value);
+                    return true;
                 }
             }
 
@@ -161,7 +155,7 @@ namespace DarkConfig {
                 AssertTypeIs(DocNodeType.Scalar);
                 return ((YamlScalarNode) node).Value;
             }
-            set { throw new System.NotSupportedException(); }
+            set => throw new NotSupportedException();
         }
 
         ////////////////////////////////////////////

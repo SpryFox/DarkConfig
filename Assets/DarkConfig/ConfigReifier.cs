@@ -444,8 +444,8 @@ namespace DarkConfig.Internal {
             }
         }
 
-        /// Used for logging errors
-        static string JoinList(List<string> args, string joinStr) {
+        /// String.Join for Lists. Only used for logging.
+        static string JoinList(IReadOnlyList<string> args, string joinStr) {
             var sb = new System.Text.StringBuilder();
             for (int i = 0; i < args.Count; i++) {
                 sb.Append(args[i]);
