@@ -171,7 +171,7 @@ namespace DarkConfig.Internal {
         /// <exception cref="Exception"></exception>
         /// <exception cref="ParseException"></exception>
         /// <exception cref="NotSupportedException"></exception>
-        public static object ValueOfType(Type fieldType, object existing, DocNode value, ConfigOptions? options) {
+        public static object ReadValueOfType(Type fieldType, object existing, DocNode value, ConfigOptions? options) {
             try {
                 if (fieldType == typeof(bool)) {
                     return Convert.ToBoolean(value.StringValue, System.Globalization.CultureInfo.InvariantCulture);
@@ -243,7 +243,7 @@ namespace DarkConfig.Internal {
                         return null;
                     }
                     var innerType = Nullable.GetUnderlyingType(fieldType);
-                    return ValueOfType(innerType, existing, value, options);
+                    return ReadValueOfType(innerType, existing, value, options);
                 }
 
                 // Custom reifier
@@ -262,7 +262,7 @@ namespace DarkConfig.Internal {
                         int j = 0;
                         foreach (DocNode subList in value.Values) {
                             int i = 0;
-                            foreach (var val in subList.Values.Select(item => ValueOfType(arrTyp, null, item, options))
+                            foreach (var val in subList.Values.Select(item => ReadValueOfType(arrTyp, null, item, options))
                             ) {
                                 destArr.SetValue(val, new int[] {i, j});
                                 i++;
@@ -286,7 +286,7 @@ namespace DarkConfig.Internal {
 
                         for (int i = 0; i < iexisting.Length; i++) {
                             var existingElt = iexisting.GetValue(i);
-                            var updatedElt = ValueOfType(arrTyp, existingElt, value[i], options);
+                            var updatedElt = ReadValueOfType(arrTyp, existingElt, value[i], options);
                             iexisting.SetValue(updatedElt, i);
                         }
 
@@ -315,13 +315,13 @@ namespace DarkConfig.Internal {
                         // create/update all pairs in the doc
                         foreach (var kv in value.Pairs) {
                             keyNode.StringValue = kv.Key;
-                            object existingKey = ValueOfType(kType, null, keyNode, options);
+                            object existingKey = ReadValueOfType(kType, null, keyNode, options);
                             object existingValue = null;
                             if (iexisting.Contains(existingKey)) {
                                 existingValue = iexisting[existingKey];
                             }
 
-                            var updated = ValueOfType(vType, existingValue, kv.Value, options);
+                            var updated = ReadValueOfType(vType, existingValue, kv.Value, options);
                             iexisting[existingKey] = updated;
                             usedKeys.Add(existingKey);
                         }
@@ -354,12 +354,12 @@ namespace DarkConfig.Internal {
 
                         for (int i = 0; i < iexisting.Count; i++) {
                             var existingElt = iexisting[i];
-                            var updatedElt = ValueOfType(typeParameters[0], existingElt, value[i], options);
+                            var updatedElt = ReadValueOfType(typeParameters[0], existingElt, value[i], options);
                             iexisting[i] = updatedElt;
                         }
 
                         while (iexisting.Count < value.Count) {
-                            var newElt = ValueOfType(typeParameters[0], null, value[iexisting.Count], options);
+                            var newElt = ReadValueOfType(typeParameters[0], null, value[iexisting.Count], options);
                             iexisting.Add(newElt);
                         }
 
@@ -426,7 +426,7 @@ namespace DarkConfig.Internal {
                     return;
                 }
                 object existing = fieldInfo.GetValue(obj);
-                object updated = ValueOfType(fieldInfo.FieldType, existing, value, options);
+                object updated = ReadValueOfType(fieldInfo.FieldType, existing, value, options);
                 object setCopy = obj; // needed for structs
                 fieldInfo.SetValue(setCopy, updated);
                 obj = setCopy;                
@@ -437,7 +437,7 @@ namespace DarkConfig.Internal {
                     return;
                 }
                 object existing = propertyInfo.GetValue(obj);
-                object updated = ValueOfType(propertyInfo.PropertyType, existing, value, options);
+                object updated = ReadValueOfType(propertyInfo.PropertyType, existing, value, options);
                 object setCopy = obj; // needed for structs
                 propertyInfo.SetValue(setCopy, updated);
                 obj = setCopy;

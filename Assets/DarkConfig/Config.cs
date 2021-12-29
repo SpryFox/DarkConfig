@@ -233,7 +233,7 @@ namespace DarkConfig {
         /// 
         /// Works on static and private variables, too.
         public static void Reify<T>(ref T obj, Type objType, DocNode doc, ConfigOptions? options = null) {
-            obj = (T) Internal.ConfigReifier.ValueOfType(objType, obj, doc, options);
+            obj = (T) Internal.ConfigReifier.ReadValueOfType(objType, obj, doc, options);
         }
 
         /// Sets up static variables (and only static variables) on type *T* based on the contents of the parsed document *doc*
