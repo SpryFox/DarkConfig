@@ -249,10 +249,6 @@ namespace DarkConfig.Internal {
                     return Enum.Parse(fieldType, value.StringValue, true);
                 }
 
-                if (fieldType == typeof(DocNode)) {
-                    return value;
-                }
-
                 if (fieldType.IsGenericType && fieldType.GetGenericTypeDefinition() == typeof(Nullable<>)) {
                     if (value.Type == DocNodeType.Scalar && value.StringValue == "null") return null;
                     var innerType = Nullable.GetUnderlyingType(fieldType);
