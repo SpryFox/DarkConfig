@@ -459,18 +459,5 @@ namespace DarkConfig {
                 isCheckingHotloadNow = false;
             }
         }
-        
-        DocNode ParseAndStoreFile(string configName, string contents, int checksum) {
-            var doc = Config.LoadDocFromString(contents, configName);
-            Files.Add(configName);
-            FileInfos.Add(configName, new ConfigFileInfo {
-                Name = configName,
-                Size = contents.Length,
-                Parsed = doc,
-                Checksum = checksum
-            });
-            return doc;
-        }
-
     }
 }
