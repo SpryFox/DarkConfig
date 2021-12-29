@@ -10,21 +10,12 @@ namespace DarkConfig.Internal {
         
         /////////////////////////////////////////////////
         
-        /// Create an instance of an object and immediately set fields on it from the document. 
-        /// The type of instance is supplied via the generic parameter.
-        public static T CreateInstance<T>(DocNode dict, ConfigOptions? options = null) where T : new() {
-            object obj = Activator.CreateInstance<T>();
-            SetFieldsOnObject(ref obj, dict, options ?? Settings.DefaultReifierOptions);
-            return (T) obj;
-        }
-
-        /// Create an instance of an object and immediately set fields on it from the document. 
-        /// The type of instance is supplied explicitly as the first argument.
-        /// Requires a zero-args constructor on the type though it doesn't enforce that.
-        public static object CreateInstance(Type t, DocNode dict, ConfigOptions? options = null) {
-            object obj = Activator.CreateInstance(t);
-            SetFieldsOnObject(ref obj, dict, options ?? Settings.DefaultReifierOptions);
-            return obj;
+        /// Sets all members on a struct from the given dictionary DocNode
+        public static void SetFieldsOnStruct<T>(ref T obj, DocNode dict, ConfigOptions? options = null) where T : struct {
+            Type type = typeof(T);
+            object setRef = obj;
+            SetFieldsOnObject(type, ref setRef, dict, options);
+            obj = (T) setRef;
         }
 
         /// Sets all members on the object *obj* (which must not be null) from *dict*.
@@ -37,24 +28,19 @@ namespace DarkConfig.Internal {
                 type = obj.GetType();
             }
 
-            var setCopy = (object) obj;
-            SetFieldsOnObject(type, ref setCopy, dict, options ?? Settings.DefaultReifierOptions);
-            obj = (T) setCopy;
+            object setRef = obj;
+            SetFieldsOnObject(type, ref setRef, dict, options);
+            obj = (T) setRef;
         }
 
-        /// Sets all members on the struct *obj* (which must not be null) from *dict*.
-        public static void SetFieldsOnStruct<T>(ref T obj, DocNode dict, ConfigOptions? options = null)
-            where T : struct {
-            Type type = typeof(T);
-            var setCopy = (object) obj;
-            SetFieldsOnObject(type, ref setCopy, dict, options ?? Settings.DefaultReifierOptions);
-            obj = (T) setCopy;
-        }
-
-        /// Sets all members on the object *obj* based on the appropriate key from *doc*
-        public static void SetFieldsOnObject(Type type, ref object obj, DocNode doc, ConfigOptions options) {
+        /// Sets all members on the object obj based on the appropriate key from doc
+        public static void SetFieldsOnObject(Type type, ref object obj, DocNode doc, ConfigOptions? options = null) {
             if (doc == null) {
                 return;
+            }
+
+            if (options == null) {
+                options = Settings.DefaultReifierOptions;
             }
 
             var typeInfo = ReflectionCache.GetTypeInfo(type);
@@ -387,24 +373,19 @@ namespace DarkConfig.Internal {
 
                 if (fieldType.IsClass) {
                     if (existing == null) {
-                        existing = CreateInstance(fieldType, value, options);
-                        return CallPostDoc(fieldType, existing);
-                    } else {
-                        SetFieldsOnObject(fieldType, ref existing, value, options ?? Settings.DefaultReifierOptions);
-                        return CallPostDoc(fieldType, existing);
+                        existing = Activator.CreateInstance(fieldType);
                     }
+                    SetFieldsOnObject(fieldType, ref existing, value, options ?? Settings.DefaultReifierOptions);
+                    return CallPostDoc(fieldType, existing);
                 }
 
                 if (fieldType.IsValueType) {
                     // a struct; set the members and return it
-                    if (existing == null) {
-                        // structs can be null when boxed
-                        existing = CreateInstance(fieldType, value, options);
-                        return CallPostDoc(fieldType, existing);
-                    } else {
-                        SetFieldsOnObject(fieldType, ref existing, value, options ?? Settings.DefaultReifierOptions);
-                        return CallPostDoc(fieldType, existing);
+                    if (existing == null) { // structs can be null when boxed
+                        existing = Activator.CreateInstance(fieldType);
                     }
+                    SetFieldsOnObject(fieldType, ref existing, value, options ?? Settings.DefaultReifierOptions);
+                    return CallPostDoc(fieldType, existing);
                 }
             } catch (Exception e) {
                 throw new ParseException($"Exception based on document starting at: {value.SourceInformation}", e);
