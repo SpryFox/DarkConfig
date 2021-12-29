@@ -227,26 +227,34 @@ namespace DarkConfig.Internal {
                     return Convert.ToUInt64(value.StringValue, System.Globalization.CultureInfo.InvariantCulture);
                 }
 
+                // String type
                 if (fieldType == typeof(string)) {
                     return value.StringValue;
                 }
 
-                if (fieldType.IsEnum) { // AudioRolloffMode, "Custom" => AudioRolloffMode.Custom
+                // Enum
+                if (fieldType.IsEnum) {
                     return Enum.Parse(fieldType, value.StringValue, true);
                 }
 
+                // Nullable generic type
                 if (fieldType.IsGenericType && fieldType.GetGenericTypeDefinition() == typeof(Nullable<>)) {
-                    if (value.Type == DocNodeType.Scalar && value.StringValue == "null") return null;
+                    if (value.Type == DocNodeType.Scalar && value.StringValue == "null") {
+                        return null;
+                    }
                     var innerType = Nullable.GetUnderlyingType(fieldType);
                     return ValueOfType(innerType, existing, value, options);
                 }
 
-                if (CustomReifiers.TryGetValue(fieldType, out var del)) {
-                    existing = del(existing, value);
+                // Custom reifier
+                if (CustomReifiers.TryGetValue(fieldType, out var fromDoc)) {
+                    existing = fromDoc(existing, value);
                     return CallPostDoc(fieldType, existing);
                 }
 
-                if (fieldType.IsArray) { // [1,2,3,4,5] => new int[] { 1,2,3,4,5 }
+                // Array
+                // [1,2,3,4,5] => new int[] { 1,2,3,4,5 }
+                if (fieldType.IsArray) { 
                     Type arrTyp = fieldType.GetElementType();
                     if (fieldType.GetArrayRank() == 2) {
                         var firstList = value[0];
@@ -434,11 +442,6 @@ namespace DarkConfig.Internal {
                 propertyInfo.SetValue(setCopy, updated);
                 obj = setCopy;
             }
-        }
-
-        /// convenience method to parse an enum value out of a string
-        static T GetEnum<T>(string v) {
-            return (T) Enum.Parse(typeof(T), v);
         }
 
         /// Used for logging errors
