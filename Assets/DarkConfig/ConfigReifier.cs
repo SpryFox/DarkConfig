@@ -424,14 +424,14 @@ namespace DarkConfig.Internal {
                     // TODO: this doesn't do inherited FromDoc methods properly, but it should
                     try {
                         existing = fromDocMethod.Invoke(null, new[] {existing, value});
-                        CallPostDoc(fieldType, ref existing);
-                        return existing;
                     } catch (TargetInvocationException e) {
                         if (e.InnerException != null) {
                             throw e.InnerException;                            
                         }
                         throw;
                     }
+                    CallPostDoc(fieldType, ref existing, typeInfo);
+                    return existing;
                 }
 
                 if (fieldType.IsClass) {
