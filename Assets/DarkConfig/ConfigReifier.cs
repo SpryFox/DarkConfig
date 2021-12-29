@@ -359,22 +359,21 @@ namespace DarkConfig.Internal {
                         }
 
                         var iexisting = (System.Collections.IDictionary) existing;
-                        Type kType = typeParameters[0];
-                        Type vType = typeParameters[1];
-                        ComposedDocNode keyNode = new ComposedDocNode(DocNodeType.Scalar,
-                            sourceInformation: value.SourceInformation); // can reuse this one object
-                        HashSet<object> usedKeys = new HashSet<object>();
+                        var keyType = typeParameters[0];
+                        var valueType = typeParameters[1];
+                        var keyNode = new ComposedDocNode(DocNodeType.Scalar, sourceInformation: value.SourceInformation); // can reuse this one object
+                        var usedKeys = new HashSet<object>();
 
                         // create/update all pairs in the doc
                         foreach (var kv in value.Pairs) {
                             keyNode.StringValue = kv.Key;
-                            object existingKey = ReadValueOfType(kType, null, keyNode, options);
+                            object existingKey = ReadValueOfType(keyType, null, keyNode, options);
                             object existingValue = null;
                             if (iexisting.Contains(existingKey)) {
                                 existingValue = iexisting[existingKey];
                             }
 
-                            var updated = ReadValueOfType(vType, existingValue, kv.Value, options);
+                            var updated = ReadValueOfType(valueType, existingValue, kv.Value, options);
                             iexisting[existingKey] = updated;
                             usedKeys.Add(existingKey);
                         }
@@ -395,25 +394,23 @@ namespace DarkConfig.Internal {
                     }
 
                     if (fieldType.GetGenericTypeDefinition() == typeof(List<>)) {
-                        Type[] typeParameters = fieldType.GetGenericArguments();
+                        var typeParameters = fieldType.GetGenericArguments();
+                        
                         if (existing == null) {
                             existing = Activator.CreateInstance(fieldType);
                         }
-
                         var iexisting = (System.Collections.IList) existing;
+                        
                         while (iexisting.Count > value.Count) {
                             iexisting.RemoveAt(iexisting.Count - 1);
                         }
 
                         for (int i = 0; i < iexisting.Count; i++) {
-                            var existingElt = iexisting[i];
-                            var updatedElt = ReadValueOfType(typeParameters[0], existingElt, value[i], options);
-                            iexisting[i] = updatedElt;
+                            iexisting[i] = ReadValueOfType(typeParameters[0], iexisting[i], value[i], options);
                         }
 
                         while (iexisting.Count < value.Count) {
-                            var newElt = ReadValueOfType(typeParameters[0], null, value[iexisting.Count], options);
-                            iexisting.Add(newElt);
+                            iexisting.Add(ReadValueOfType(typeParameters[0], null, value[iexisting.Count], options));
                         }
 
                         return existing;
@@ -428,7 +425,10 @@ namespace DarkConfig.Internal {
                         existing = fromDocMethod.Invoke(null, new[] {existing, value});
                         return CallPostDoc(fieldType, existing);
                     } catch (TargetInvocationException e) {
-                        throw e.InnerException;
+                        if (e.InnerException != null) {
+                            throw e.InnerException;                            
+                        }
+                        throw;
                     }
                 }
 
