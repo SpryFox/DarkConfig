@@ -69,13 +69,18 @@ namespace DarkConfig {
             return FileManager.LoadConfig(filename);
         }
 
+        /// <summary>
         /// Use the configuration found in file *filename* to update *obj*.
-        /// 
+        ///
         /// Registers the object for updates whenever the config file changes in the future.
         /// To avoid leaking memory, updates cease when *obj* compares to null -- appropriate
         /// for MonoBehaviours.
-        /// 
+        ///
         /// Preloading must be complete before calling Apply
+        /// </summary>
+        /// <param name="filename"></param>
+        /// <param name="obj"></param>
+        /// <typeparam name="T"></typeparam>
         public static void Apply<T>(string filename, ref T obj) {
             Reify(ref obj, FileManager.LoadConfig(filename));
             if (obj != null) {
