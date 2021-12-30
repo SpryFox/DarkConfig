@@ -16,6 +16,16 @@ public class YamlParseTests {
     
     [TestFixture]
     public class YamlDocParser {
+        [SetUp]
+        public void DoSetUp() {
+            Config.Platform = new UnityPlatform();
+        }
+
+        [TearDown]
+        public void DoTearDown() {
+            Config.Platform = null;
+        }
+        
         [Test]
         public void JsonSubset_TraversedByDocNode() {
             string testStr = "{\"test_key\":\"test_value\"}";
