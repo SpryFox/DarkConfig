@@ -22,9 +22,6 @@ namespace DarkConfig {
             }
         }
 
-        /// How often, in seconds, to scan files for changes.
-        public float HotloadCheckInterval = 2f;
-
         /// List of files in the index file.  This is all the files that DarkConfig can load at the time of access.
         /// Contents may change during preloading.  Do not modify list. (readonly lists are not supported by the 
         /// version of Mono that Unity bundles)
@@ -365,7 +362,7 @@ namespace DarkConfig {
                     while (!IsPreloaded) {
                         yield return Platform.Instance.WaitForSeconds(0.1f);
                     }
-                    yield return Platform.Instance.WaitForSeconds(HotloadCheckInterval);
+                    yield return Platform.Instance.WaitForSeconds(Config.Settings.HotloadCheckFrequencySeconds);
                     yield return Platform.Instance.StartCoroutine(CheckHotloadCoro());
                 }
             } finally {
