@@ -214,7 +214,7 @@ namespace DarkConfig {
         /// *obj* can be null; if it is it gets assigned a new instance based on its type and the contents of *doc* (this is why the parameter is a ref)
         /// 
         /// Works on static and private variables, too.
-        public static void Reify<T>(ref T obj, DocNode doc, ConfigOptions? options = null) {
+        public static void Reify<T>(ref T obj, DocNode doc, ReificationOptions? options = null) {
             Reify(ref obj, typeof(T), doc, options);
         }
 
@@ -232,20 +232,20 @@ namespace DarkConfig {
         /// *obj* can be null; if it is it gets assigned a new instance based on its type and the contents of *doc* (this is why the parameter is a ref)
         /// 
         /// Works on static and private variables, too.
-        public static void Reify<T>(ref T obj, Type objType, DocNode doc, ConfigOptions? options = null) {
+        public static void Reify<T>(ref T obj, Type objType, DocNode doc, ReificationOptions? options = null) {
             obj = (T) Internal.ConfigReifier.ReadValueOfType(objType, obj, doc, options);
         }
 
         /// Sets up static variables (and only static variables) on type *T* based on the contents of the parsed document *doc*
         ///
         /// Ignores any fields in *doc* that are for non-static fields.
-        public static void ReifyStatic<T>(DocNode doc, ConfigOptions? options = null) {
+        public static void ReifyStatic<T>(DocNode doc, ReificationOptions? options = null) {
             ReifyStatic(typeof(T), doc, options);
         }
 
         /// Same as ReifyStatic<T>, but with a type argument instead of a generic.
         /// Static classes can't be used in generics, so use this version instead.
-        public static void ReifyStatic(Type type, DocNode doc, ConfigOptions? options = null) {
+        public static void ReifyStatic(Type type, DocNode doc, ReificationOptions? options = null) {
             object dummyObj = null;
             Internal.ConfigReifier.SetFieldsOnObject(type, ref dummyObj, doc, options ?? Settings.DefaultReifierOptions);
         }
@@ -262,12 +262,12 @@ namespace DarkConfig {
 
         /// Sets all members on the object *obj* (which must not be null) from *dict*.
         /// Expects *obj* to be a plain class, but if it's a boxed struct it will work as well.
-        public static void SetFieldsOnObject<T>(ref T obj, DocNode dict, ConfigOptions? options = null) where T : class {
+        public static void SetFieldsOnObject<T>(ref T obj, DocNode dict, ReificationOptions? options = null) where T : class {
             Internal.ConfigReifier.SetFieldsOnObject<T>(ref obj, dict, options);
         }
 
         /// Sets all members on the struct *obj* (which must not be null) from *dict*.
-        public static void SetFieldsOnStruct<T>(ref T obj, DocNode dict, ConfigOptions? options = null) where T : struct {
+        public static void SetFieldsOnStruct<T>(ref T obj, DocNode dict, ReificationOptions? options = null) where T : struct {
             Internal.ConfigReifier.SetFieldsOnStruct<T>(ref obj, dict, options);
         }
 
