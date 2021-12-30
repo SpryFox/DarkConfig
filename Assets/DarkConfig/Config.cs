@@ -46,7 +46,6 @@ namespace DarkConfig {
         /// 
         /// Optional callback argument is called once preloading is complete.
         public static void Preload(Action callback = null) {
-            OnPreload += PreloadComplete;
             if (callback != null) {
                 OnPreload += callback;
             }
@@ -283,10 +282,6 @@ namespace DarkConfig {
         static Action OnPreloadInvoker;
 
         /////////////////////////////////////////////////
-
-        internal static void PreloadComplete() {
-            Internal.BuiltInTypeRefiers.RegisterAll();
-        }
 
         static DocNode LoadDocFromTextReader(TextReader reader, string filename) {
             var yaml = new YamlStream();

@@ -482,6 +482,11 @@ namespace DarkConfig.Internal {
         
         /////////////////////////////////////////////////
 
+        static ConfigReifier() {
+            CustomReifiers[typeof(DateTime)] = BuiltInTypeRefiers.FromDateTime;
+            CustomReifiers[typeof(TimeSpan)] = BuiltInTypeRefiers.FromTimeSpan;
+        }
+        
         static bool IsDelegateType(Type type) {
             // http://mikehadlow.blogspot.com/2010/03/how-to-tell-if-type-is-delegate.html
             return typeof(MulticastDelegate).IsAssignableFrom(type.BaseType);
