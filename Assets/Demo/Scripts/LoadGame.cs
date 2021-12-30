@@ -26,7 +26,7 @@ public class LoadGame : MonoBehaviour {
         // this delay is purely because Unity's profiler doesn't capture the first frame a game is running
         yield return new WaitForSeconds(0.1f);
 
-        UnityPlatform.Setup();
+        Config.Platform = new UnityPlatform();
         Config.FileManager.AddSource(new FileSource(Application.dataPath + "/Demo/Resources/Configs", hotload: true));
         m_sw = Stopwatch.StartNew();
 

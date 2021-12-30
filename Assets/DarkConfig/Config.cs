@@ -23,6 +23,9 @@ namespace DarkConfig {
         /// Configuration for Dark Config itself.
         public static Settings Settings = new Settings();
         
+        /// Provides DarkConfig with platform-specific resources like logging, coroutines, etc.
+        public static Platform Platform;
+        
         public static ConfigFileManager FileManager => configFileManager = configFileManager ?? new ConfigFileManager();
         static ConfigFileManager configFileManager;
         
@@ -122,8 +125,8 @@ namespace DarkConfig {
         public static void Clear() {
             OnPreloadInvoker = null;
             Internal.ConfigReifier.CustomReifiers.Clear();
-            Platform.Instance.Clear();
             configFileManager = null;
+            Platform.Clear();
         }
 
         /// A function that loads multiple files and delivers it as a single

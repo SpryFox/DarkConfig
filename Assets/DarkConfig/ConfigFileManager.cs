@@ -14,9 +14,9 @@ namespace DarkConfig {
                 isHotloadingFiles = value;
                 if (isHotloadingFiles && watchFilesCoro == null) {
                     watchFilesCoro = WatchFilesCoro();
-                    Platform.Instance.StartCoroutine(watchFilesCoro);
+                    Config.Platform.StartCoroutine(watchFilesCoro);
                 } else if (!isHotloadingFiles && watchFilesCoro != null) {
-                    Platform.Instance.StopCoroutine(watchFilesCoro);
+                    Config.Platform.StopCoroutine(watchFilesCoro);
                     watchFilesCoro = null;
                 }
             }
@@ -76,7 +76,7 @@ namespace DarkConfig {
                     Platform.Log(LogVerbosity.Info, "Done preloading, IsHotloadingFiles: ", IsHotloadingFiles);
 
                     if (IsHotloadingFiles) {
-                        Platform.Instance.StartCoroutine(WatchFilesCoro());
+                        Config.Platform.StartCoroutine(WatchFilesCoro());
                     }
 
                     if (callback != null) callback();
@@ -202,7 +202,7 @@ namespace DarkConfig {
 
         /// Loads all files from the source immediately.  For editor tooling.
         public void LoadFromSourceImmediately(ConfigSource source) {
-            Platform.Assert(Platform.Instance.CanDoImmediatePreload, "Trying to load immediately on a platform that doesn't support it");
+            Platform.Assert(Config.Platform.CanDoImmediatePreload, "Trying to load immediately on a platform that doesn't support it");
             isPreloading = true;
             Platform.Log(LogVerbosity.Info, "Immediate-loading " + source);
 
@@ -235,7 +235,7 @@ namespace DarkConfig {
             if (isCheckingHotloadNow) {
                 return;
             }
-            Platform.Instance.StartCoroutine(CheckHotloadCoro(callback, filesPerFrame));
+            Config.Platform.StartCoroutine(CheckHotloadCoro(callback, filesPerFrame));
         }
 
         internal void RegisterReload(string filename, ReloadDelegate cb) {
@@ -318,11 +318,7 @@ namespace DarkConfig {
         /////////////////////////////////////////////////
 
         void CheckPreload() {
-#if UNITY_EDITOR
-            UnityPlatform.Setup();
-#endif
-
-            if (!Platform.Instance.CanDoImmediatePreload) {
+            if (!Config.Platform.CanDoImmediatePreload) {
                 Platform.Assert(IsPreloaded, "Can't use configs in any way in a built game, before preloading is complete");
                 return;
             }
@@ -333,7 +329,7 @@ namespace DarkConfig {
             }
 
             if (sources.Count == 0) {
-                LoadFromSourceImmediately(Platform.Instance.ConfigSource);
+                LoadFromSourceImmediately(Config.Platform.ConfigSource);
             } else {
                 bool preloadWasImmediate = false;
                 Preload(() => { preloadWasImmediate = true; }); // note: all preloading is immediate
@@ -360,10 +356,10 @@ namespace DarkConfig {
             try {
                 while (IsHotloadingFiles) {
                     while (!IsPreloaded) {
-                        yield return Platform.Instance.WaitForSeconds(0.1f);
+                        yield return Config.Platform.WaitForSeconds(0.1f);
                     }
-                    yield return Platform.Instance.WaitForSeconds(Config.Settings.HotloadCheckFrequencySeconds);
-                    yield return Platform.Instance.StartCoroutine(CheckHotloadCoro());
+                    yield return Config.Platform.WaitForSeconds(Config.Settings.HotloadCheckFrequencySeconds);
+                    yield return Config.Platform.StartCoroutine(CheckHotloadCoro());
                 }
             } finally {
                 watchFilesCoro = null;
