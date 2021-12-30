@@ -3,11 +3,7 @@ using System.Collections;
 
 namespace DarkConfig {
     public class UnityPlatform : Platform {
-        public static void Setup() {
-            Instance = new UnityPlatform();
-        }
-
-        UnityPlatform() {
+        public UnityPlatform() {
             CanDoImmediatePreload = Application.isEditor;
             UnityTypeReifiers.RegisterAll();
         }

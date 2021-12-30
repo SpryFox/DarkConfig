@@ -11,8 +11,6 @@ namespace DarkConfig {
     }
     
     public abstract class Platform {
-        public static Platform Instance;
-
         public bool CanDoImmediatePreload = false;
 
         public abstract ConfigSource ConfigSource { get; }
@@ -38,9 +36,9 @@ namespace DarkConfig {
             if (level <= LogLevel) {
                 var message = LogPrefix + msg;
                 if (level > LogVerbosity.Error) {
-                    Instance.Log(message);
+                    Config.Platform.Log(message);
                 } else {
-                    Instance.LogError(message);
+                    Config.Platform.LogError(message);
                 }
             }
         }

@@ -4,10 +4,6 @@ using System.Collections.Generic;
 
 namespace DarkConfig {
     public class ConsolePlatform : Platform {
-        public static void Setup() {
-            Instance = new ConsolePlatform();
-        }
-
         public ConsolePlatform() {
             CanDoImmediatePreload = false;
         }
