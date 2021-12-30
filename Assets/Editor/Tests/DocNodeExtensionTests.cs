@@ -7,6 +7,12 @@ class DocNodeExtensionTests {
     [SetUp]
     public void DoSetup() {
         UnityTypeReifiers.RegisterAll();
+        Config.Platform = new UnityPlatform();
+    }
+
+    [TearDown]
+    public void DoTeardown() {
+        Config.Platform = null;
     }
 
     DocNode GetDocNode(string str) {

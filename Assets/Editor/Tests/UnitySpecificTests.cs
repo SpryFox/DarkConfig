@@ -21,6 +21,16 @@ public class UnityTypesConfigReifierTests : UnityTestFixture {
         public Vector3 vector3Key = Vector3.zero;
         public Color colorKey = Color.black;
     }
+
+    [SetUp]
+    public void DoSetUp() {
+        Config.Platform = new UnityPlatform();
+    }
+
+    [TearDown]
+    public void DoTearDown() {
+        Config.Platform = null;
+    }
     
     [Test]
     public void ConfigReifier_SetsVector2() {
@@ -102,6 +112,16 @@ public class UnityMonoBehaviourReifyTests : UnityTestFixture {
         public int field1;
     }
 
+    [SetUp]
+    public void DoSetUp() {
+        Config.Platform = new UnityPlatform();
+    }
+
+    [TearDown]
+    public void DoTearDown() {
+        Config.Platform = null;
+    }
+
     [Test]
     public void ReifierAttributes_MonoBehaviour_ForcesAllowMissing() {
         var doc = Config.LoadDocFromString(@"---
@@ -119,6 +139,16 @@ public class UnityMonoBehaviourReifyTests : UnityTestFixture {
 
 [TestFixture]
 public class UnityColorRefierTests : UnityTestFixture {
+    [SetUp]
+    public void DoSetUp() {
+        Config.Platform = new UnityPlatform();
+    }
+
+    [TearDown]
+    public void DoTearDown() {
+        Config.Platform = null;
+    }
+    
     [Test]
     public void Color_FourFloats() {
         var c = ReifyString<Color>("[0.1, 0.5, 0.5, 0.9]");
@@ -188,6 +218,11 @@ public class UnityColorRefierTests : UnityTestFixture {
 
 [TestFixture]
 public class UnityEditorUtilsTests : UnityTestFixture {
+    [SetUp]
+    public void DoSetUp() {
+        Config.Platform = new UnityPlatform();
+    }
+    
     [TearDown]
     public void TearDown() {
         // clean up entire test directory
@@ -195,6 +230,7 @@ public class UnityEditorUtilsTests : UnityTestFixture {
         if (tempDir.Exists) {
             tempDir.Delete(true);
         }
+        Config.Platform = null;
     }
 
     [Test]
@@ -240,6 +276,16 @@ public class UnityDocNodeExtensionsTests : UnityTestFixture {
         var doc = Config.LoadDocFromString(str, "ConfigReifierTests_ReifyString_TestFilename");
         return doc;
     }
+
+    [SetUp]
+    public void DoSetUp() {
+        Config.Platform = new UnityPlatform();
+    }
+
+    [TearDown]
+    public void DoTearDown() {
+        Config.Platform = null;
+    }
     
     [Test]
     public void As_DictOfVector3() {
@@ -252,5 +298,4 @@ public class UnityDocNodeExtensionsTests : UnityTestFixture {
         Assert.AreEqual(dict["swerve"], new Vector3(1, 1, 1));
     }
 }
-
 #endif

@@ -1,9 +1,10 @@
 using DarkConfig;
-using DarkConfig.Internal;
 using NUnit.Framework;
 
 [TestFixture]
 class PostDocTests {
+    const string FILENAME = "PostDocTests_TestFilename";
+    
     class PostDocClass {
         public static PostDocClass PostDoc(PostDocClass existing) {
             existing.baseKey += 1;
@@ -27,13 +28,21 @@ class PostDocTests {
         public int baseKey;
     }
 
-    const string FILENAME = "PostDocTests_TestFilename";
-
     static T ReifyString<T>(string str) where T : new() {
         var doc = Config.LoadDocFromString(str, FILENAME);
         var result = default(T);
         Config.Reify(ref result, doc);
         return result;
+    }
+
+    [SetUp]
+    public void DoSetUp() {
+        Config.Platform = new UnityPlatform();
+    }
+
+    [TearDown]
+    public void DoTeardown() {
+        Config.Platform = null;
     }
 
     [Test]
