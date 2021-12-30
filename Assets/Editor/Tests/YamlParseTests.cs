@@ -13,36 +13,7 @@ public class YamlParseTests {
 
         return yaml.Documents[0].RootNode;
     }
-
-    [TestFixture]
-    public class RawYamlParser {
-        [Test]
-        public void JsonSubset_ParsesOK() {
-            string testStr = "{\"test_key\":\"test_value\"}";
-            var mapping = (YamlMappingNode) ParseYamlNode(testStr);
-
-            Assert.AreEqual(mapping.Children.Count, 1);
-
-            foreach (var entry in mapping.Children) {
-                Assert.AreEqual(((YamlScalarNode) entry.Key).Value, "test_key");
-                Assert.AreEqual(((YamlScalarNode) entry.Value).Value, "test_value");
-            }
-        }
-
-        [Test]
-        public void BasicYamlDoc_ParsesOK() {
-            string testStr = @"---
-            yaml_key: yaml_value
-        ";
-            var mapping = (YamlMappingNode) ParseYamlNode(testStr);
-
-            foreach (var entry in mapping.Children) {
-                Assert.AreEqual(((YamlScalarNode) entry.Key).Value, "yaml_key");
-                Assert.AreEqual(((YamlScalarNode) entry.Value).Value, "yaml_value");
-            }
-        }
-    }
-
+    
     [TestFixture]
     public class YamlDocParser {
         [Test]
