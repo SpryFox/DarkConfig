@@ -127,6 +127,7 @@ class ConfigReifierTests {
     public void DoSetup() {
         // needs to be called here because we can't be sure whether preload has been called before or not
         UnityTypeReifiers.RegisterAll();
+        Config.Platform = new UnityPlatform();
         defaults = Config.Settings.DefaultReifierOptions;
         Config.Settings.DefaultReifierOptions = ReificationOptions.AllowMissingExtraFields;
     }
