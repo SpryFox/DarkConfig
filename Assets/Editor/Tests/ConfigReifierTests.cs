@@ -120,24 +120,6 @@ class ConfigReifierTests {
         [ConfigMandatory]
         public string mandatoryValue { get; set; }
     }
-    
-    [Test]
-    public void ReifierAttributes_PropertiesClass() {
-        var doc = Config.LoadDocFromString(@"---
-            int1Value: 10
-            staticStringValue: newValue
-            mandatoryValue: mandatory
-        ", "ReifierAttributes_PropertiesClass_AcceptsSetting");
-        var inst = Activator.CreateInstance<PropertiesClass>();
-        ConfigReifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.None);
-        Assert.AreEqual(inst.int1Value, 10);
-        Assert.AreEqual(inst.int2Value, 2);
-        Assert.AreEqual(inst.backing3Int, 3);
-        Assert.AreEqual(inst.int4Value, 4);
-        Assert.AreEqual(PropertiesClass.staticStringValue, "newValue");
-        Assert.AreEqual(inst.allowMissing, "missing");
-        Assert.AreEqual(inst.mandatoryValue, "mandatory");
-    }
 
     ReificationOptions defaults;
 
@@ -1157,5 +1139,23 @@ class ConfigReifierTests {
         var doc = Config.LoadDocFromStream(new System.IO.MemoryStream(), "EmptyDoc");
         Assert.IsNotNull(doc);
         Assert.IsInstanceOf<DocNode>(doc);
+    }
+    
+    [Test]
+    public void ReifierAttributes_PropertiesClass() {
+        var doc = Config.LoadDocFromString(@"---
+            int1Value: 10
+            staticStringValue: newValue
+            mandatoryValue: mandatory
+        ", "ReifierAttributes_PropertiesClass_AcceptsSetting");
+        var inst = Activator.CreateInstance<PropertiesClass>();
+        ConfigReifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.None);
+        Assert.AreEqual(inst.int1Value, 10);
+        Assert.AreEqual(inst.int2Value, 2);
+        Assert.AreEqual(inst.backing3Int, 3);
+        Assert.AreEqual(inst.int4Value, 4);
+        Assert.AreEqual(PropertiesClass.staticStringValue, "newValue");
+        Assert.AreEqual(inst.allowMissing, "missing");
+        Assert.AreEqual(inst.mandatoryValue, "mandatory");
     }
 }
