@@ -12,7 +12,7 @@ public class LoadGame : MonoBehaviour {
         // notified of any mistakes.  It will warn for any missing fields
         // (which haven't been annotated with ConfigAllowMissing) and for any
         // extra fields.
-        DarkConfig.Settings.DefaultReifierOptions = ConfigOptions.None;
+        DarkConfig.Settings.DefaultReifierOptions = ReificationOptions.None;
 #else
         // In production mode, ignore missing/extra checks.  This makes the 
         // runtime faster.  ConfigMandatory fields are still checked.

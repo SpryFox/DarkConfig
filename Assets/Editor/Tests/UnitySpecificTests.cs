@@ -110,7 +110,7 @@ public class UnityMonoBehaviourReifyTests : UnityTestFixture {
 
         var obj = new GameObject("Test_ReifierAttributes");
         var mb = obj.AddComponent<MonoBehaviourSubclass>();
-        Config.Reify(ref mb, doc, ConfigOptions.None);
+        Config.Reify(ref mb, doc, ReificationOptions.None);
         Assert.AreEqual(mb.field1, 1);
 
         Object.DestroyImmediate(obj);

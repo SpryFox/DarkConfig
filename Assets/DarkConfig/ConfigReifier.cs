@@ -10,7 +10,7 @@ namespace DarkConfig.Internal {
         /////////////////////////////////////////////////
         
         /// Sets all members on a struct from the given dictionary DocNode
-        public static void SetFieldsOnStruct<T>(ref T obj, DocNode dict, ConfigOptions? options = null) where T : struct {
+        public static void SetFieldsOnStruct<T>(ref T obj, DocNode dict, ReificationOptions? options = null) where T : struct {
             Type type = typeof(T);
             object setRef = obj;
             SetFieldsOnObject(type, ref setRef, dict, options);
@@ -19,7 +19,7 @@ namespace DarkConfig.Internal {
 
         /// Sets all members on the object *obj* (which must not be null) from *dict*.
         /// Expects *obj* to be a plain class, but if it's a boxed struct it will work as well.
-        public static void SetFieldsOnObject<T>(ref T obj, DocNode dict, ConfigOptions? options = null) where T : class {
+        public static void SetFieldsOnObject<T>(ref T obj, DocNode dict, ReificationOptions? options = null) where T : class {
             Platform.Assert(obj != null, "Can't SetFields on null");
             Type type = typeof(T);
             if (type == typeof(object)) {
@@ -33,7 +33,7 @@ namespace DarkConfig.Internal {
         }
 
         /// Sets all members on the object obj based on the appropriate key from doc.
-        public static void SetFieldsOnObject(Type type, ref object obj, DocNode doc, ConfigOptions? options = null) {
+        public static void SetFieldsOnObject(Type type, ref object obj, DocNode doc, ReificationOptions? options = null) {
             if (doc == null) {
                 return;
             }
@@ -45,9 +45,9 @@ namespace DarkConfig.Internal {
             var typeInfo = ReflectionCache.GetTypeInfo(type);
 
             // Grab global settings
-            bool ignoreCase = (options & ConfigOptions.CaseSensitive) != ConfigOptions.CaseSensitive;
-            bool checkForMissingFields = (options & ConfigOptions.AllowMissingFields) != ConfigOptions.AllowMissingFields;
-            bool checkForExtraFields = (options & ConfigOptions.AllowExtraFields) != ConfigOptions.AllowExtraFields;
+            bool ignoreCase = (options & ReificationOptions.CaseSensitive) != ReificationOptions.CaseSensitive;
+            bool checkForMissingFields = (options & ReificationOptions.AllowMissingFields) != ReificationOptions.AllowMissingFields;
+            bool checkForExtraFields = (options & ReificationOptions.AllowExtraFields) != ReificationOptions.AllowExtraFields;
             
             // Override global settings with type-specific settings
             if ((typeInfo.AttributeFlags & ReflectionCache.ClassAttributesFlags.HasConfigMandatoryAttribute) != 0) {
@@ -170,7 +170,7 @@ namespace DarkConfig.Internal {
         /// <exception cref="Exception"></exception>
         /// <exception cref="ParseException"></exception>
         /// <exception cref="NotSupportedException"></exception>
-        public static object ReadValueOfType(Type fieldType, object existing, DocNode value, ConfigOptions? options) {
+        public static object ReadValueOfType(Type fieldType, object existing, DocNode value, ReificationOptions? options) {
             try {
                 if (fieldType == typeof(bool)) {
                     return Convert.ToBoolean(value.StringValue, System.Globalization.CultureInfo.InvariantCulture);
@@ -476,7 +476,7 @@ namespace DarkConfig.Internal {
             return curr;
         }
         
-        static void SetMember(MemberInfo memberInfo, bool isField, ref object obj, DocNode value, ConfigOptions? options) {
+        static void SetMember(MemberInfo memberInfo, bool isField, ref object obj, DocNode value, ReificationOptions? options) {
             if (isField) {
                 var fieldInfo = (FieldInfo)memberInfo;
                 if (obj == null && !fieldInfo.IsStatic) {
