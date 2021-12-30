@@ -18,9 +18,9 @@ namespace DarkConfig {
         CaseSensitive = 1 << 2
     }
 
-	public static class Settings {
+	public class Settings {
 		/// Default options for refication.  Change this if you want to change
         /// DarkConfig behavior without passing in parameters to each call.
-        public static ReificationOptions DefaultReifierOptions = ReificationOptions.AllowMissingExtraFields | ReificationOptions.CaseSensitive;
+        public ReificationOptions DefaultReifierOptions = ReificationOptions.AllowMissingExtraFields | ReificationOptions.CaseSensitive;
 	}
 }

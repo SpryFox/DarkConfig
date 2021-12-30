@@ -25,6 +25,8 @@ namespace DarkConfig {
         
         /// True if preloading is complete, false otherwise.
         public static bool IsPreloaded => FileManager.IsPreloaded;
+
+        public static Settings Settings = new Settings();
         
         /////////////////////////////////////////////////
 
@@ -273,7 +275,7 @@ namespace DarkConfig {
 
         /// Sets all members on the struct *obj* (which must not be null) from *dict*.
         public static void SetFieldsOnStruct<T>(ref T obj, DocNode dict, ReificationOptions? options = null) where T : struct {
-            Internal.ConfigReifier.SetFieldsOnStruct<T>(ref obj, dict, options);
+            Internal.ConfigReifier.SetFieldsOnStruct(ref obj, dict, options);
         }
 
         /////////////////////////////////////////////////

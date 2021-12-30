@@ -17,7 +17,7 @@ namespace DarkConfig.Internal {
         /// <param name="options"></param>
         /// <typeparam name="T"></typeparam>
         public static void SetFieldsOnStruct<T>(ref T obj, DocNode doc, ReificationOptions? options = null) where T : struct {
-            Type type = typeof(T);
+            var type = typeof(T);
             object setRef = obj;
             SetFieldsOnObject(type, ref setRef, doc, options);
             obj = (T) setRef;
@@ -33,7 +33,7 @@ namespace DarkConfig.Internal {
         /// <typeparam name="T"></typeparam>
         public static void SetFieldsOnObject<T>(ref T obj, DocNode doc, ReificationOptions? options = null) where T : class {
             Platform.Assert(obj != null, "Can't SetFields on null");
-            Type type = typeof(T);
+            var type = typeof(T);
             if (type == typeof(object)) {
                 // caller is using an object, but that is not the real type
                 type = obj.GetType();
@@ -59,7 +59,7 @@ namespace DarkConfig.Internal {
             }
 
             if (options == null) {
-                options = Settings.DefaultReifierOptions;
+                options = Config.Settings.DefaultReifierOptions;
             }
 
             var typeInfo = ReflectionCache.GetTypeInfo(type);
@@ -459,7 +459,7 @@ namespace DarkConfig.Internal {
                     if (existing == null) {
                         existing = Activator.CreateInstance(fieldType);
                     }
-                    SetFieldsOnObject(fieldType, ref existing, doc, options ?? Settings.DefaultReifierOptions);
+                    SetFieldsOnObject(fieldType, ref existing, doc, options);
                     CallPostDoc(fieldType, ref existing, typeInfo);
                     return existing;
                 }
@@ -469,7 +469,7 @@ namespace DarkConfig.Internal {
                     if (existing == null) { // structs can be null when boxed
                         existing = Activator.CreateInstance(fieldType);
                     }
-                    SetFieldsOnObject(fieldType, ref existing, doc, options ?? Settings.DefaultReifierOptions);
+                    SetFieldsOnObject(fieldType, ref existing, doc, options);
                     CallPostDoc(fieldType, ref existing, typeInfo);
                     return existing;
                 }
