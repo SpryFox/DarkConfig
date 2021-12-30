@@ -6,7 +6,6 @@ using System.Collections.Generic;
 class DocNodeExtensionTests {
     [SetUp]
     public void DoSetup() {
-        DarkConfig.Internal.BuiltInTypeRefiers.RegisterAll();
         UnityTypeReifiers.RegisterAll();
     }
 

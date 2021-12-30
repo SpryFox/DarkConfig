@@ -1,17 +1,12 @@
 using System;
 
 namespace DarkConfig.Internal {
-    public static class BuiltInTypeRefiers {
-        public static void RegisterAll() {
-            Config.RegisterFromDoc<DateTime>(FromDateTime);
-            Config.RegisterFromDoc<TimeSpan>(FromTimeSpan);
-        }
-
-        static object FromDateTime(object existing, DocNode doc) {
+    static class BuiltInTypeRefiers {
+        internal static object FromDateTime(object existing, DocNode doc) {
             return DateTime.Parse(doc.StringValue, System.Globalization.CultureInfo.InvariantCulture);
         }
 
-        static object FromTimeSpan(object existing, DocNode doc) {
+        internal static object FromTimeSpan(object existing, DocNode doc) {
             bool isSuccess = TimeSpan.TryParse(doc.StringValue, out var newSpan);
             if (!isSuccess) {
                 throw new ParseException("expected parseable timespan string " + doc.StringValue, null);

@@ -343,8 +343,6 @@ namespace DarkConfig {
                 Platform.Log(LogVerbosity.Info, "Done immediate-loading, IsHotloadingFiles: ", IsHotloadingFiles);
                 Platform.Assert(preloadWasImmediate, "Did not preload immediately");
             }
-
-            Config.PreloadComplete();
         }
 
         void HotloadIndex(ConfigSource source) {

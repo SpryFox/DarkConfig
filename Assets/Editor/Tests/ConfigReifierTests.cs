@@ -138,15 +138,12 @@ class ConfigReifierTests {
         Assert.AreEqual(inst.allowMissing, "missing");
         Assert.AreEqual(inst.mandatoryValue, "mandatory");
     }
-    
 
     ReificationOptions defaults;
 
     [SetUp]
     public void DoSetup() {
         // needs to be called here because we can't be sure whether preload has been called before or not
-        DarkConfig.Internal.BuiltInTypeRefiers.RegisterAll(); 
-        
         UnityTypeReifiers.RegisterAll();
         defaults = Config.Settings.DefaultReifierOptions;
         Config.Settings.DefaultReifierOptions = ReificationOptions.AllowMissingExtraFields;
