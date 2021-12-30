@@ -20,14 +20,15 @@ namespace DarkConfig {
     public delegate bool ReloadDelegate(DocNode d);
 
     public static class Config {
+        /// Configuration for Dark Config itself.
+        public static Settings Settings = new Settings();
+        
         public static ConfigFileManager FileManager => configFileManager = configFileManager ?? new ConfigFileManager();
         static ConfigFileManager configFileManager;
         
         /// True if preloading is complete, false otherwise.
         public static bool IsPreloaded => FileManager.IsPreloaded;
 
-        public static Settings Settings = new Settings();
-        
         /////////////////////////////////////////////////
 
         /// Callback, gets called when preloading completes.
