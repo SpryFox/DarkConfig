@@ -115,7 +115,7 @@ namespace DarkConfig {
 
             bool save = cb(FileInfos[configName].Parsed);
             if (save) {
-                RegisterReload(configName, cb);
+                RegisterReloadCallback(configName, cb);
             }
         }
 
@@ -238,7 +238,7 @@ namespace DarkConfig {
             Config.Platform.StartCoroutine(CheckHotloadCoro(callback, filesPerFrame));
         }
 
-        internal void RegisterReload(string filename, ReloadDelegate cb) {
+        internal void RegisterReloadCallback(string filename, ReloadDelegate cb) {
             List<ReloadDelegate> delegates;
             if (!reloadCallbacks.TryGetValue(filename, out delegates)) {
                 delegates = new List<ReloadDelegate>();
