@@ -26,8 +26,7 @@ namespace DarkConfig {
         /// Contents may change during preloading.  Do not modify list.
         public readonly List<string> Files = new List<string>();
 
-        /// Returns a dictionary of the files that are currently loaded.
-        public readonly Dictionary<string, ConfigFileInfo> FileInfos = new Dictionary<string, ConfigFileInfo>();
+        public readonly Dictionary<string, ConfigFileInfo> LoadedFiles = new Dictionary<string, ConfigFileInfo>();
 
         /// This event is called for every file that gets hotloaded.
         public event Action<string> OnHotloadFile;
@@ -43,7 +42,7 @@ namespace DarkConfig {
             }
             isPreloading = true;
 
-            FileInfos.Clear();
+            LoadedFiles.Clear();
             Files.Clear();
 
             Platform.Log(LogVerbosity.Info, "Preloading", sources.Count, "sources");
@@ -62,7 +61,7 @@ namespace DarkConfig {
                     var files = source1.LoadedFiles;
                     foreach (var finfo in files) {
                         Files.Add(finfo.Name);
-                        FileInfos.Add(finfo.Name, finfo);
+                        LoadedFiles.Add(finfo.Name, finfo);
                     }
 
                     // put files in all other sources
@@ -97,22 +96,22 @@ namespace DarkConfig {
         /// Load a config file into a DocNode and return it directly.
         public DocNode LoadConfig(string configName) {
             CheckPreload();
-            if (!FileInfos.ContainsKey(configName)) {
+            if (!LoadedFiles.ContainsKey(configName)) {
                 throw new ConfigFileNotFoundException(configName);
             }
 
-            return FileInfos[configName].Parsed;
+            return LoadedFiles[configName].Parsed;
         }
 
         /// Load a config file and call *cb* immediately with the contents.  This also registers *cb* to
         /// be called every time the file is hotloaded.
         public void LoadConfig(string configName, ReloadDelegate cb) {
             CheckPreload();
-            if (!FileInfos.ContainsKey(configName)) {
+            if (!LoadedFiles.ContainsKey(configName)) {
                 throw new ConfigFileNotFoundException(configName);
             }
 
-            bool save = cb(FileInfos[configName].Parsed);
+            bool save = cb(LoadedFiles[configName].Parsed);
             if (save) {
                 RegisterReloadCallback(configName, cb);
             }
@@ -156,7 +155,7 @@ namespace DarkConfig {
             }
 
             if (IsPreloaded) {
-                FileInfos[newFilename] = new ConfigFileInfo {
+                LoadedFiles[newFilename] = new ConfigFileInfo {
                     Name = newFilename,
                     Parsed = BuildCombinedConfig(newFilename)
                 };
@@ -211,7 +210,7 @@ namespace DarkConfig {
             var files = source.LoadedFiles;
             foreach (var finfo in files) {
                 Files.Add(finfo.Name);
-                FileInfos.Add(finfo.Name, finfo);
+                LoadedFiles.Add(finfo.Name, finfo);
             }
 
             isPreloading = false;
@@ -270,8 +269,8 @@ namespace DarkConfig {
 
         internal ConfigFileInfo CheckHotload(string configName) {
             ConfigFileInfo finfo;
-            lock (FileInfos) {
-                finfo = FileInfos[configName];
+            lock (LoadedFiles) {
+                finfo = LoadedFiles[configName];
             }
 
             foreach (var source in sources) {
@@ -345,8 +344,8 @@ namespace DarkConfig {
                 if (!Files.Contains(finfo.Name)) {
                     Files.Add(finfo.Name);
                 }
-                bool isNewFile = !FileInfos.ContainsKey(finfo.Name);
-                FileInfos[finfo.Name] = finfo;
+                bool isNewFile = !LoadedFiles.ContainsKey(finfo.Name);
+                LoadedFiles[finfo.Name] = finfo;
                 if (isNewFile) {
                     OnHotloadFile?.Invoke(finfo.Name);
                 }
@@ -393,7 +392,7 @@ namespace DarkConfig {
                     var multicallbacks = combinersBySubfile[filename];
                     foreach (var mc in multicallbacks) {
                         var shortName = mc.DestinationFilename;
-                        FileInfos[shortName] = new ConfigFileInfo {
+                        LoadedFiles[shortName] = new ConfigFileInfo {
                             Name = shortName,
                             Parsed = BuildCombinedConfig(mc.DestinationFilename)
                         };
@@ -433,7 +432,7 @@ namespace DarkConfig {
                         var newInfo = CheckHotload(configName);
                         if (newInfo != null) {
                             modifiedFiles.Add(configName);
-                            FileInfos[configName] = newInfo;
+                            LoadedFiles[configName] = newInfo;
                         }
                     } catch (Exception e) {
                         Platform.Log(LogVerbosity.Error, "Exception loading file", configName, e);
