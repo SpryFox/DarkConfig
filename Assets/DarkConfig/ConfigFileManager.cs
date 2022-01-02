@@ -23,8 +23,7 @@ namespace DarkConfig {
         }
 
         /// List of files in the index file.  This is all the files that DarkConfig can load at the time of access.
-        /// Contents may change during preloading.  Do not modify list. (readonly lists are not supported by the 
-        /// version of Mono that Unity bundles)
+        /// Contents may change during preloading.  Do not modify list.
         public readonly List<string> Files = new List<string>();
 
         /// Returns a dictionary of the files that are currently loaded.
@@ -129,9 +128,8 @@ namespace DarkConfig {
         /// <param name="newFilename">Name of the new combined file.  Once it's registered, 
         /// you call LoadConfig with this name.  Should be unique -- naming a combined file
         /// the same as another will clobber it.</param>
-        /// <param name="combiner">Function that takes in an array of DocNodes and returns a
-        /// DocNode.  Implement whatever algorithm you want.  This function gets called every
-        /// time any of the source files changes, with the DocNodes of all source files.</param>
+        /// <param name="combiner">Combines multiple parsed fies into a single file.
+        /// Called when any of the source files change with the DocNodes of all source files.</param>
         public void RegisterCombinedFile(List<string> sourceFilenames, string newFilename, Func<List<DocNode>, DocNode> combiner) {
             CheckPreload();
 
@@ -165,7 +163,10 @@ namespace DarkConfig {
             }
         }
 
-        /// Stops producing a combined file, specified by name.
+        /// <summary>
+        /// Stop producing a combined file.
+        /// </summary>
+        /// <param name="combinedConfigName">Generated name of the combined file.</param>
         public void UnregisterCombinedFile(string combinedConfigName) {
             CheckPreload();
 
