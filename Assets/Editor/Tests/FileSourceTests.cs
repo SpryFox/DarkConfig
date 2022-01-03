@@ -8,7 +8,6 @@ class FileSourceTests {
 
     [SetUp]
     public void SetUp() {
-        FileSource.ConfigFileExtension = ".bytes";
         tempDirPath = Path.Combine(Path.GetTempPath(), "FileSourceTests");
         Directory.CreateDirectory(tempDirPath);
         Config.Platform = new UnityPlatform();
@@ -33,7 +32,7 @@ class FileSourceTests {
     [Test]
     public void CanLoadIndex() {
         CreateFile("index.bytes", "");
-        var fs = new FileSource(tempDirPath, true);
+        var fs = new FileSource(tempDirPath, ".bytes", true);
         Assert.True(fs.CanLoadNow(), tempDirPath);
     }
 
@@ -42,7 +41,7 @@ class FileSourceTests {
         CreateFile("derp.bytes", "key: value");
         CreateFile("index.bytes", "- derp");
 
-        var fs = new FileSource(tempDirPath, true);
+        var fs = new FileSource(tempDirPath, ".bytes", true);
         bool calledCallback = false;
         fs.Preload(() => { calledCallback = true; });
         Assert.True(calledCallback);
@@ -53,7 +52,7 @@ class FileSourceTests {
         CreateFile("derp.bytes", "key: value");
         CreateFile("index.bytes", "- derp");
 
-        var fs = new FileSource(tempDirPath, true);
+        var fs = new FileSource(tempDirPath, ".bytes", true);
         fs.Preload(() => { });
         var files = fs.LoadedFiles;
         Assert.AreEqual(2, files.Count);
@@ -67,10 +66,10 @@ class FileSourceTests {
         CreateFile("derp.bytes", "key: value");
         CreateFile("index.bytes", "- derp");
 
-        var fs = new FileSource(tempDirPath, true);
+        var fs = new FileSource(tempDirPath, ".bytes", true);
         fs.Preload(() => { });
 
-        var fs2 = new FileSource(tempDirPath, true);
+        var fs2 = new FileSource(tempDirPath, ".bytes", true);
         fs2.ReceivePreloaded(fs.LoadedFiles);
         var files = fs2.LoadedFiles;
         Assert.AreEqual(2, files.Count);
@@ -83,7 +82,7 @@ class FileSourceTests {
         CreateFile("derp.bytes", "key: value");
         CreateFile("index.bytes", "- derp");
 
-        var fs = new FileSource(tempDirPath, true);
+        var fs = new FileSource(tempDirPath, ".bytes", true);
         fs.Preload(() => { });
 
         CreateFile("derp.bytes", "key: value2");
@@ -100,7 +99,7 @@ class FileSourceTests {
         CreateFile("durr.bytes", "a: b");
         CreateFile("index.bytes", "- derp\n- durr");
 
-        var fs = new FileSource(tempDirPath, true);
+        var fs = new FileSource(tempDirPath, ".bytes", true);
         fs.Preload(() => { });
 
         CreateFile("index.bytes", "- derp");
@@ -115,7 +114,7 @@ class FileSourceTests {
         CreateFile("derp.bytes", "key: value");
         CreateFile("index.bytes", "- derp");
 
-        var fs = new FileSource(tempDirPath, true);
+        var fs = new FileSource(tempDirPath, ".bytes", true);
         fs.Preload(() => { });
 
         CreateFile("durr.bytes", "a: b");
@@ -136,7 +135,7 @@ class FileSourceTests {
         CreateFile("derp.bytes", "key: value");
         CreateFile("index.bytes", "- derp");
 
-        var fs = new FileSource(tempDirPath, true);
+        var fs = new FileSource(tempDirPath, ".bytes", true);
         fs.Preload(() => { });
 
         CreateFile("durr.bytes", "a: b");
@@ -163,7 +162,7 @@ class FileSourceTests {
         CreateFile("derp.bytes", "key: value");
         CreateFile("index.bytes", "- derp");
 
-        var fs = new FileSource(tempDirPath, true);
+        var fs = new FileSource(tempDirPath, ".bytes", true);
         fs.Preload(() => { });
 
         CreateFile("durr.bytes", "a: b");
