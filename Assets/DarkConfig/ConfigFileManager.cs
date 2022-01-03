@@ -33,13 +33,17 @@ namespace DarkConfig {
         
         /////////////////////////////////////////////////   
 
+        /// <summary>
         /// Loads index file and start loading all config files.  Must call
         /// this (via Config.Preload, not directly) before using anything else
         /// in DarkConfig.
+        /// </summary>
+        /// <param name="callback">Called when preloading is complete</param>
         public void Preload(Action callback = null) {
             if (IsPreloaded || isPreloading) {
                 return;
             }
+            
             isPreloading = true;
 
             LoadedFiles.Clear();
@@ -51,7 +55,7 @@ namespace DarkConfig {
                     continue;
                 }
 
-                Platform.Log(LogVerbosity.Info, "Using source", source);
+                Platform.Log(LogVerbosity.Info, "Preloading source", source);
 
                 var source1 = source;
                 source.Preload(() => {
@@ -77,23 +81,36 @@ namespace DarkConfig {
                         Config.Platform.StartCoroutine(WatchFilesCoro());
                     }
 
-                    if (callback != null) callback();
+                    callback?.Invoke();
                 });
                 break;
             }
         }
 
-        /// Adds a source of config files, to be consulted when loading or hotloading.
+        /// <summary>
+        /// Add a config file source.
+        /// Sources are used when loading or hotloading.
+        /// Multiple sources of config files can be registered.
+        /// </summary>
+        /// <param name="source">The new source to register</param>
         public void AddSource(ConfigSource source) {
             sources.Add(source);
         }
 
-        /// Returns the number of sources currently added.
+        /// <summary>
+        /// Get the number of sources currently registered.
+        /// </summary>
+        /// <returns>number of sources currently registered</returns>
         public int CountSources() {
             return sources.Count;
         }
 
-        /// Load a config file into a DocNode and return it directly.
+        /// <summary>
+        /// Get the parsed contents of a preloaded file.
+        /// </summary>
+        /// <param name="configName">Name of the config to load.</param>
+        /// <returns>The parsed config file contents.</returns>
+        /// <exception cref="ConfigFileNotFoundException">Thrown if a config can't be found with the given name.</exception>
         public DocNode LoadConfig(string configName) {
             CheckPreload();
             if (!LoadedFiles.ContainsKey(configName)) {
@@ -103,17 +120,22 @@ namespace DarkConfig {
             return LoadedFiles[configName].Parsed;
         }
 
-        /// Load a config file and call *cb* immediately with the contents.  This also registers *cb* to
-        /// be called every time the file is hotloaded.
-        public void LoadConfig(string configName, ReloadDelegate cb) {
+        /// <summary>
+        /// Load a config file, parse the contents, and pass it to the given callback.
+        /// Register the callback to be called every time the file is hotloaded.
+        /// </summary>
+        /// <param name="configName">Name of the config to load.</param>
+        /// <param name="callback">Called whenever the file is loaded or changed.</param>
+        /// <exception cref="ConfigFileNotFoundException">Thrown if a config can't be found with the given name.</exception>
+        public void LoadConfig(string configName, ReloadDelegate callback) {
             CheckPreload();
             if (!LoadedFiles.ContainsKey(configName)) {
                 throw new ConfigFileNotFoundException(configName);
             }
 
-            bool save = cb(LoadedFiles[configName].Parsed);
+            bool save = callback(LoadedFiles[configName].Parsed);
             if (save) {
-                RegisterReloadCallback(configName, cb);
+                RegisterReloadCallback(configName, callback);
             }
         }
 
@@ -184,23 +206,36 @@ namespace DarkConfig {
 
             combiners.Remove(combinedFilename);
         }
-
-        /// Returns a list of files in the index that match a glob pattern.  Glob patterns work in a Unix-esque fashion:
-        ///   '*' matches any sequence of characters, but stops at slashes
-        ///   '?' matches a single character, except a slash
-        ///   '**' matches any sequence of characters, including slashes
+        
+        /// <summary>
+        /// Find all files in the index that match a glob pattern.
+        ///
+        ///  Glob patterns work in a Unix-esque fashion:
+        ///  '*' matches any sequence of characters, but stops at slashes
+        ///  '?' matches a single character, except a slash
+        ///  '**' matches any sequence of characters, including slashes
+        /// </summary>
+        /// <param name="glob">Glob to match file names with.</param>
+        /// <returns>List of file names matching the given glob.</returns>
         public List<string> GetFilesByGlob(string glob) {
             CheckPreload();
             return Internal.RegexUtils.FilterMatchingGlob(glob, Files);
         }
 
-        /// Returns a list of files in the index that match a regular expression.
+        /// <summary>
+        /// Find all files in the index that match a regular expression.
+        /// </summary>
+        /// <param name="pattern">Regex to match file names with.</param>
+        /// <returns>List of file names matching the given regex.</returns>
         public List<string> GetFilesByRegex(Regex pattern) {
             CheckPreload();
             return Internal.RegexUtils.FilterMatching(pattern, Files);
         }
 
+        /// <summary>
         /// Loads all files from the source immediately.  For editor tooling.
+        /// </summary>
+        /// <param name="source"></param>
         public void LoadFromSourceImmediately(ConfigSource source) {
             Platform.Assert(Config.Platform.CanDoImmediatePreload, "Trying to load immediately on a platform that doesn't support it");
             isPreloading = true;
