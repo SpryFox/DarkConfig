@@ -24,12 +24,14 @@ namespace DarkConfig {
 
         /// List of files in the index file.  This is all the files that DarkConfig can load at the time of access.
         /// Contents may change during preloading.  Do not modify list.
-        public readonly List<string> Files = new List<string>();
+        public readonly List<string> AllFilenames = new List<string>();
 
         public readonly Dictionary<string, ConfigFileInfo> LoadedFiles = new Dictionary<string, ConfigFileInfo>();
 
         /// This event is called for every file that gets hotloaded.
         public event Action<string> OnHotloadFile;
+        
+        internal bool IsPreloaded { get; private set; }
         
         /////////////////////////////////////////////////   
 
@@ -47,7 +49,7 @@ namespace DarkConfig {
             isPreloading = true;
 
             LoadedFiles.Clear();
-            Files.Clear();
+            AllFilenames.Clear();
 
             Platform.Log(LogVerbosity.Info, "Preloading", sources.Count, "sources");
             foreach (var source in sources) {
@@ -64,7 +66,7 @@ namespace DarkConfig {
 
                     var files = source1.LoadedFiles;
                     foreach (var finfo in files) {
-                        Files.Add(finfo.Name);
+                        AllFilenames.Add(finfo.Name);
                         LoadedFiles.Add(finfo.Name, finfo);
                     }
 
@@ -219,7 +221,7 @@ namespace DarkConfig {
         /// <returns>List of file names matching the given glob.</returns>
         public List<string> GetFilesByGlob(string glob) {
             CheckPreload();
-            return Internal.RegexUtils.FilterMatchingGlob(glob, Files);
+            return Internal.RegexUtils.FilterMatchingGlob(glob, AllFilenames);
         }
 
         /// <summary>
@@ -229,7 +231,7 @@ namespace DarkConfig {
         /// <returns>List of file names matching the given regex.</returns>
         public List<string> GetFilesByRegex(Regex pattern) {
             CheckPreload();
-            return Internal.RegexUtils.FilterMatching(pattern, Files);
+            return Internal.RegexUtils.FilterMatching(pattern, AllFilenames);
         }
 
         /// <summary>
@@ -242,113 +244,80 @@ namespace DarkConfig {
             Platform.Log(LogVerbosity.Info, "Immediate-loading " + source);
 
             source.Preload(() => { }); // assume that this is immediate
-            var files = source.LoadedFiles;
-            foreach (var finfo in files) {
-                Files.Add(finfo.Name);
-                LoadedFiles.Add(finfo.Name, finfo);
+            foreach (var fileInfo in source.LoadedFiles) {
+                AllFilenames.Add(fileInfo.Name);
+                LoadedFiles.Add(fileInfo.Name, fileInfo);
             }
 
             isPreloading = false;
             IsPreloaded = true;
         }
 
-        /// Immediately checks all config files to see whether they can be
-        /// hotloaded.  This may take tens or hundreds of milliseconds, but
-        /// when it's complete every file will have been checked and hotloaded
-        /// if necessary.  Calls callback when done.
-        public void CheckHotloadImmediate(Action callback = null) {
+        /// <summary>
+        /// Immediately checks all config files for changes in a non-async way.
+        /// Reloads any files that have changed since they were last loaded.
+        /// </summary>
+        public void CheckHotloadBlocking() {
             // deliberately ignore value of isCheckingHotloadNow
-            var iter = CheckHotloadCoro(callback, 100);
-            while (iter.MoveNext()) { }
+            var coroutine = CheckHotloadAsyncCoro(filesPerLoop:100);
+            while (coroutine.MoveNext()) { }
         }
 
-        /// Starts a coroutine to check every file to see whether it can be
-        /// hotloaded, N files per frame.  It calls the callback when done
-        /// with all files.  If one of the coroutines is already running when
-        /// you call this, it will early exit (without calling the callback).
-        public void CheckHotload(Action callback = null, int filesPerFrame = 1) {
+        /// True if there is an async hotload in-progress.
+        public bool IsAsyncHotloading => isCheckingHotloadNow;
+        
+        /// <summary>
+        /// Checks all config files for changes in a non-blocking way.
+        /// Reloads any files that have changed since they were last loaded.
+        /// Waits until all files are re-parsed and then calls all file on-reload callbacks at once.
+        /// Calls the optional provided callback once all this is complete.
+        ///
+        /// If this process is already started, this function does nothing and does not call the callback.
+        /// </summary>
+        /// <param name="callback">(optional) Called when the process is complete.</param>
+        /// <param name="filesPerFrame">(optional) Control how many files are checked per-frame.</param>
+        public void CheckHotloadAsync(Action callback = null, int filesPerFrame = 1) {
             if (isCheckingHotloadNow) {
                 return;
             }
-            Config.Platform.StartCoroutine(CheckHotloadCoro(callback, filesPerFrame));
-        }
-
-        internal void RegisterReloadCallback(string filename, ReloadDelegate cb) {
-            List<ReloadDelegate> delegates;
-            if (!reloadCallbacks.TryGetValue(filename, out delegates)) {
-                delegates = new List<ReloadDelegate>();
-                reloadCallbacks[filename] = delegates;
-            }
-
-            if (!delegates.Contains(cb)) {
-                delegates.Add(cb);
-            }
-        }
-
-        internal int GetReloadDelegateCount() {
-            int count = 0;
-            foreach (var callback in reloadCallbacks) {
-                count += callback.Value.Count;
-            }
-            return count;
-        }
-
-        internal void CallAllDelegates() {
-            List<string> modified = new List<string>();
-            foreach (var kv in reloadCallbacks) {
-                modified.Add(kv.Key);
-            }
-
-            CallCallbacks(modified);
-        }
-
-        internal ConfigFileInfo CheckHotload(string configName) {
-            ConfigFileInfo finfo;
-            lock (LoadedFiles) {
-                finfo = LoadedFiles[configName];
-            }
-
-            foreach (var source in sources) {
-                if (!source.CanHotload) {
-                    continue;
-                }
-
-                var newInfo = source.TryHotload(finfo);
-
-                if (newInfo != null) {
-                    Platform.Log(LogVerbosity.Info, "Hotloaded file " + newInfo + " old: " + finfo);
-
-                    if (newInfo.Name == "index") {
-                        // make sure that we sync up our list of loaded files
-                        HotloadIndex(source);
-                    }
-
-                    OnHotloadFile?.Invoke(newInfo.Name);
-                    return newInfo;
-                }
-            }
-
-            return null;
+            Config.Platform.StartCoroutine(CheckHotloadAsyncCoro(callback, filesPerFrame));
         }
 
         /////////////////////////////////////////////////
 
-        internal bool IsPreloaded { get; private set; }
+        /// <summary>
+        /// Register a function to be called whenever a file is loaded.
+        /// </summary>
+        /// <param name="filename">Config file name.</param>
+        /// <param name="callback">Called whenever the file is loaded.</param>
+        internal void RegisterReloadCallback(string filename, ReloadDelegate callback) {
+            if (!reloadCallbacks.TryGetValue(filename, out var delegates)) {
+                reloadCallbacks[filename] = new List<ReloadDelegate> {callback};
+                return;
+            }
+
+            if (!delegates.Contains(callback)) {
+                delegates.Add(callback);
+            }
+        }
+
+        /////////////////////////////////////////////////
         
         bool isPreloading;
         bool isHotloadingFiles = true;
-        IEnumerator watchFilesCoro;
         bool isCheckingHotloadNow;
+        IEnumerator watchFilesCoro;
+        
         readonly List<ConfigSource> sources = new List<ConfigSource>();
         readonly Dictionary<string, List<ReloadDelegate>> reloadCallbacks = new Dictionary<string, List<ReloadDelegate>>();
-        readonly Dictionary<string, CombinerData> combiners = new Dictionary<string, CombinerData>();
-        readonly Dictionary<string, List<CombinerData>> combinersBySubfile = new Dictionary<string, List<CombinerData>>();
-
+        
         class CombinerData {
             public string[] Filenames;
             public string DestinationFilename;
             public Func<List<DocNode>, DocNode> Combiner;
         }
+        readonly Dictionary<string, CombinerData> combiners = new Dictionary<string, CombinerData>();
+        readonly Dictionary<string, List<CombinerData>> combinersBySubfile = new Dictionary<string, List<CombinerData>>();
         
         /////////////////////////////////////////////////
 
@@ -373,20 +342,6 @@ namespace DarkConfig {
             }
         }
 
-        void HotloadIndex(ConfigSource source) {
-            var files = source.LoadedFiles;
-            foreach (var finfo in files) {
-                if (!Files.Contains(finfo.Name)) {
-                    Files.Add(finfo.Name);
-                }
-                bool isNewFile = !LoadedFiles.ContainsKey(finfo.Name);
-                LoadedFiles[finfo.Name] = finfo;
-                if (isNewFile) {
-                    OnHotloadFile?.Invoke(finfo.Name);
-                }
-            }
-        }
-
         IEnumerator WatchFilesCoro() {
             try {
                 while (IsHotloadingFiles) {
@@ -394,7 +349,7 @@ namespace DarkConfig {
                         yield return Config.Platform.WaitForSeconds(0.1f);
                     }
                     yield return Config.Platform.WaitForSeconds(Config.Settings.HotloadCheckFrequencySeconds);
-                    yield return Config.Platform.StartCoroutine(CheckHotloadCoro());
+                    yield return Config.Platform.StartCoroutine(CheckHotloadAsyncCoro());
                 }
             } finally {
                 watchFilesCoro = null;
@@ -402,8 +357,7 @@ namespace DarkConfig {
         }
 
         DocNode BuildCombinedConfig(string filename) {
-            if (combiners.ContainsKey(filename)) {
-                var multifile = combiners[filename];
+            if (combiners.TryGetValue(filename, out var multifile)) {
                 var subdocs = new List<DocNode>(multifile.Filenames.Length);
                 foreach (string subfilename in multifile.Filenames) {
                     if (subfilename == filename) {
@@ -417,73 +371,97 @@ namespace DarkConfig {
 
             return null;
         }
-
-        void CallCallbacks(List<string> modifiedFiles) {
-            // generate any combined files once, then mark that file changed
-            for (int i = 0; i < modifiedFiles.Count; i++) {
-                var filename = modifiedFiles[i];
-
-                if (combinersBySubfile.ContainsKey(filename)) {
-                    var multicallbacks = combinersBySubfile[filename];
-                    foreach (var mc in multicallbacks) {
-                        var shortName = mc.DestinationFilename;
-                        LoadedFiles[shortName] = new ConfigFileInfo {
-                            Name = shortName,
-                            Parsed = BuildCombinedConfig(mc.DestinationFilename)
-                        };
-                        modifiedFiles.Add(mc.DestinationFilename);
-                    }
-                }
-            }
-
-            // call callbacks for modified files
-            foreach (string filename in modifiedFiles) {
-                if (!reloadCallbacks.ContainsKey(filename)) {
-                    continue;
-                }
-                var callbacks = reloadCallbacks[filename];
-                for (int j = 0; j < callbacks.Count; j++) {
-                    var doc = LoadConfig(filename);
-                    var save = callbacks[j](doc);
-                    if (!save) {
-                        callbacks.RemoveAt(j);
-                        j--;
-                    }
-                }
-            }
-        }
         
-        IEnumerator CheckHotloadCoro(Action cb = null, int filesPerLoop = 1) {
+        IEnumerator CheckHotloadAsyncCoro(Action callback = null, int filesPerLoop = 1) {
             isCheckingHotloadNow = true;
 
-            try {
-                // kind of a brute-force implementation for now: look at each file and see whether it changed
-                List<string> modifiedFiles = new List<string>();
+            // look at each file and see whether it changed
+            var modifiedFiles = new List<string>();
 
-                for (int k = 0; k < Files.Count; k++) {
-                    if (!IsHotloadingFiles) yield break;
-                    var configName = Files[k];
-                    try {
-                        var newInfo = CheckHotload(configName);
-                        if (newInfo != null) {
-                            modifiedFiles.Add(configName);
-                            LoadedFiles[configName] = newInfo;
+            for (int fileIndex = 0; fileIndex < AllFilenames.Count; fileIndex++) {
+                string configName = AllFilenames[fileIndex];
+                
+                if (!IsHotloadingFiles) {
+                    yield break;
+                }
+                
+                // throttle how many files we check per frame to control the performance impact
+                if ((fileIndex % filesPerLoop) == 0) {
+                    yield return null;
+                }
+                
+                try {
+                    var loadedFile = LoadedFiles[configName];
+                    foreach (var source in sources) {
+                        if (!source.CanHotload) {
+                            continue;
                         }
-                    } catch (Exception e) {
-                        Platform.Log(LogVerbosity.Error, "Exception loading file", configName, e);
-                    }
 
-                    if ((k % filesPerLoop) == 0) {
-                        // throttle how many files we check per frame to control the performance impact
-                        yield return null;
+                        var newInfo = source.TryHotload(loadedFile);
+                
+                        if (newInfo == null) {
+                            continue;
+                        }
+                
+                        Platform.Log(LogVerbosity.Info, "Re-parsed file " + newInfo + " old: " + loadedFile);
+
+                        if (newInfo.Name == "index") {
+                            // make sure that we sync up our list of loaded files
+                            foreach (var finfo in source.LoadedFiles) {
+                                if (!AllFilenames.Contains(finfo.Name)) {
+                                    AllFilenames.Add(finfo.Name);
+                                }
+                                bool isNewFile = !LoadedFiles.ContainsKey(finfo.Name);
+                                LoadedFiles[finfo.Name] = finfo;
+                                if (isNewFile) {
+                                    OnHotloadFile?.Invoke(finfo.Name);
+                                }
+                            }
+                        }
+
+                        LoadedFiles[configName] = newInfo;
+                        modifiedFiles.Add(configName);
+                        break;
+                    }
+                } catch (Exception e) {
+                    Platform.Log(LogVerbosity.Error, "Exception loading file", configName, e);
+                }
+            }
+
+            // re-generate any combined files as necessary, and then mark the combined file as changed
+            for (int modifiedFileIndex = 0; modifiedFileIndex < modifiedFiles.Count; modifiedFileIndex++) {
+                string filename = modifiedFiles[modifiedFileIndex];
+                if (combinersBySubfile.ContainsKey(filename)) {
+                    var multicallbacks = combinersBySubfile[filename];
+                    foreach (var combinerData in multicallbacks) {
+                        string combinedName = combinerData.DestinationFilename;
+                        LoadedFiles[combinedName] = new ConfigFileInfo {
+                            Name = combinedName,
+                            Parsed = BuildCombinedConfig(combinedName)
+                        };
+                        modifiedFiles.Add(combinedName);
                     }
                 }
-
-                CallCallbacks(modifiedFiles);
-                cb?.Invoke();
-            } finally {
-                isCheckingHotloadNow = false;
             }
+            
+            // call callbacks for modified files
+            foreach (string filename in modifiedFiles) {
+                if (reloadCallbacks.TryGetValue(filename, out var callbacks)) {
+                    for (int j = 0; j < callbacks.Count; j++) {
+                        var doc = LoadConfig(filename);
+                        bool save = callbacks[j](doc);
+                        if (!save) {
+                            callbacks.RemoveAt(j);
+                            j--;
+                        }
+                    }
+                }
+                
+                OnHotloadFile?.Invoke(filename);
+            }
+            
+            callback?.Invoke();
+            isCheckingHotloadNow = false;
         }
     }
 }
