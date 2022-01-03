@@ -1,33 +1,36 @@
 using UnityEngine;
-using System.Collections.Generic;
-using DarkConfig;
-using SpryFox.Common;
 
 public class AIController : MonoBehaviour {
     public PlaneController Controller;
-
     public Transform PickupPrefab;
+
+    ////////////////////////////////////////////
 
     public void Setup(PlaneCard card) {
         Controller.Setup(card);
     }
 
+    ////////////////////////////////////////////
+
     void Update() {
         // try and target the player (which is a singleton because it's a single player game)
         var player = MetaGame.Instance.GetPlayer();
-        if (player == null) return;
+        if (player == null) {
+            return;
+        }
         var directionToPlayer = player.transform.position - transform.position;
-        var angleToPlayer =
-            MathPlus.NormalizeAngle(Mathf.Atan2(directionToPlayer.y, directionToPlayer.x) * Mathf.Rad2Deg - 90);
-        var myAngle = MathPlus.NormalizeAngle(transform.eulerAngles.z);
+        var angleToPlayer = (Mathf.Atan2(directionToPlayer.y, directionToPlayer.x) * Mathf.Rad2Deg - 90) % 360f;
+        var myAngle = transform.eulerAngles.z % 360f;
 
         var turnAmount = Mathf.Clamp((angleToPlayer - myAngle) / 45, -1, 1);
 
-        if (Controller == null) return;
+        if (Controller == null) {
+            return;
+        }
         Controller.RotationCommand = turnAmount;
 
         var playerIsClose = directionToPlayer.magnitude < Controller.Card.AIRange;
-        Controller.IsFiring = playerIsClose && (Mathf.Abs(angleToPlayer - myAngle) < 20);
+        Controller.IsFiring = playerIsClose && Mathf.Abs(angleToPlayer - myAngle) < 20;
 
         Controller.Throttle = 1;
     }
@@ -54,14 +57,14 @@ public class AIController : MonoBehaviour {
 
         var rnd = totalWeight * Random.value;
 
-        for (int i = 0; i < lootTable.Count; i++) {
-            if (rnd > lootTable[i].Weight) {
-                rnd -= lootTable[i].Weight;
+        foreach (var lootTableEntry in lootTable) {
+            if (rnd > lootTableEntry.Weight) {
+                rnd -= lootTableEntry.Weight;
             } else {
-                var loot = lootTable[i];
+                var loot = lootTableEntry;
                 if (loot.Health == 0 && loot.CardName == null) return;
 
-                var pickupObj = (Transform) Instantiate(PickupPrefab, transform.position, Quaternion.identity);
+                var pickupObj = Instantiate(PickupPrefab, transform.position, Quaternion.identity);
                 var pickup = pickupObj.GetComponent<Pickup>();
 
                 pickup.Health = loot.Health;

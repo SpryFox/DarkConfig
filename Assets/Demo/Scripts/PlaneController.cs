@@ -1,11 +1,9 @@
 using UnityEngine;
 using System.Collections.Generic;
-using DarkConfig;
-using SpryFox.Common;
 
 public class PlaneController : MonoBehaviour {
-    public float RotationCommand = 0;
-    public bool IsFiring = false;
+    public float RotationCommand;
+    public bool IsFiring;
     public float Throttle = 1;
 
     public int HitPoints;
@@ -14,13 +12,15 @@ public class PlaneController : MonoBehaviour {
     // changes to the card will affect the MaxHitPoints implicitly
     public int MaxHitPoints {
         get {
-            if (Card == null) return 1;
-            if (tag == "Player") {
+            if (Card == null) {
+                return 1;
+            }
+            if (CompareTag("Player")) {
                 // for gameplay reasons, players are more durable
                 return Card.HitPoints * 2;
-            } else {
-                return Card.HitPoints;
             }
+
+            return Card.HitPoints;
         }
     }
 
@@ -32,19 +32,17 @@ public class PlaneController : MonoBehaviour {
     public GameObject ExplosionPrefab;
     public GameObject ShotFireFXPrefab;
 
-    [HideInInspector] public PlaneView View;
+    [HideInInspector]
+    public PlaneView View;
+
+    ////////////////////////////////////////////
 
     public void Setup(PlaneCard card) {
-        var viewTrf = (Transform) Instantiate(ViewPrefab, transform.position,
-            transform.rotation);
+        var viewTrf = Instantiate(ViewPrefab, transform.position, transform.rotation);
         viewTrf.parent = transform;
         View = viewTrf.GetComponent<PlaneView>();
         View.Controller = this;
 
-        UseCard(card);
-    }
-
-    public void UseCard(PlaneCard card) {
         // here we take a reference to the card; the card object will get 
         // updated automatically for us if the config hotloads, so we don't
         // have to have special hotloading logic in this class
@@ -52,7 +50,7 @@ public class PlaneController : MonoBehaviour {
 
         // do this after assigning to Card b/c MaxHitPoints depends on Card
         HitPoints = MaxHitPoints;
-        m_lastFiredTimes.Clear();
+        lastFiredTimes.Clear();
 
         // display the view; this has to be after HitPoints is assigned
         // or the view will show the wrong thing
@@ -71,26 +69,29 @@ public class PlaneController : MonoBehaviour {
         if (HitPoints <= 0) {
             gameObject.BroadcastMessage("Killed");
             Destroy(gameObject);
-            var explosion = (GameObject) Instantiate(ExplosionPrefab, transform.position, Quaternion.identity);
+            var explosion = Instantiate(ExplosionPrefab, transform.position, Quaternion.identity);
             Destroy(explosion, 1f);
         }
     }
 
-    void FixedUpdate() {
-        var euler = transform.eulerAngles;
-        euler.z += RotationCommand * Card.RotationRate * Time.fixedDeltaTime;
-        transform.eulerAngles = euler;
+    ////////////////////////////////////////////
 
-        transform.position =
-            transform.position +
-            transform.up * Card.Speed * Throttle * Time.fixedDeltaTime;
+    // this handles the rate-of-fire for the guns
+    readonly Dictionary<GunMount, float> lastFiredTimes = new Dictionary<GunMount, float>();
+
+    ////////////////////////////////////////////
+
+    void FixedUpdate() {
+        var eulers = transform.eulerAngles;
+        eulers.z += RotationCommand * Card.RotationRate * Time.fixedDeltaTime;
+        transform.eulerAngles = eulers;
+
+        transform.position += transform.up * Card.Speed * Throttle * Time.fixedDeltaTime;
 
         var now = Time.fixedTime;
         if (IsFiring) {
-            for (int i = 0; i < Card.GunMounts.Count; i++) {
-                var mount = Card.GunMounts[i];
-                if (m_lastFiredTimes.ContainsKey(mount) &&
-                    now - m_lastFiredTimes[mount] < mount.Card.FireInterval) {
+            foreach (var mount in Card.GunMounts) {
+                if (lastFiredTimes.ContainsKey(mount) && now - lastFiredTimes[mount] < mount.Card.FireInterval) {
                     continue;
                 }
 
@@ -103,35 +104,24 @@ public class PlaneController : MonoBehaviour {
                 // shot, though, otherwise we'd have to restart the entire game
                 // to see changes, which would be slow.
                 var gunCard = mount.Card;
-                var bulletTrf = (Transform) Instantiate(BulletPrefab,
-                    transform.TransformPoint(mount.Location.Pos),
-                    transform.rotation);
+                var bulletTrf = Instantiate(BulletPrefab, transform.TransformPoint(mount.Location.Pos), transform.rotation);
                 var bulletComponent = bulletTrf.GetComponent<Bullet>();
                 bulletComponent.Damage = gunCard.BulletDamage;
-                bulletComponent.Speed =
-                    Card.Speed * Throttle + gunCard.BulletSpeed;
-                bulletTrf.GetComponent<Rigidbody2D>().velocity =
-                    bulletTrf.up * bulletComponent.Speed;
+                bulletComponent.Speed = Card.Speed * Throttle + gunCard.BulletSpeed;
+                bulletTrf.GetComponent<Rigidbody2D>().velocity = bulletTrf.up * bulletComponent.Speed;
                 bulletComponent.Firer = transform;
-                bulletTrf.localScale = gunCard.BulletSize.XYZ1();
+                bulletTrf.localScale = new Vector3(gunCard.BulletSize.x, gunCard.BulletSize.y, 1);
 
-                var timeToFly = gunCard.BulletRange / bulletComponent.Speed;
+                float timeToFly = gunCard.BulletRange / bulletComponent.Speed;
 
                 Destroy(bulletTrf.gameObject, timeToFly);
 
-                m_lastFiredTimes[mount] = now;
+                lastFiredTimes[mount] = now;
 
                 // display muzzle flash
-                var fx = (GameObject) Instantiate(
-                    ShotFireFXPrefab,
-                    transform.TransformPoint(mount.Location.Pos),
-                    transform.rotation);
+                var fx = Instantiate(ShotFireFXPrefab, transform.TransformPoint(mount.Location.Pos), transform.rotation);
                 Destroy(fx, 0.5f);
             }
         }
     }
-
-    // this handles the rate-of-fire for the guns
-    Dictionary<GunMount, float> m_lastFiredTimes =
-        new Dictionary<GunMount, float>();
 }

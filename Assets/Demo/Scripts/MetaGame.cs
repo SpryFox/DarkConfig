@@ -1,125 +1,131 @@
+using System;
 using UnityEngine;
-using System.Collections.Generic;
-using SpryFox.Common;
 using DarkConfig;
 
 public class MetaGame : MonoBehaviour {
-    public Transform PlayerPrefab;
-    public Transform TitlePrefab;
-
+    [Header("Prefabs")]
+    public GameObject PlayerPrefab;
+    public GameObject TitlePrefab;
+    
+    [Header("UI")]
     public TextMesh Score;
-
+    
+    [Header("References")]
     public GameObject Background;
-
+    
+    // Singleton.
     public static MetaGame Instance;
 
+    /////////////////////////////////////////////////
+
+    public void PlayerKilled() {
+        SetState(GameState.Postgame);
+    }
+
+    public void AIKilled() {
+        score++;
+        Score.text = string.Format("Score: {0}", score);
+    }
+
+    public PlayerController GetPlayer() {
+        if (player == null) return null;
+        return player;
+    }
+    
+    /////////////////////////////////////////////////
+
+    enum GameState {
+        Title,
+        Playing,
+        Postgame
+    }
+    
+    int score;
+    float currentStateStartTime;
+    Transform title;
+    PlayerController player;
+    GameState currentState;
+
+    /////////////////////////////////////////////////
 
     void Awake() {
         Instance = this;
     }
 
     void Start() {
-        SetState(GameStateEnum.Title);
+        SetState(GameState.Title);
     }
 
-    void SetState(GameStateEnum state) {
-        if (m_gameState != state) {
-            ExitState(m_gameState);
-            m_gameState = state;
-            m_stateStartTime = Time.time;
+    void Update() {
+        switch (currentState) {
+            case GameState.Title:
+                if (Input.GetKeyDown(KeyCode.Space)) {
+                    SetState(GameState.Playing);
+                }
+                break;
+            case GameState.Playing:
+                break;
+            case GameState.Postgame:
+                if (Time.time - currentStateStartTime > 10 || Input.GetKeyDown(KeyCode.Space)) {
+                    SetState(GameState.Title);
+                }
+                break;
+            default:
+                throw new ArgumentOutOfRangeException();
         }
 
-        switch (state) {
-            case GameStateEnum.Title:
+        // Shift+H to hotload
+        if (Input.GetKeyDown(KeyCode.H) && (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))) {
+            Debug.Log("Hotloading configs");
+            Config.FileManager.CheckHotloadAsync();
+        }
+
+        // Q toggles hotloading
+        if (Input.GetKeyDown(KeyCode.Q)) {
+            Config.FileManager.IsHotloadingFiles = !Config.FileManager.IsHotloadingFiles;
+            Debug.Log("Setting auto hotloading to: " + Config.FileManager.IsHotloadingFiles);
+        }
+    }
+
+    void SetState(GameState newState) {
+        if (currentState != newState) {
+            ExitState(currentState);
+            currentState = newState;
+            currentStateStartTime = Time.time;
+        }
+
+        switch (newState) {
+            case GameState.Title:
                 Camera.main.transform.position = new Vector3(0, 0, -10);
-                m_title = Instantiate(TitlePrefab);
+                title = Instantiate(TitlePrefab).transform;
                 break;
-            case GameStateEnum.Playing:
+            case GameState.Playing:
                 Score.gameObject.SetActive(true);
-                m_score = 0;
+                score = 0;
                 Score.text = "Score: 0";
 
-                var playerTrf = (Transform) Instantiate(PlayerPrefab);
-                m_player = playerTrf.GetComponent<PlayerController>();
+                var playerTrf = Instantiate(PlayerPrefab).transform;
+                player = playerTrf.GetComponent<PlayerController>();
                 FindObjectOfType<CameraFollow>().Target = playerTrf;
 
                 Background.BroadcastMessage("Init", playerTrf);
 
                 break;
-            case GameStateEnum.Postgame:
+            case GameState.Postgame:
                 break;
         }
     }
 
-    void ExitState(GameStateEnum state) {
+    void ExitState(GameState state) {
         switch (state) {
-            case GameStateEnum.Title:
-                Destroy(m_title.gameObject);
+            case GameState.Title:
+                Destroy(title.gameObject);
                 break;
-            case GameStateEnum.Playing:
+            case GameState.Playing:
                 break;
-            case GameStateEnum.Postgame:
+            case GameState.Postgame:
                 Score.gameObject.SetActive(false);
                 break;
         }
     }
-
-    void Update() {
-        if (m_gameState == GameStateEnum.Title) {
-            if (Input.GetKeyDown(KeyCode.Space)) {
-                SetState(GameStateEnum.Playing);
-            }
-        }
-
-        if (m_gameState == GameStateEnum.Postgame) {
-            if (Time.time - m_stateStartTime > 10 ||
-                Input.GetKeyDown(KeyCode.Space)) {
-                SetState(GameStateEnum.Title);
-            }
-        }
-
-        if (Input.GetKeyDown(KeyCode.H) &&
-            (Input.GetKey(KeyCode.LeftShift) ||
-             Input.GetKey(KeyCode.RightShift))) {
-            Debug.Log("Hotloading configs");
-            Config.FileManager.CheckHotload();
-        }
-
-        if (Input.GetKeyDown(KeyCode.Q)) {
-            Config.FileManager.IsHotloadingFiles =
-                !Config.FileManager.IsHotloadingFiles;
-            Debug.Log("Setting auto hotloading to: " +
-                      Config.FileManager.IsHotloadingFiles);
-        }
-    }
-
-    public void PlayerKilled() {
-        SetState(GameStateEnum.Postgame);
-    }
-
-    public void AIKilled() {
-        m_score++;
-        Score.text = string.Format("Score: {0}", m_score);
-    }
-
-    public PlayerController GetPlayer() {
-        if (m_player == null) return null;
-        return m_player;
-    }
-
-    int m_score = 0;
-
-    float m_stateStartTime = 0;
-
-    Transform m_title;
-
-    PlayerController m_player;
-
-    enum GameStateEnum {
-        Title,
-        Playing,
-        Postgame
-    };
-
-    GameStateEnum m_gameState;
 }

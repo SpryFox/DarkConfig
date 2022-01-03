@@ -1,11 +1,11 @@
-using System.Collections.Generic;
 using UnityEngine;
 using DarkConfig;
 
 public class Location {
     public Vector2 Pos;
 
-    [ConfigAllowMissing] public Vector2 Size = new Vector2(1, 1);
+    [ConfigAllowMissing]
+    public Vector2 Size = new Vector2(1, 1);
 
     public Location(Vector2 pos, Vector2 size) {
         Pos = pos;
@@ -18,7 +18,7 @@ public class Location {
         if (existing == null) {
             // want to modify an existing Location if possible, but if it's 
             // null we need to instantiate it
-            existing = new Location(default(Vector2), default(Vector2));
+            existing = new Location(default, default);
         }
 
         if (doc.Type == DocNodeType.List) {
@@ -27,8 +27,7 @@ public class Location {
             existing.Size = new Vector2(1, 1);
         } else {
             // Do the default parsing for an object.  Note that calling
-            // Config.Refiy on the same type would trigger infinite recursion.
-            // It's safe to call Reify a few lines up because the type is different.
+            // Config.Reify on the same type would trigger infinite recursion.
             Config.SetFieldsOnObject(ref existing, doc);
         }
 
