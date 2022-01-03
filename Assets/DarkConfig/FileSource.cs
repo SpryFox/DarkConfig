@@ -196,7 +196,7 @@ namespace DarkConfig {
         ConfigFileInfo ReadFile(string filePath, string shortName) {
             string pathWithExtension = filePath + configFileExtension;
             try {
-                using (var fileStream = File.Open(pathWithExtension, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)) {
+                using (var fileStream = File.OpenRead(pathWithExtension)) {
                     int checksum = Internal.ChecksumUtils.Checksum(fileStream);
                     fileStream.Seek(0, SeekOrigin.Begin);
 
