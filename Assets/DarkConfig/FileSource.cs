@@ -3,13 +3,21 @@ using System.IO;
 using System.Collections.Generic;
 
 namespace DarkConfig {
-    /// Loads configs from loose files in a directory.  Uses timestamps to decide whether it should hotload or not.
+    /// Loads configs from loose files in a directory.
+    /// Uses file modified timestamps to decide whether it should hotload or not.
     public class FileSource : ConfigSource {
+        /// <summary>
+        /// Create a config source based on files in a directory.
+        /// </summary>
+        /// <param name="dir">Path containing config files</param>
+        /// <param name="fileExtension">
         /// Some platforms like Unity require that text files have a specific extension e.g. ".bytes"
         /// Also, some files use ".yml" instead of ".yaml"
-        public static string ConfigFileExtension = ".yaml";
-        
-        public FileSource(string dir, bool hotload = false) : base(hotload) {
+        /// </param>
+        /// <param name="hotload">Allow file hotloading</param>
+        /// <exception cref="ArgumentException">If <paramref name="dir"/> is null</exception>
+        public FileSource(string dir, string fileExtension = ".yaml", bool hotload = false) : base(hotload) {
+            configFileExtension = fileExtension;
             if (string.IsNullOrEmpty(dir)) {
                 throw new ArgumentException("FileSource needs non-null dir");
             }
@@ -17,7 +25,7 @@ namespace DarkConfig {
         }
 
         public override bool CanLoadNow() {
-            return File.Exists(baseDir + "/index" + ConfigFileExtension);
+            return File.Exists(baseDir + "/index" + configFileExtension);
         }
 
         public override void Preload(Action callback) {
@@ -67,7 +75,7 @@ namespace DarkConfig {
         }
 
         public override ConfigFileInfo TryHotload(ConfigFileInfo loadedFileInfo) {
-            var filename = baseDir + "/" + loadedFileInfo.Name + ConfigFileExtension;
+            var filename = baseDir + "/" + loadedFileInfo.Name + configFileExtension;
             if (!File.Exists(filename)) {
                 return null;
             }
@@ -131,6 +139,7 @@ namespace DarkConfig {
         ////////////////////////////////////////////
 
         readonly string baseDir;
+        readonly string configFileExtension;
         
         ////////////////////////////////////////////
 
@@ -185,7 +194,7 @@ namespace DarkConfig {
         }
         
         ConfigFileInfo ReadFile(string filePath, string shortName) {
-            string pathWithExtension = filePath + ConfigFileExtension;
+            string pathWithExtension = filePath + configFileExtension;
             try {
                 using (var fileStream = File.Open(pathWithExtension, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)) {
                     int checksum = Internal.ChecksumUtils.Checksum(fileStream);
