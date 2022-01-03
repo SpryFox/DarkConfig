@@ -7,7 +7,10 @@ public class PlayerController : MonoBehaviour {
 
     public Dictionary<string, KeyCode> Keyboard;
 
-    [ConfigIgnore] public PlaneController Controller;
+    [ConfigIgnore]
+    public PlaneController Controller;
+
+    ////////////////////////////////////////////
 
     void Start() {
         // Get keyboard bindings from the config, and also automatically 

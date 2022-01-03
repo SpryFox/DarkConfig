@@ -6,25 +6,24 @@ public class GunMount {
     public string Name;
     public Location Location;
 
-    public GunCard Card {
-        get {
-            // Note that this is assuming that GunCard.Cards is loaded by the 
-            // time we get into this property accessor.
-            return GunCard.Cards[Name];
-        }
-    }
+    // Note that this is assuming that GunCard.Cards is loaded by the 
+    // time we get into this property accessor.
+    public GunCard Card => GunCard.Cards[Name];
 }
 
 public class LootTableEntry {
     // Don't permit this field to be missing in the config, even if DarkConfig 
     // isn't being strict.
-    [ConfigMandatory] public float Weight;
+    [ConfigMandatory]
+    public float Weight;
 
     // Permit this field to be missing in the config, even if DarkConfig is 
     // being strict.
-    [ConfigAllowMissing] public int Health;
+    [ConfigAllowMissing]
+    public int Health;
 
-    [ConfigAllowMissing] public string CardName;
+    [ConfigAllowMissing]
+    public string CardName;
 }
 
 public class PlaneCard {
@@ -41,22 +40,27 @@ public class PlaneCard {
 
     public List<GunMount> GunMounts;
 
-    [ConfigMandatory] public List<LootTableEntry> LootTable;
+    [ConfigMandatory]
+    public List<LootTableEntry> LootTable;
 
     /////////////////////////////////////////////////////////
 
     // this field can't be set by DarkConfig because it's a function; it's 
     // also ignored for clarity
-    [ConfigIgnore] public System.Action<PlaneCard> OnChanged;
+    [ConfigIgnore]
+    public System.Action<PlaneCard> OnChanged;
 
     // see LoadConfigs for where this is hooked up
-    [ConfigIgnore] static Dictionary<string, PlaneCard> m_cards;
+    [ConfigIgnore]
+    static Dictionary<string, PlaneCard> _Cards;
 
     // DarkConfig can't currently set properties
     public static Dictionary<string, PlaneCard> Cards {
         get {
-            if (m_cards == null) LoadConfigs();
-            return m_cards;
+            if (_Cards == null) {
+                LoadConfigs();
+            }
+            return _Cards;
         }
     }
 
@@ -66,7 +70,7 @@ public class PlaneCard {
             Config.FileManager.GetFilesByGlob("Planes/**"),
             "PlaneCards",
             Config.CombineDict);
-        Config.Apply("PlaneCards", ref m_cards);
+        Config.Apply("PlaneCards", ref _Cards);
     }
 
     // We have a few places in the code which need to be notified when their
@@ -77,7 +81,7 @@ public class PlaneCard {
     // To see those use cases, look for usage of OnChanged in PlaneView.cs. 
     // See hotloading.md for more information on hotloading in general.
     public static PlaneCard PostDoc(PlaneCard existing) {
-        if (existing.OnChanged != null) existing.OnChanged(existing);
+        existing.OnChanged?.Invoke(existing);
         return existing;
     }
 }

@@ -1,21 +1,10 @@
-﻿using UnityEngine;
-using UnityEditor;
-using System.Collections;
+﻿using UnityEditor;
 using DarkConfig;
-using System.Threading;
 
-public class DemoEditorMenus {
-    public static string GetRelPath() {
-        return "/Demo/Resources/Configs";
-    }
-
-    public static string GetFilePath() {
-        return Application.dataPath + GetRelPath();
-    }
-
+public static class DemoEditorMenus {
     [MenuItem("Assets/DarkConfig/Autogenerate Index")]
     static void MenuGenerateIndex() {
-        EditorUtils.GenerateIndex(GetRelPath());
+        EditorUtils.GenerateIndex("/Demo/Resources/Configs");
         AssetDatabase.Refresh();
     }
 }
