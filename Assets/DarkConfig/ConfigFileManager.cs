@@ -397,7 +397,7 @@ namespace DarkConfig {
                             continue;
                         }
 
-                        var newInfo = source.TryHotload(loadedFile);
+                        var newInfo = source.TryHotloadFile(loadedFile);
                 
                         if (newInfo == null) {
                             continue;
