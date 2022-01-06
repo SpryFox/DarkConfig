@@ -397,8 +397,6 @@ namespace DarkConfig {
             Internal.ConfigReifier.SetFieldsOnObject(ref obj, doc, options);
         }
 
-        // 
-        
         /// <summary>
         /// Sets all public, private, and static members on a struct from a parsed config.
         /// </summary>

@@ -22,12 +22,6 @@ namespace DarkConfig {
             }
         }
 
-        /// List of files in the index file.  This is all the files that DarkConfig can load at the time of access.
-        /// Contents may change during preloading.  Do not modify list.
-        public readonly List<string> AllFilenames = new List<string>();
-
-        public readonly Dictionary<string, ConfigFileInfo> LoadedFiles = new Dictionary<string, ConfigFileInfo>();
-
         /// This event is called for every file that gets hotloaded.
         public event Action<string> OnHotloadFile;
         
@@ -48,8 +42,8 @@ namespace DarkConfig {
             
             isPreloading = true;
 
-            LoadedFiles.Clear();
-            AllFilenames.Clear();
+            loadedFiles.Clear();
+            allFilenames.Clear();
 
             Platform.Log(LogVerbosity.Info, "Preloading", sources.Count, "sources");
             foreach (var source in sources) {
@@ -66,8 +60,8 @@ namespace DarkConfig {
 
                     var files = source1.LoadedFiles;
                     foreach (var finfo in files) {
-                        AllFilenames.Add(finfo.Name);
-                        LoadedFiles.Add(finfo.Name, finfo);
+                        allFilenames.Add(finfo.Name);
+                        loadedFiles.Add(finfo.Name, finfo);
                     }
 
                     // put files in all other sources
@@ -115,11 +109,11 @@ namespace DarkConfig {
         /// <exception cref="ConfigFileNotFoundException">Thrown if a config can't be found with the given name.</exception>
         public DocNode LoadConfig(string configName) {
             CheckPreload();
-            if (!LoadedFiles.ContainsKey(configName)) {
+            if (!loadedFiles.ContainsKey(configName)) {
                 throw new ConfigFileNotFoundException(configName);
             }
 
-            return LoadedFiles[configName].Parsed;
+            return loadedFiles[configName].Parsed;
         }
 
         /// <summary>
@@ -131,11 +125,11 @@ namespace DarkConfig {
         /// <exception cref="ConfigFileNotFoundException">Thrown if a config can't be found with the given name.</exception>
         public void LoadConfig(string configName, ReloadDelegate callback) {
             CheckPreload();
-            if (!LoadedFiles.ContainsKey(configName)) {
+            if (!loadedFiles.ContainsKey(configName)) {
                 throw new ConfigFileNotFoundException(configName);
             }
 
-            bool save = callback(LoadedFiles[configName].Parsed);
+            bool save = callback(loadedFiles[configName].Parsed);
             if (save) {
                 RegisterReloadCallback(configName, callback);
             }
@@ -179,7 +173,7 @@ namespace DarkConfig {
             }
 
             if (IsPreloaded) {
-                LoadedFiles[newFilename] = new ConfigFileInfo {
+                loadedFiles[newFilename] = new ConfigFileInfo {
                     Name = newFilename,
                     Parsed = BuildCombinedConfig(newFilename)
                 };
@@ -221,7 +215,7 @@ namespace DarkConfig {
         /// <returns>List of file names matching the given glob.</returns>
         public List<string> GetFilesByGlob(string glob) {
             CheckPreload();
-            return Internal.RegexUtils.FilterMatchingGlob(glob, AllFilenames);
+            return Internal.RegexUtils.FilterMatchingGlob(glob, allFilenames);
         }
 
         /// <summary>
@@ -231,7 +225,7 @@ namespace DarkConfig {
         /// <returns>List of file names matching the given regex.</returns>
         public List<string> GetFilesByRegex(Regex pattern) {
             CheckPreload();
-            return Internal.RegexUtils.FilterMatching(pattern, AllFilenames);
+            return Internal.RegexUtils.FilterMatching(pattern, allFilenames);
         }
 
         /// <summary>
@@ -245,8 +239,8 @@ namespace DarkConfig {
 
             source.Preload(() => { }); // assume that this is immediate
             foreach (var fileInfo in source.LoadedFiles) {
-                AllFilenames.Add(fileInfo.Name);
-                LoadedFiles.Add(fileInfo.Name, fileInfo);
+                allFilenames.Add(fileInfo.Name);
+                loadedFiles.Add(fileInfo.Name, fileInfo);
             }
 
             isPreloading = false;
@@ -303,6 +297,12 @@ namespace DarkConfig {
 
         /////////////////////////////////////////////////
         
+        /// List of files in the index file.  This is all the files that DarkConfig can load at the time of access.
+        /// Contents may change during preloading.  Do not modify list.
+        readonly List<string> allFilenames = new List<string>();
+
+        readonly Dictionary<string, ConfigFileInfo> loadedFiles = new Dictionary<string, ConfigFileInfo>();
+
         bool isPreloading;
         bool isHotloadingFiles = true;
         bool isCheckingHotloadNow;
@@ -356,17 +356,17 @@ namespace DarkConfig {
             }
         }
 
-        DocNode BuildCombinedConfig(string filename) {
-            if (combiners.TryGetValue(filename, out var multifile)) {
-                var subdocs = new List<DocNode>(multifile.Filenames.Length);
-                foreach (string subfilename in multifile.Filenames) {
-                    if (subfilename == filename) {
+        DocNode BuildCombinedConfig(string combinedFilename) {
+            if (combiners.TryGetValue(combinedFilename, out var combinerData)) {
+                var docs = new List<DocNode>(combinerData.Filenames.Length);
+                foreach (string filename in combinerData.Filenames) {
+                    if (filename == combinedFilename) {
                         continue; // prevent trivial infinite loops
                     }
-                    subdocs.Add(LoadConfig(subfilename));
+                    docs.Add(LoadConfig(filename));
                 }
 
-                return multifile.Combiner(subdocs);
+                return combinerData.Combiner(docs);
             }
 
             return null;
@@ -378,8 +378,8 @@ namespace DarkConfig {
             // look at each file and see whether it changed
             var modifiedFiles = new List<string>();
 
-            for (int fileIndex = 0; fileIndex < AllFilenames.Count; fileIndex++) {
-                string configName = AllFilenames[fileIndex];
+            for (int fileIndex = 0; fileIndex < allFilenames.Count; fileIndex++) {
+                string configName = allFilenames[fileIndex];
                 
                 if (!IsHotloadingFiles) {
                     yield break;
@@ -391,7 +391,7 @@ namespace DarkConfig {
                 }
                 
                 try {
-                    var loadedFile = LoadedFiles[configName];
+                    var loadedFile = loadedFiles[configName];
                     foreach (var source in sources) {
                         if (!source.CanHotload) {
                             continue;
@@ -408,18 +408,18 @@ namespace DarkConfig {
                         if (newInfo.Name == "index") {
                             // make sure that we sync up our list of loaded files
                             foreach (var finfo in source.LoadedFiles) {
-                                if (!AllFilenames.Contains(finfo.Name)) {
-                                    AllFilenames.Add(finfo.Name);
+                                if (!allFilenames.Contains(finfo.Name)) {
+                                    allFilenames.Add(finfo.Name);
                                 }
-                                bool isNewFile = !LoadedFiles.ContainsKey(finfo.Name);
-                                LoadedFiles[finfo.Name] = finfo;
+                                bool isNewFile = !loadedFiles.ContainsKey(finfo.Name);
+                                loadedFiles[finfo.Name] = finfo;
                                 if (isNewFile) {
                                     OnHotloadFile?.Invoke(finfo.Name);
                                 }
                             }
                         }
 
-                        LoadedFiles[configName] = newInfo;
+                        loadedFiles[configName] = newInfo;
                         modifiedFiles.Add(configName);
                         break;
                     }
@@ -435,7 +435,7 @@ namespace DarkConfig {
                     var multicallbacks = combinersBySubfile[filename];
                     foreach (var combinerData in multicallbacks) {
                         string combinedName = combinerData.DestinationFilename;
-                        LoadedFiles[combinedName] = new ConfigFileInfo {
+                        loadedFiles[combinedName] = new ConfigFileInfo {
                             Name = combinedName,
                             Parsed = BuildCombinedConfig(combinedName)
                         };
