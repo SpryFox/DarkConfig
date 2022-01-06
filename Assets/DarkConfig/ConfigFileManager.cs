@@ -47,10 +47,6 @@ namespace DarkConfig {
 
             Platform.Log(LogVerbosity.Info, "Preloading", sources.Count, "sources");
             foreach (var source in sources) {
-                if (!source.CanLoadNow()) {
-                    continue;
-                }
-
                 Platform.Log(LogVerbosity.Info, "Preloading source", source);
 
                 var source1 = source;

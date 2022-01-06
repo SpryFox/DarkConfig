@@ -12,10 +12,6 @@ namespace DarkConfig {
             this.baseDir = baseDir;
         }
 
-        public override bool CanLoadNow() {
-            return true;
-        }
-
         public override void Preload(Action callback) {
             // load index file
             var indexInfo = ReadFile(baseDir + "/index", "index");
