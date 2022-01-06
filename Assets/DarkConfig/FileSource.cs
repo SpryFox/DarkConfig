@@ -24,10 +24,6 @@ namespace DarkConfig {
             baseDir = dir;
         }
 
-        public override bool CanLoadNow() {
-            return File.Exists(baseDir + "/index" + configFileExtension);
-        }
-
         public override void Preload(Action callback) {
             // load index file
             var indexInfo = ReadFile(baseDir + "/index", "index");

@@ -30,13 +30,6 @@ class FileSourceTests {
     }
 
     [Test]
-    public void CanLoadIndex() {
-        CreateFile("index.bytes", "");
-        var fs = new FileSource(tempDirPath, ".bytes", true);
-        Assert.True(fs.CanLoadNow(), tempDirPath);
-    }
-
-    [Test]
     public void PreloadCallsCallback() {
         CreateFile("derp.bytes", "key: value");
         CreateFile("index.bytes", "- derp");
