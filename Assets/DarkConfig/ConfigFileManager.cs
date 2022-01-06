@@ -45,9 +45,9 @@ namespace DarkConfig {
             loadedFiles.Clear();
             allFilenames.Clear();
 
-            Platform.Log(LogVerbosity.Info, "Preloading", sources.Count, "sources");
+            Platform.Log(LogVerbosity.Info, $"Preloading {sources.Count} sources");
             foreach (var source in sources) {
-                Platform.Log(LogVerbosity.Info, "Preloading source", source);
+                Platform.Log(LogVerbosity.Info, $"Preloading source {source}");
 
                 var source1 = source;
                 source.Preload(() => {
@@ -67,7 +67,7 @@ namespace DarkConfig {
                         }
                     }
 
-                    Platform.Log(LogVerbosity.Info, "Done preloading, IsHotloadingFiles: ", IsHotloadingFiles);
+                    Platform.Log(LogVerbosity.Info, $"Done preloading, IsHotloadingFiles: {IsHotloadingFiles}");
 
                     if (IsHotloadingFiles) {
                         Config.Platform.StartCoroutine(WatchFilesCoro());
@@ -398,8 +398,8 @@ namespace DarkConfig {
                         if (newInfo == null) {
                             continue;
                         }
-                
-                        Platform.Log(LogVerbosity.Info, "Re-parsed file " + newInfo + " old: " + loadedFile);
+
+                        Platform.Log(LogVerbosity.Info, $"Re-parsed file {newInfo} old: {loadedFile}");
 
                         if (newInfo.Name == "index") {
                             // make sure that we sync up our list of loaded files
