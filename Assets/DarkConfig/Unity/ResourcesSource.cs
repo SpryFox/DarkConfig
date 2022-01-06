@@ -56,7 +56,7 @@ namespace DarkConfig {
             }
         }
 
-        public override ConfigFileInfo TryHotload(ConfigFileInfo finfo) {
+        public override ConfigFileInfo TryHotloadFile(ConfigFileInfo finfo) {
             var filename = baseDir + "/" + finfo.Name;
             filename = System.IO.Path.ChangeExtension(filename, null);
             var asset = Resources.Load<TextAsset>(filename);

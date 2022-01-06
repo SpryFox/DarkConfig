@@ -74,7 +74,7 @@ namespace DarkConfig {
             }
         }
 
-        public override ConfigFileInfo TryHotload(ConfigFileInfo loadedFileInfo) {
+        public override ConfigFileInfo TryHotloadFile(ConfigFileInfo loadedFileInfo) {
             var filename = baseDir + "/" + loadedFileInfo.Name + configFileExtension;
             if (!File.Exists(filename)) {
                 return null;

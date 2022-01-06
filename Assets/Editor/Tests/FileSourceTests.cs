@@ -87,7 +87,7 @@ class FileSourceTests {
 
         CreateFile("derp.bytes", "key: value2");
         var fi = fs.LoadedFiles[1];
-        var fi2 = fs.TryHotload(fi);
+        var fi2 = fs.TryHotloadFile(fi);
         Assert.IsNotNull(fi2);
         Assert.AreEqual("derp", fi2.Name);
         Assert.AreEqual("value2", fi2.Parsed["key"].StringValue);
@@ -105,7 +105,7 @@ class FileSourceTests {
         CreateFile("index.bytes", "- derp");
         DeleteFile("durr.bytes");
         var fi = fs.LoadedFiles[2];
-        var fi2 = fs.TryHotload(fi);
+        var fi2 = fs.TryHotloadFile(fi);
         Assert.IsNull(fi2);
     }
 
@@ -121,7 +121,7 @@ class FileSourceTests {
         CreateFile("index.bytes", "- derp\n- durr");
 
         var index = fs.LoadedFiles[0];
-        var fi = fs.TryHotload(index);
+        var fi = fs.TryHotloadFile(index);
         Assert.AreEqual(2, fi.Parsed.Count);
 
         var files = fs.LoadedFiles;
@@ -144,7 +144,7 @@ class FileSourceTests {
         CreateFile("index.bytes", "- derp\n- durr\n- hurr\n- err");
 
         var index = fs.LoadedFiles[0];
-        var fi = fs.TryHotload(index);
+        var fi = fs.TryHotloadFile(index);
         Assert.AreEqual(4, fi.Parsed.Count);
 
         var files = fs.LoadedFiles;
@@ -169,12 +169,12 @@ class FileSourceTests {
         CreateFile("index.bytes", "- derp\n- durr");
 
         var index = fs.LoadedFiles[0];
-        fs.TryHotload(index);
+        fs.TryHotloadFile(index);
 
         CreateFile("hurr.bytes", "x: y");
         CreateFile("index.bytes", "- derp\n- durr\n- hurr");
 
-        fs.TryHotload(index);
+        fs.TryHotloadFile(index);
 
         var files = fs.LoadedFiles;
         Assert.AreEqual(4, files.Count);

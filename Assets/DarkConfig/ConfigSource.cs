@@ -13,7 +13,7 @@ namespace DarkConfig {
 
         public abstract void ReceivePreloaded(List<ConfigFileInfo> files);
 
-        public abstract ConfigFileInfo TryHotload(ConfigFileInfo configFileInfo);
+        public abstract ConfigFileInfo TryHotloadFile(ConfigFileInfo configFileInfo);
         
         /////////////////////////////////////////////////
 
