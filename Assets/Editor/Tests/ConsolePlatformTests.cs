@@ -13,6 +13,7 @@ class ConsolePlatformTests {
     [SetUp]
     public void DoSetup() {
         cp = new ConsolePlatform();
+        Config.Platform = cp;
         counter = 0;
         nestLevel = 0;
         coroPasser = null;
