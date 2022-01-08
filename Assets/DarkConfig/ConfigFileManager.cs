@@ -229,7 +229,7 @@ namespace DarkConfig {
         /// </summary>
         /// <param name="source"></param>
         public void LoadFromSourceImmediately(ConfigSource source) {
-            Platform.Assert(Config.Platform.CanDoImmediatePreload, "Trying to load immediately on a platform that doesn't support it");
+            Config.Platform.Assert(Config.Platform.CanDoImmediatePreload, "Trying to load immediately on a platform that doesn't support it");
             isPreloading = true;
             Platform.LogInfo($"Immediate-loading {source}");
 
@@ -319,7 +319,7 @@ namespace DarkConfig {
 
         void CheckPreload() {
             if (!Config.Platform.CanDoImmediatePreload) {
-                Platform.Assert(IsPreloaded, "Can't use configs in any way in a built game, before preloading is complete");
+                Config.Platform.Assert(IsPreloaded, "Can't use configs in any way in a built game, before preloading is complete");
                 return;
             }
 
@@ -334,7 +334,7 @@ namespace DarkConfig {
                 bool preloadWasImmediate = false;
                 Preload(() => { preloadWasImmediate = true; }); // note: all preloading is immediate
                 Platform.LogInfo($"Done immediate-loading, IsHotloadingFiles: {IsHotloadingFiles}");
-                Platform.Assert(preloadWasImmediate, "Did not preload immediately");
+                Config.Platform.Assert(preloadWasImmediate, "Did not preload immediately");
             }
         }
 

@@ -41,6 +41,10 @@ namespace DarkConfig {
         public override void StopCoroutine(IEnumerator coroutine) {
             TokenMonoBehaviour.StopCoroutine(coroutine);
         }
+        
+        public override void Assert(bool test, string message) {
+            Debug.Assert(test, message);
+        }
 
         /// instance of MonoBehaviour used only for its StartCoroutine functionality
         static MonoBehaviour TokenMonoBehaviour {

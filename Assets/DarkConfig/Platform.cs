@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 
 namespace DarkConfig {
-    public delegate void AssertDelegate(bool test, params object[] messages);
-
     public enum LogVerbosity {
         Error,
         Warn,
@@ -11,6 +8,14 @@ namespace DarkConfig {
     }
     
     public abstract class Platform {
+        const string LOG_GUARD = "DC_LOGGING_ENABLED";
+        const string ASSERT_GUARD = "DC_ASSERTS_ENABLED";
+        
+        const string LogPrefix = "[DarkConfig] ";
+        
+        /// How aggressively DarkConfig logs
+        public static LogVerbosity LogLevel = LogVerbosity.Info;
+
         public bool CanDoImmediatePreload = false;
 
         public abstract ConfigSource ConfigSource { get; }
@@ -23,12 +28,10 @@ namespace DarkConfig {
 
         protected abstract void LogCallback(LogVerbosity verbosity, string message);
         
-        #region Logging
-        const string LOG_GUARD = "DC_LOGGING_ENABLED";
-        const string LogPrefix = "[DarkConfig] ";
-        
-        /// How aggressively DarkConfig logs
-        public static LogVerbosity LogLevel = LogVerbosity.Info;
+        [System.Diagnostics.Conditional(ASSERT_GUARD)]
+        public virtual void Assert(bool test, string message) {
+            System.Diagnostics.Debug.Assert(test, message);
+        }
 
         [System.Diagnostics.Conditional(LOG_GUARD)]
         public static void LogInfo(string message) {
@@ -46,66 +49,10 @@ namespace DarkConfig {
         }
         
         [System.Diagnostics.Conditional(LOG_GUARD)]
-        static void Log(LogVerbosity level, string msg) {
+        public static void Log(LogVerbosity level, string msg) {
             if (level <= LogLevel) {
                 Config.Platform.LogCallback(level, LogPrefix + msg);
             }
         }
-        #endregion
-
-        #region Asserts
-        const string ASSERT_GUARD = "DC_ASSERTS_ENABLED";
-        /// Hook for custom assert functions.  If set, DarkConfig calls this function for its assert checks.
-        public static AssertDelegate AssertFailureCallback;
-        
-        [System.Diagnostics.Conditional(ASSERT_GUARD)]
-        public static void Assert(bool test, string message) {
-            if (AssertFailureCallback != null) {
-                AssertFailureCallback(test, message);                    
-            } else {
-                System.Diagnostics.Debug.Assert(test, message);
-            }
-        }
-
-        [System.Diagnostics.Conditional(ASSERT_GUARD)]
-        public static void Assert(bool test, object msg1) {
-            Assert(test, msg1.ToString());
-        }
-
-        [System.Diagnostics.Conditional(ASSERT_GUARD)]
-        public static void Assert(bool test, object msg1, object msg2) {
-            Assert(test, msg1 + " " + msg2);
-        }
-
-        [System.Diagnostics.Conditional(ASSERT_GUARD)]
-        public static void Assert(bool test, object msg1, object msg2, object msg3) {
-            Assert(test, msg1 + " " + msg2 + " " + msg3);
-        }
-
-        [System.Diagnostics.Conditional(ASSERT_GUARD)]
-        public static void Assert(bool test, object msg1, object msg2, object msg3, object msg4) {
-            Assert(test, msg1 + " " + msg2 + " " + msg3 + " " + msg4);
-        }
-        
-        [System.Diagnostics.Conditional(ASSERT_GUARD)]
-        public static void Assert(bool test, object msg1, object msg2, object msg3, object msg4, object msg5) {
-            Assert(test, msg1 + " " + msg2 + " " + msg3 + " " + msg4 + " " + msg5);
-        }
-
-        [System.Diagnostics.Conditional(ASSERT_GUARD)]
-        public static void Assert(bool test, object msg1, object msg2, object msg3, object msg4, object msg5, object msg6) {
-            Assert(test, msg1 + " " + msg2 + " " + msg3 + " " + msg4 + " " + msg5 + " " + msg6);
-        }
-
-        [System.Diagnostics.Conditional(ASSERT_GUARD)]
-        public static void Assert(bool test, object msg1, object msg2, object msg3, object msg4, object msg5, object msg6, object msg7) {
-            Assert(test, msg1 + " " + msg2 + " " + msg3 + " " + msg4 + " " + msg5 + " " + msg6 + " " + msg7);
-        }
-        
-        [System.Diagnostics.Conditional(ASSERT_GUARD)]
-        public static void Assert(bool test, params object[] messages) {
-            Assert(test, string.Join(" ", messages));
-        }
-        #endregion
     }
 }
