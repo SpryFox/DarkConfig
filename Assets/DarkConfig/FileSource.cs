@@ -50,7 +50,7 @@ namespace DarkConfig {
                 try {
                     LoadedFiles.Add(ReadFile(filePath, filename));
                 } catch (Exception e) {
-                    Platform.Log(LogVerbosity.Error, "Failed to load file at path", filePath, "with exception:", e);
+                    Platform.LogError($"Failed to load file at path {filePath} with exception: {e}");
                 }
             }
 
@@ -58,7 +58,7 @@ namespace DarkConfig {
         }
 
         public override void ReceivePreloaded(List<ConfigFileInfo> files) {
-            Platform.Log(LogVerbosity.Info, "ReceivePreloaded", files.Count);
+            Platform.LogInfo($"ReceivePreloaded {files.Count}");
             
             // Copy the list
             LoadedFiles = new List<ConfigFileInfo>(files);
@@ -90,11 +90,11 @@ namespace DarkConfig {
                 if (checksum == loadedFileInfo.Checksum) {
                     if (!AreTimestampsEquivalent(modifiedTime, loadedFileInfo.Modified)) {
                         // set the mtime on the file so that we don't have to re-check it later
-                        Platform.Log(LogVerbosity.Info, "Setting mtime on file", loadedFileInfo, "prev", modifiedTime, "new", loadedFileInfo.Modified);
+                        Platform.LogInfo($"Setting mtime on file {loadedFileInfo} prev {modifiedTime} new {loadedFileInfo.Modified}");
                         try {
                             File.SetLastWriteTimeUtc(filename, loadedFileInfo.Modified);
                         } catch (Exception e) {
-                            Platform.Log(LogVerbosity.Info, "Error setting mtime on file", loadedFileInfo, e.ToString());
+                            Platform.LogInfo($"Error setting mtime on file {loadedFileInfo} {e}");
                             // if we can't modify the file then let's at least store the mtime in memory for next time
                             loadedFileInfo.Modified = modifiedTime;
                         }
@@ -102,7 +102,7 @@ namespace DarkConfig {
 
                     if (fileLength != loadedFileInfo.Size) {
                         // for some reason the file's length is different, but the checksum is the same, so let's remember the size so next time we won't have to reload
-                        Platform.Log(LogVerbosity.Info, "Saving size of file", loadedFileInfo, "prev", loadedFileInfo.Size, "new", fileLength);
+                        Platform.LogInfo($"Saving size of file {loadedFileInfo} prev {loadedFileInfo.Size} new {fileLength}");
                         loadedFileInfo.Size = (int) fileLength;
                     }
 
@@ -147,7 +147,7 @@ namespace DarkConfig {
 
         void HotloadIndex(ConfigFileInfo indexInfo) {
             if (index == null) {
-                Platform.Log(LogVerbosity.Warn, "Null m_index");
+                Platform.LogWarning("Null index");
                 return;
             }
 
@@ -205,7 +205,7 @@ namespace DarkConfig {
                     };
                 }
             } catch (Exception e) {
-                Platform.Log(LogVerbosity.Error, "Exception loading file at path", pathWithExtension, "exception:", e);
+                Platform.LogError($"Exception loading file at path {pathWithExtension} exception: {e}");
                 throw;
             }
         }

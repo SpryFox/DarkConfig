@@ -20,62 +20,36 @@ namespace DarkConfig {
         public abstract object WaitForSeconds(float seconds);
         public abstract object StartCoroutine(IEnumerator coroutine);
         public abstract void StopCoroutine(IEnumerator coroutine);
-        
-        protected virtual void Log(string msg) { Console.Out.WriteLine(msg); }
-        protected virtual void LogError(string msg) { Console.Error.WriteLine(msg); }
+
+        protected abstract void LogCallback(LogVerbosity verbosity, string message);
         
         #region Logging
         const string LOG_GUARD = "DC_LOGGING_ENABLED";
         const string LogPrefix = "[DarkConfig] ";
         
-        /// How aggressively DarkConfig logs to Debug.Log.
+        /// How aggressively DarkConfig logs
         public static LogVerbosity LogLevel = LogVerbosity.Info;
+
+        [System.Diagnostics.Conditional(LOG_GUARD)]
+        public static void LogInfo(string message) {
+            Log(LogVerbosity.Info, message);
+        }
+
+        [System.Diagnostics.Conditional(LOG_GUARD)]
+        public static void LogWarning(string message) {
+            Log(LogVerbosity.Warn, message);
+        }
+
+        [System.Diagnostics.Conditional(LOG_GUARD)]
+        public static void LogError(string message) {
+            Log(LogVerbosity.Error, message);
+        }
         
         [System.Diagnostics.Conditional(LOG_GUARD)]
-        public static void Log(LogVerbosity level, string msg) {
+        static void Log(LogVerbosity level, string msg) {
             if (level <= LogLevel) {
-                var message = LogPrefix + msg;
-                if (level > LogVerbosity.Error) {
-                    Config.Platform.Log(message);
-                } else {
-                    Config.Platform.LogError(message);
-                }
+                Config.Platform.LogCallback(level, LogPrefix + msg);
             }
-        }
-
-        [System.Diagnostics.Conditional(LOG_GUARD)]
-        public static void Log(LogVerbosity level, object msg1) {
-            Log(level, msg1.ToString());
-        }
-
-        [System.Diagnostics.Conditional(LOG_GUARD)]
-        public static void Log(LogVerbosity level, object msg1, object msg2) {
-            Log(level, msg1 + " " + msg2);
-        }
-
-        [System.Diagnostics.Conditional(LOG_GUARD)]
-        public static void Log(LogVerbosity level, object msg1, object msg2, object msg3) {
-            Log(level, msg1 + " " + msg2 + " " + msg3);
-        }
-
-        [System.Diagnostics.Conditional(LOG_GUARD)]
-        public static void Log(LogVerbosity level, object msg1, object msg2, object msg3, object msg4) {
-            Log(level, msg1 + " " + msg2 + " " + msg3 + " " + msg4);
-        }
-        
-        [System.Diagnostics.Conditional(LOG_GUARD)]
-        public static void Log(LogVerbosity level, object msg1, object msg2, object msg3, object msg4, object msg5) {
-            Log(level, msg1 + " " + msg2 + " " + msg3 + " " + msg4 + " " + msg5);
-        }
-
-        [System.Diagnostics.Conditional(LOG_GUARD)]
-        public static void Log(LogVerbosity level, object msg1, object msg2, object msg3, object msg4, object msg5, object msg6) {
-            Log(level, msg1 + " " + msg2 + " " + msg3 + " " + msg4 + " " + msg5 + " " + msg6);
-        }
-        
-        [System.Diagnostics.Conditional(LOG_GUARD)]
-        public static void Log(LogVerbosity level, params object[] msgs) {
-            Log(level, string.Join(" ", msgs));
         }
         #endregion
 

@@ -45,9 +45,9 @@ namespace DarkConfig {
             loadedFiles.Clear();
             allFilenames.Clear();
 
-            Platform.Log(LogVerbosity.Info, $"Preloading {sources.Count} sources");
+            Platform.LogInfo($"Preloading {sources.Count} sources");
             foreach (var source in sources) {
-                Platform.Log(LogVerbosity.Info, $"Preloading source {source}");
+                Platform.LogInfo($"Preloading source {source}");
 
                 var source1 = source;
                 source.Preload(() => {
@@ -67,7 +67,7 @@ namespace DarkConfig {
                         }
                     }
 
-                    Platform.Log(LogVerbosity.Info, $"Done preloading, IsHotloadingFiles: {IsHotloadingFiles}");
+                    Platform.LogInfo($"Done preloading, IsHotloadingFiles: {IsHotloadingFiles}");
 
                     if (IsHotloadingFiles) {
                         Config.Platform.StartCoroutine(WatchFilesCoro());
@@ -231,7 +231,7 @@ namespace DarkConfig {
         public void LoadFromSourceImmediately(ConfigSource source) {
             Platform.Assert(Config.Platform.CanDoImmediatePreload, "Trying to load immediately on a platform that doesn't support it");
             isPreloading = true;
-            Platform.Log(LogVerbosity.Info, "Immediate-loading " + source);
+            Platform.LogInfo($"Immediate-loading {source}");
 
             source.Preload(() => { }); // assume that this is immediate
             foreach (var fileInfo in source.LoadedFiles) {
@@ -333,7 +333,7 @@ namespace DarkConfig {
             } else {
                 bool preloadWasImmediate = false;
                 Preload(() => { preloadWasImmediate = true; }); // note: all preloading is immediate
-                Platform.Log(LogVerbosity.Info, "Done immediate-loading, IsHotloadingFiles: ", IsHotloadingFiles);
+                Platform.LogInfo($"Done immediate-loading, IsHotloadingFiles: {IsHotloadingFiles}");
                 Platform.Assert(preloadWasImmediate, "Did not preload immediately");
             }
         }
@@ -399,7 +399,7 @@ namespace DarkConfig {
                             continue;
                         }
 
-                        Platform.Log(LogVerbosity.Info, $"Re-parsed file {newInfo} old: {loadedFile}");
+                        Platform.LogInfo($"Re-parsed file {newInfo} old: {loadedFile}");
 
                         if (newInfo.Name == "index") {
                             // make sure that we sync up our list of loaded files
@@ -420,7 +420,7 @@ namespace DarkConfig {
                         break;
                     }
                 } catch (Exception e) {
-                    Platform.Log(LogVerbosity.Error, "Exception loading file", configName, e);
+                    Platform.LogError($"Exception loading file {configName} {e}");
                 }
             }
 

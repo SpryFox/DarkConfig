@@ -10,12 +10,12 @@ namespace DarkConfig {
 
         public override ConfigSource ConfigSource => new ResourcesSource();
 
-        protected override void Log(string msg) {
-            Debug.Log(msg);
-        }
-
-        protected override void LogError(string msg) {
-            Debug.LogError(msg);
+        protected override void LogCallback(LogVerbosity verbosity, string message) {
+            switch (verbosity) {
+                case LogVerbosity.Error: Debug.LogError(message); break;
+                case LogVerbosity.Warn: Debug.LogWarning(message); break;
+                case LogVerbosity.Info: Debug.Log(message); break;
+            }
         }
 
         public override void Clear() {

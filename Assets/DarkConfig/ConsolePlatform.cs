@@ -10,12 +10,12 @@ namespace DarkConfig {
 
         public override ConfigSource ConfigSource => new FileSource(AppDomain.CurrentDomain.BaseDirectory + "Configs");
 
-        protected override void Log(string msg) {
-            Console.WriteLine(msg);
-        }
-
-        protected override void LogError(string msg) {
-            Console.WriteLine("Error: " + msg);
+        protected override void LogCallback(LogVerbosity verbosity, string message) {
+            if (verbosity == LogVerbosity.Info) {
+                Console.Out.WriteLine(message);
+            } else {
+                Console.Error.WriteLine(message);
+            }
         }
 
         void FinishCoro(Coro coro, ref int index) {
@@ -76,19 +76,22 @@ namespace DarkConfig {
 
                     // coroutine not finished, check the result
                     var stepResult = coro.iter.Current;
-                    if (stepResult is float) {
-                        // wait for some seconds
-                        coro.resumeAt = currentTime + (float) stepResult;
-                    } else if (stepResult is Coro) {
-                        // child coro, need to wait for that to finish
-                        var childCoro = stepResult as Coro;
-                        childCoro.parent = coro;
-                        // it replaces the parent in the updates; when it's done we'll swap the parent back
-                        coroutines[i] = childCoro;
-                        newCoroutines.Remove(childCoro);
-                    } else {
-                        // it's anything else, including null, so execute as soon as possible
-                        coro.resumeAt = float.MinValue;
+                    switch (stepResult) {
+                        case float result:
+                            // wait for some seconds
+                            coro.resumeAt = currentTime + result;
+                            break;
+                        case Coro childCoro:
+                            // child coro, need to wait for that to finish
+                            childCoro.parent = coro;
+                            // it replaces the parent in the updates; when it's done we'll swap the parent back
+                            coroutines[i] = childCoro;
+                            newCoroutines.Remove(childCoro);
+                            break;
+                        default:
+                            // it's anything else, including null, so execute as soon as possible
+                            coro.resumeAt = float.MinValue;
+                            break;
                     }
                 } catch (Exception e) {
                     LogError("Caught coroutine error" + e);

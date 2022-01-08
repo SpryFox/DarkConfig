@@ -57,7 +57,7 @@ namespace DarkConfig {
             filename = System.IO.Path.ChangeExtension(filename, null);
             var asset = Resources.Load<TextAsset>(filename);
             if (asset == null) {
-                Platform.Log(LogVerbosity.Error, "Null when loading file", filename);
+                Platform.LogError($"Null when loading file {filename}");
                 return null;
             }
 
@@ -93,7 +93,7 @@ namespace DarkConfig {
                 var filename = System.IO.Path.ChangeExtension(fileName, null);
                 var asset = Resources.Load<TextAsset>(filename);
                 if (asset == null) {
-                    Platform.Log(LogVerbosity.Error, "Null loading file", fileName);
+                    Platform.LogError($"Null loading file {fileName}");
                     return null;
                 }
 
@@ -107,7 +107,7 @@ namespace DarkConfig {
                     Parsed = parsed
                 };
             } catch (Exception e) {
-                Platform.Log(LogVerbosity.Error, "Exception loading file", fileName, e);
+                Platform.LogError($"Exception loading file {fileName} {e}");
                 throw;
             }
         }
