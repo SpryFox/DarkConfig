@@ -32,7 +32,7 @@ namespace DarkConfig.Internal {
         /// <param name="options">(optional) Reifier options</param>
         /// <typeparam name="T"></typeparam>
         public static void SetFieldsOnObject<T>(ref T obj, DocNode doc, ReificationOptions? options = null) where T : class {
-            Platform.Assert(obj != null, "Can't SetFields on null");
+            Config.Platform.Assert(obj != null, "Can't SetFields on null");
             var type = typeof(T);
             if (type == typeof(object)) {
                 // caller is using an object, but that is not the real type
@@ -87,11 +87,10 @@ namespace DarkConfig.Internal {
                 // ==== Special Case ====
                 // Allow specifying object types with a single property or field as a scalar value in configs.
                 // This is syntactic sugar that lets us wrap values in classes.
-                Platform.Assert(typeInfo.Members.Length == 1, "Trying to set a field of type: ",
-                    type, typeInfo.Members.Length, "from value of wrong type:",
-                    doc.Type == DocNodeType.Scalar ? doc.StringValue : doc.Type.ToString(),
-                    "at",
-                    doc.SourceInformation);
+                Config.Platform.Assert(typeInfo.Members.Length == 1, 
+                    $"Trying to set a field of type: {type} {typeInfo.Members.Length} from value of wrong type: " +
+                    (doc.Type == DocNodeType.Scalar ? doc.StringValue : doc.Type.ToString()) +
+                    $" at {doc.SourceInformation}");
                 
                 ref var memberMetadata = ref typeInfo.Members[0];
                 SetMember(memberMetadata.Info, memberMetadata.IsField, ref setCopy, doc, options);
