@@ -45,15 +45,16 @@ namespace DarkConfig {
             loadedFiles.Clear();
             allFilenames.Clear();
 
+            int preloadedSources = 0;
+            
             Platform.LogInfo($"Preloading {sources.Count} sources");
             foreach (var source in sources) {
                 Platform.LogInfo($"Preloading source {source}");
 
                 var source1 = source;
                 source.Preload(() => {
-                    isPreloading = false;
-                    IsPreloaded = true;
-
+                    preloadedSources++;
+                    
                     var files = source1.LoadedFiles;
                     foreach (var finfo in files) {
                         allFilenames.Add(finfo.Name);
@@ -67,13 +68,19 @@ namespace DarkConfig {
                         }
                     }
 
-                    Platform.LogInfo($"Done preloading, IsHotloadingFiles: {IsHotloadingFiles}");
+                    if (preloadedSources == sources.Count) {
+                        isPreloading = false;
+                        IsPreloaded = true;
+                        
+                        // We're done preloading all sources.
+                        Platform.LogInfo($"Done preloading, IsHotloadingFiles: {IsHotloadingFiles}");
 
-                    if (IsHotloadingFiles) {
-                        Config.Platform.StartCoroutine(WatchFilesCoro());
+                        if (IsHotloadingFiles) {
+                            Config.Platform.StartCoroutine(WatchFilesCoro());
+                        }
+
+                        callback?.Invoke();                        
                     }
-
-                    callback?.Invoke();
                 });
                 break;
             }
