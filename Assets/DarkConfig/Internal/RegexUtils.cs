@@ -4,18 +4,16 @@ using System.Text.RegularExpressions;
 namespace DarkConfig.Internal {
     public static class RegexUtils {
         /// Returns a list of all the strings in the given list that match the given regex.
-        public static List<string> FilterMatching(Regex pattern, List<string> strings) {
-            var result = new List<string>();
+        public static void FilterMatching(Regex pattern, IEnumerable<string> strings, List<string> results) {
             foreach (string str in strings) {
                 if (pattern.IsMatch(str)) {
-                    result.Add(str);
+                    results.Add(str);
                 }
             }
-            return result;
         }
 
-        public static List<string> FilterMatchingGlob(string glob, List<string> strings) {
-            return FilterMatching(GlobToRegex(glob), strings);
+        public static void FilterMatchingGlob(string glob, IEnumerable<string> strings, List<string> results) {
+            FilterMatching(GlobToRegex(glob), strings, results);
         }
 
         /// Converts a glob-style expression into a file path regex
