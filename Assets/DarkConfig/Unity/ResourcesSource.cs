@@ -8,73 +8,62 @@ namespace DarkConfig {
     /// since we can't check the timestamp on the files, it has to read them in in their
     /// entirety to see whether to hotload them
     public class ResourcesSource : ConfigSource {
-        public ResourcesSource(string baseDir = "Configs", bool hotload = false) : base(hotload && Application.isEditor) {
+        const string INDEX_FILENAME = "index";
+
+        public override bool CanHotload { get; }
+
+        public ResourcesSource(string baseDir = "Configs", bool hotload = false) {
             this.baseDir = baseDir;
+            CanHotload = hotload && Application.isEditor;
         }
 
         public override void Preload(Action callback) {
-            // load index file
-            var indexInfo = ReadFile(baseDir + "/index", "index");
+            AllFiles.Clear();
+            filesList.Clear();
             
-            LoadedFiles.Clear();
-            LoadedFiles.Add(indexInfo);
-            
-            var indexNode = indexInfo.Parsed;
-            
-            index.Clear();
-            index.Capacity = indexNode.Count;
-
-            for (int i = 0; i < indexNode.Count; i++) {
-                index.Add(indexNode[i].StringValue);
+            // Load the index file.
+            indexFile = ReadFile(INDEX_FILENAME);
+            if (indexFile == null) {
+                Platform.LogError($"Index file is missing at Resources path {INDEX_FILENAME}.");
+                return;
             }
-
-            foreach (string filename in index) {
-                if (filename == "index") {
-                    continue;
-                }
-                try {
-                    LoadedFiles.Add(ReadFile(baseDir + "/" + filename, filename));
-                } catch (Exception) {
-                    // ignored
+            
+            // Load all the files.
+            foreach (var nameNode in indexFile.Parsed.Values) {
+                string filename = nameNode.StringValue;
+                filesList.Add(filename);
+                if (filename != "index") {
+                    AllFiles[filename] = ReadFile(filename);    
                 }
             }
-
+            
             callback();
         }
-
-        public override void ReceivePreloaded(List<ConfigFileInfo> files) {
-            LoadedFiles.Clear();
-            LoadedFiles.AddRange(files);
-
-            index.Clear();
-            foreach (var file in LoadedFiles) {
-                index.Add(file.Name);
+        
+        public override void Hotload(List<string> changedFiles) {
+            // First try to load the index in case any files were added or removed.
+            var newIndex = ReadFile(INDEX_FILENAME);
+            if (newIndex == null) {
+                Platform.LogError($"Index file is missing at Resources path {INDEX_FILENAME}.");
+                return;
             }
-        }
-
-        public override ConfigFileInfo TryHotloadFile(ConfigFileInfo finfo) {
-            var filename = baseDir + "/" + finfo.Name;
-            filename = System.IO.Path.ChangeExtension(filename, null);
-            var asset = Resources.Load<TextAsset>(filename);
-            if (asset == null) {
-                Platform.LogError($"Null when loading file {filename}");
-                return null;
+            
+            if (newIndex.Checksum != indexFile.Checksum) {
+                // Index has changed, possibly have added or removed files from the index.
+                // TODO Smart update, don't just toss the whole list and start from scratch.
+                Preload(() => { });
+                changedFiles.AddRange(filesList);
+            } else {
+                // Index hasn't changed.  Check each file.
+                foreach (string file in filesList) {
+                    var newFile = ReadFile(file);
+                    if (newFile.Checksum == AllFiles[file].Checksum) {
+                        continue;
+                    }
+                    AllFiles[file] = newFile;
+                    changedFiles.Add(file);
+                }
             }
-
-            var contents = asset.text;
-            var checksum = Internal.ChecksumUtils.Checksum(contents);
-            if (checksum == finfo.Checksum) {
-                // early-out with a false result
-                return null;
-            }
-
-            var parsed = Config.LoadDocFromString(contents, finfo.Name);
-            return new ConfigFileInfo {
-                Name = finfo.Name,
-                Size = contents.Length,
-                Checksum = checksum,
-                Parsed = parsed
-            };
         }
 
         public override string ToString() {
@@ -83,33 +72,34 @@ namespace DarkConfig {
         
         /////////////////////////////////////////////////
 
+        ConfigFileInfo indexFile;
+        readonly List<string> filesList = new List<string>();
         readonly string baseDir;
-        
+
         /////////////////////////////////////////////////
         
-        ConfigFileInfo ReadFile(string fileName, string shortName) {
-            try {
-                // for some reason Unity prefers resource names without extensions
-                var filename = System.IO.Path.ChangeExtension(fileName, null);
-                var asset = Resources.Load<TextAsset>(filename);
-                if (asset == null) {
-                    Platform.LogError($"Null loading file {fileName}");
-                    return null;
-                }
-
-                var contents = asset.text;
-
-                var parsed = Config.LoadDocFromString(contents, fileName);
-                return new ConfigFileInfo {
-                    Name = shortName,
-                    Size = contents.Length,
-                    Checksum = Internal.ChecksumUtils.Checksum(contents),
-                    Parsed = parsed
-                };
-            } catch (Exception e) {
-                Platform.LogError($"Exception loading file {fileName} {e}");
-                throw;
+        ConfigFileInfo ReadFile(string filename) {
+            // Get the full resources path for the file.
+            string path = baseDir + "/" + filename;
+            
+            // Remove extension if one is specified.  
+            path = System.IO.Path.ChangeExtension(path, null);
+            
+            var asset = Resources.Load<TextAsset>(path);
+            if (asset == null) {
+                return null;
             }
+
+            return new ConfigFileInfo {
+                Name = filename,
+                Checksum = Internal.ChecksumUtils.Checksum(asset.text),
+                
+                // It's not easy to get a modified timestamp on a resources file, so just set it to the
+                // default DateTime value. We'll instead rely on checksums to detect differences that need hotloading.
+                Modified = new DateTime(),
+                Size = asset.text.Length,
+                Parsed = Config.LoadDocFromString(asset.text, filename)
+            };
         }
     }
 }

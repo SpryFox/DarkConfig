@@ -170,7 +170,7 @@ namespace DarkConfig {
         /// Registered as a reload callback for the merged files.
         /// </param>
         public static void LoadFilesAsList(string glob, ReloadDelegate callback) {
-            var matchingFiles = FileManager.GetFilesByGlob(glob);
+            var matchingFiles = FileManager.GetFilenamesMatchingGlob(glob);
             string destFile = glob + "_file";
             FileManager.RegisterCombinedFile(matchingFiles, destFile, CombineList);
             FileManager.LoadConfig(destFile, callback);
@@ -193,7 +193,7 @@ namespace DarkConfig {
         /// </param>
         public static void LoadFilesAsMergedDict(string glob, ReloadDelegate callback) {
             string combinedFilename = glob + "_file";
-            FileManager.RegisterCombinedFile(FileManager.GetFilesByGlob(glob), combinedFilename, CombineDict);
+            FileManager.RegisterCombinedFile(FileManager.GetFilenamesMatchingGlob(glob), combinedFilename, CombineDict);
             FileManager.LoadConfig(combinedFilename, callback);
         }
 

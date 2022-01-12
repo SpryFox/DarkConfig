@@ -67,7 +67,7 @@ public class PlaneCard {
     public static void LoadConfigs() {
         // loads all config files in the Planes directory
         Config.FileManager.RegisterCombinedFile(
-            Config.FileManager.GetFilesByGlob("Planes/**"),
+            Config.FileManager.GetFilenamesMatchingGlob("Planes/**"),
             "PlaneCards",
             Config.CombineDict);
         Config.Apply("PlaneCards", ref _Cards);
