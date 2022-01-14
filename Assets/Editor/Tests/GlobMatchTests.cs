@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using DarkConfig.Internal;
 
 [TestFixture]
-class FileMatchTests {
+class GlobMatchTests {
     static readonly List<string> AllFiles = new List<string>{
         "Folder/1File",
         "Folder/2File",
