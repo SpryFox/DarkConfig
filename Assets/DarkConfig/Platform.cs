@@ -18,8 +18,6 @@ namespace DarkConfig {
 
         public bool CanDoImmediatePreload = false;
 
-        public abstract ConfigSource ConfigSource { get; }
-
         public virtual void Clear() { }
 
         public abstract object WaitForSeconds(float seconds);

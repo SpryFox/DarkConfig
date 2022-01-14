@@ -8,8 +8,6 @@ namespace DarkConfig {
             UnityTypeReifiers.RegisterAll();
         }
 
-        public override ConfigSource ConfigSource => new ResourcesSource();
-
         protected override void LogCallback(LogVerbosity verbosity, string message) {
             switch (verbosity) {
                 case LogVerbosity.Error: Debug.LogError(message); break;
