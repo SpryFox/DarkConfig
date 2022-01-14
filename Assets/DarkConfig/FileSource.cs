@@ -11,16 +11,17 @@ namespace DarkConfig {
         /// <summary>
         /// Create a config source based on files in a directory.
         /// </summary>
-        /// <param name="dir">Path containing config files</param>
+        /// <param name="dir">(optional) Path containing config files. Defaults to a folder named "Configs" in the current path.</param>
         /// <param name="fileExtension">
+        /// File extension used for config files.  Specify with a leading dot.
         /// Some platforms like Unity require that text files have a specific extension e.g. ".bytes"
         /// Also, some files use ".yml" instead of ".yaml"
         /// </param>
         /// <param name="hotload">Allow file hotloading</param>
         /// <exception cref="ArgumentException">If <paramref name="dir"/> is null</exception>
-        public FileSource(string dir, string fileExtension = ".yaml", bool hotload = false) {
+        public FileSource(string dir = null, string fileExtension = ".yaml", bool hotload = false) {
             if (string.IsNullOrEmpty(dir)) {
-                throw new ArgumentNullException(nameof(dir), "FileSource needs non-null base directory");
+                dir = AppDomain.CurrentDomain.BaseDirectory + "Configs";
             }
             CanHotload = hotload;
             configFileExtension = fileExtension;
