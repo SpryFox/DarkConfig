@@ -8,8 +8,6 @@ namespace DarkConfig {
             CanDoImmediatePreload = false;
         }
 
-        public override ConfigSource ConfigSource => new FileSource(AppDomain.CurrentDomain.BaseDirectory + "Configs");
-
         protected override void LogCallback(LogVerbosity verbosity, string message) {
             if (verbosity == LogVerbosity.Info) {
                 Console.Out.WriteLine(message);

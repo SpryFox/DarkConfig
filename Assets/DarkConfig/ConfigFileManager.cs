@@ -251,21 +251,6 @@ namespace DarkConfig {
         }
 
         /// <summary>
-        /// Loads all files from the source immediately.  For editor tooling.
-        /// </summary>
-        /// <param name="source"></param>
-        public void LoadFromSourceImmediately(ConfigSource source) {
-            Config.Platform.Assert(Config.Platform.CanDoImmediatePreload, "Trying to load immediately on a platform that doesn't support it");
-            isPreloading = true;
-            Platform.LogInfo($"Immediate-loading {source}");
-
-            source.Preload(() => { }); // assume that this is immediate
-
-            isPreloading = false;
-            IsPreloaded = true; // TODO More accurate IsPreloaded system
-        }
-
-        /// <summary>
         /// Immediately checks all config files for changes in a non-async way.
         /// Reloads any files that have changed since they were last loaded.
         /// </summary>
@@ -341,14 +326,10 @@ namespace DarkConfig {
                 return;
             }
 
-            if (sources.Count == 0) {
-                LoadFromSourceImmediately(Config.Platform.ConfigSource);
-            } else {
-                bool preloadWasImmediate = false;
-                Preload(() => { preloadWasImmediate = true; }); // note: all preloading is immediate
-                Config.Platform.Assert(preloadWasImmediate, "Attempting to on-demand preload but didn't finish preloading immediately");
-                Platform.LogInfo($"Done on-demand preloading, IsHotloadingFiles: {IsHotloadingFiles}");
-            }
+            bool preloadWasImmediate = false;
+            Preload(() => { preloadWasImmediate = true; }); // note: all preloading is immediate
+            Config.Platform.Assert(preloadWasImmediate, "Attempting to on-demand preload but didn't finish preloading immediately");
+            Platform.LogInfo($"Done on-demand preloading, IsHotloadingFiles: {IsHotloadingFiles}");
         }
 
         IEnumerator WatchFilesCoro() {
