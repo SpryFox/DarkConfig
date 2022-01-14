@@ -4,6 +4,7 @@ Library
 Temp
 
 .idea
+.vscode
 *.userprefs
 *.sln
 *.csproj
