@@ -17,7 +17,7 @@ namespace DarkConfig {
             CanHotload = hotload && Application.isEditor;
         }
 
-        public override void Preload(Action callback) {
+        public override void Preload() {
             AllFiles.Clear();
             filesList.Clear();
             
@@ -36,8 +36,6 @@ namespace DarkConfig {
                     AllFiles[filename] = ReadFile(filename);    
                 }
             }
-            
-            callback();
         }
         
         public override void Hotload(List<string> changedFiles) {
@@ -51,7 +49,7 @@ namespace DarkConfig {
             if (newIndex.Checksum != indexFile.Checksum) {
                 // Index has changed, possibly have added or removed files from the index.
                 // TODO Smart update, don't just toss the whole list and start from scratch.
-                Preload(() => { });
+                Preload();
                 changedFiles.AddRange(filesList);
             } else {
                 // Index hasn't changed.  Check each file.

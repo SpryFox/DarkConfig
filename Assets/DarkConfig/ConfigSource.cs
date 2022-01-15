@@ -7,9 +7,9 @@ namespace DarkConfig {
     public abstract class ConfigSource {
         public abstract bool CanHotload { get; }
 
-        public abstract void Preload(Action callback);
+        public abstract void Preload();
 
-        public abstract void Hotload(List<string> changedFiles);
+        public virtual void Hotload(List<string> changedFiles) {}
         
         /////////////////////////////////////////////////
         

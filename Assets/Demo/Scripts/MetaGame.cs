@@ -57,6 +57,8 @@ public class MetaGame : MonoBehaviour {
     }
 
     void Update() {
+        Config.Update(Time.deltaTime);
+        
         switch (currentState) {
             case GameState.Title:
                 if (Input.GetKeyDown(KeyCode.Space)) {
@@ -77,7 +79,7 @@ public class MetaGame : MonoBehaviour {
         // Shift+H to hotload
         if (Input.GetKeyDown(KeyCode.H) && (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))) {
             Debug.Log("Hotloading configs");
-            Config.FileManager.CheckHotloadAsync();
+            Config.FileManager.DoHotload();
         }
 
         // Q toggles hotloading

@@ -59,7 +59,8 @@ namespace DarkConfig {
             if (callback != null) {
                 OnPreload += callback;
             }
-            FileManager.Preload(_OnPreload);
+            FileManager.Preload();
+            _OnPreload();
         }
 
         /// <summary>
@@ -153,7 +154,6 @@ namespace DarkConfig {
             _OnPreload = null;
             Internal.ConfigReifier.CustomReifiers.Clear();
             FileManager = new ConfigFileManager();
-            Platform.Clear();
         }
 
         /// <summary>
@@ -406,6 +406,10 @@ namespace DarkConfig {
         /// <typeparam name="T">The type of the struct to update.</typeparam>
         public static void SetFieldsOnStruct<T>(ref T obj, DocNode doc, ReificationOptions? options = null) where T : struct {
             Internal.ConfigReifier.SetFieldsOnStruct(ref obj, doc, options);
+        }
+
+        public static void Update(float dt) {
+            FileManager.Update(dt);
         }
 
         /////////////////////////////////////////////////
