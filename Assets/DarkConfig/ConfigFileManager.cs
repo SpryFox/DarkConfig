@@ -9,13 +9,13 @@ namespace DarkConfig {
         /// HotloadCheckInterval seconds.  Setting it to false stops hotloading;
         /// recommended for production games.
         public bool IsHotloadingFiles {
-            get => isHotloadingFiles;
+            get => _IsHotloadingFiles;
             set {
-                isHotloadingFiles = value;
-                if (isHotloadingFiles && watchFilesCoro == null) {
+                _IsHotloadingFiles = value;
+                if (_IsHotloadingFiles && watchFilesCoro == null) {
                     watchFilesCoro = WatchFilesCoro();
                     Config.Platform.StartCoroutine(watchFilesCoro);
-                } else if (!isHotloadingFiles && watchFilesCoro != null) {
+                } else if (!_IsHotloadingFiles && watchFilesCoro != null) {
                     Config.Platform.StopCoroutine(watchFilesCoro);
                     watchFilesCoro = null;
                 }
@@ -296,9 +296,9 @@ namespace DarkConfig {
         /////////////////////////////////////////////////
 
         bool isPreloading;
-        bool isHotloadingFiles = true;
         bool isCheckingHotloadNow;
         IEnumerator watchFilesCoro;
+        bool _IsHotloadingFiles = true;
 
         readonly List<ConfigSource> sources = new List<ConfigSource>();
         
