@@ -28,12 +28,11 @@ namespace DarkConfig {
             baseDir = dir;
         }
 
-        public override void Preload(Action callback) {
+        public override void Preload() {
             foreach (string file in FindConfigsInBaseDir()) {
                 var fileInfo = ReadFile(file);
                 AllFiles.Add(fileInfo.Name, fileInfo);
             }
-            callback();
         }
 
         string[] FindConfigsInBaseDir() {

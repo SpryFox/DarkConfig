@@ -1,5 +1,3 @@
-﻿using System.Collections;
-
 namespace DarkConfig {
     public enum LogVerbosity {
         Error,
@@ -10,19 +8,11 @@ namespace DarkConfig {
     public abstract class Platform {
         const string LOG_GUARD = "DC_LOGGING_ENABLED";
         const string ASSERT_GUARD = "DC_ASSERTS_ENABLED";
-        
         const string LogPrefix = "[DarkConfig] ";
         
         /// How aggressively DarkConfig logs
         public static LogVerbosity LogLevel = LogVerbosity.Info;
 
-        public bool CanDoImmediatePreload = false;
-
-        public virtual void Clear() { }
-
-        public abstract object WaitForSeconds(float seconds);
-        public abstract object StartCoroutine(IEnumerator coroutine);
-        public abstract void StopCoroutine(IEnumerator coroutine);
 
         protected abstract void LogCallback(LogVerbosity verbosity, string message);
         
