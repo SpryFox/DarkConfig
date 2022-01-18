@@ -1,18 +1,8 @@
-namespace DarkConfig {
-    public enum LogVerbosity {
-        Error,
-        Warn,
-        Info
-    }
-    
+﻿namespace DarkConfig {
     public abstract class Platform {
         const string LOG_GUARD = "DC_LOGGING_ENABLED";
         const string ASSERT_GUARD = "DC_ASSERTS_ENABLED";
         const string LogPrefix = "[DarkConfig] ";
-        
-        /// How aggressively DarkConfig logs
-        public static LogVerbosity LogLevel = LogVerbosity.Info;
-
 
         protected abstract void LogCallback(LogVerbosity verbosity, string message);
         
@@ -38,7 +28,7 @@ namespace DarkConfig {
         
         [System.Diagnostics.Conditional(LOG_GUARD)]
         public static void Log(LogVerbosity level, string msg) {
-            if (level <= LogLevel) {
+            if (level <= Config.Settings.LogLevel) {
                 Config.Platform.LogCallback(level, LogPrefix + msg);
             }
         }
