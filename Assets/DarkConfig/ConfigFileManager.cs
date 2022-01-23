@@ -303,6 +303,14 @@ namespace DarkConfig {
             }
         }
 
+        public int CountReloadCallbacks() {
+            int callbackCount = 0;
+            foreach (var kvp in reloadCallbacks) {
+                callbackCount += kvp.Value.Count;
+            }
+            return callbackCount;
+        }
+
         /////////////////////////////////////////////////
         
         float nextHotloadTime = 0;
