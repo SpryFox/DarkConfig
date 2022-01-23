@@ -60,7 +60,7 @@ namespace DarkConfig {
                 OnPreload += callback;
             }
             FileManager.Preload();
-            _OnPreload();
+            _OnPreload?.Invoke();
         }
 
         /// <summary>
