@@ -52,6 +52,7 @@ namespace DarkConfig {
             }
 
             IsPreloaded = true;
+            nextHotloadTime = Config.Settings.HotloadCheckFrequencySeconds;
 
             Platform.LogInfo($"Done preloading, IsHotloadingFiles: {IsHotloadingFiles}");
         }
