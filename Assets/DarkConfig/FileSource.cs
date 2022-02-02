@@ -22,7 +22,7 @@ namespace DarkConfig {
         /// <param name="hotload">Allow file hotloading</param>
         /// <exception cref="ArgumentException">If <paramref name="dir"/> is null</exception>
         public FileSource(string dir, string fileExtension = ".yaml", bool hotload = false) {
-            baseDir = dir;
+            baseDir = Path.GetFullPath(dir).Replace('\\', '/'); // Always use forward slashes in paths, even on windows.
             CanHotload = hotload;
             configFileExtensions = new[]{fileExtension};
         }
@@ -38,7 +38,7 @@ namespace DarkConfig {
         /// <param name="hotload">Allow file hotloading</param>
         /// <exception cref="ArgumentException">If <paramref name="dir"/> is null</exception>
         public FileSource(string dir, string[] fileExtensions, bool hotload = false) {
-            baseDir = dir;
+            baseDir = Path.GetFullPath(dir).Replace('\\', '/'); // Always use forward slashes in paths, even on windows.
             CanHotload = hotload;
             configFileExtensions = fileExtensions;
         }
@@ -125,8 +125,11 @@ namespace DarkConfig {
 
         /// Get the relative path without the extension
         string GetFileNameFromPath(string filePath) {
+            // Normalize the path to fix any mixed forward and back slashes.
+            filePath = Path.GetFullPath(filePath).Replace('\\', '/'); // Always use forward slashes in paths, even on windows.
+            
             return Path.ChangeExtension(filePath, null)
-                .Replace(baseDir + "/", "");
+                .Substring(baseDir.Length + 1); // remove the basedir from the path.
         }
         
         /// Reads and parses a file's contents.
