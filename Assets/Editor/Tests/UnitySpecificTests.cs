@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using NUnit.Framework;
 using DarkConfig;
+using System.IO;
 
 public class UnityTestFixture {
     protected T ReifyString<T>(string str) where T : new() {
@@ -218,24 +219,37 @@ public class UnityColorRefierTests : UnityTestFixture {
 
 [TestFixture]
 public class UnityEditorUtilsTests : UnityTestFixture {
+    string tempDirPath = "TestTemp";
+    string fullDirPath;
+
+    void CreateFile(string filename, string contents) {
+        var fullPath = Path.Combine(Application.dataPath, tempDirPath, filename);
+        using (var sw = new StreamWriter(fullPath, false, new System.Text.UTF8Encoding())) {
+            sw.Write(contents);
+        }
+    }
+
     [SetUp]
     public void DoSetUp() {
+        fullDirPath = Path.Combine(Application.dataPath, tempDirPath);
+        Directory.CreateDirectory(fullDirPath);
         Config.Platform = new UnityPlatform();
     }
     
     [TearDown]
     public void TearDown() {
         // clean up entire test directory
-        var tempDir = new System.IO.DirectoryInfo(Application.dataPath + "/TestTemp");
-        if (tempDir.Exists) {
-            tempDir.Delete(true);
-        }
+        Directory.Delete(fullDirPath, true);
         Config.Platform = null;
     }
 
     [Test]
     public void FindConfigFiles() {
-        var files = EditorUtils.FindConfigFiles("/TestScenes/Resources/FileSearchConfigs");
+        CreateFile("index.bytes", "- spinner");
+        CreateFile("test1.bytes", "- DemoConfigs/spinner.bytes");
+        CreateFile("test2.bytes", "- DemoConfigs/spinner.bytes");
+
+        var files = EditorUtils.FindConfigFiles("/" + tempDirPath);
         files.Sort();
         Assert.AreEqual(3, files.Count);
         Assert.AreEqual("index.bytes", files[0]);

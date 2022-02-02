@@ -26,7 +26,7 @@ class ApplyTests {
 
     [SetUp]
     public void Setup() {
-        tempDirPath = Path.Combine(Path.GetTempPath(), "FileSourceTests");
+        tempDirPath = Path.Combine(Path.GetTempPath(), "ApplyTests");
         Directory.CreateDirectory(tempDirPath);
 
         Config.Platform = new UnityPlatform();
