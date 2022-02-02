@@ -312,6 +312,15 @@ namespace DarkConfig {
             return callbackCount;
         }
 
+        public bool HasFile(string filename) {
+            foreach (var source in sources) {
+                if (source.AllFiles.ContainsKey(filename)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         /////////////////////////////////////////////////
         
         float nextHotloadTime = 0;
