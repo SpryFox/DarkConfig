@@ -36,7 +36,7 @@ jobs:
       - name: Setup .NET Core SDK
         uses: actions/setup-dotnet@v1.9.0
         with:
-          dotnet-version: '3.1.x' # SDK Version to use; x will use the latest version of the 3.1 channel
+          dotnet-version: '4.x' # SDK Version to use; x will use the latest version of the 3.1 channel
       - name: Install dependencies
         run: dotnet restore
       - name: Build
