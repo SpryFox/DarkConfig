@@ -17,7 +17,9 @@ demo/**/*-TestResults.xml*
 
 # these are copied here as a post-build step in the normal csproj
 demo/Assets/Plugins/DarkConfig.dll
+demo/Assets/Plugins/DarkConfig.dll.meta
 demo/Assets/Plugins/YamlDotNet.dll
+demo/Assets/Plugins/YamlDotNet.dll.meta
 
 .idea
 .vscode
