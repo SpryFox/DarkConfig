@@ -33,10 +33,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - name: Setup .NET Core SDK
+      - name: Setup .NET
         uses: actions/setup-dotnet@v1.9.0
         with:
-          dotnet-version: '4.x' # SDK Version to use; x will use the latest version of the 3.1 channel
+          dotnet-version: '3.1.x'
       - name: Install dependencies
         run: dotnet restore
       - name: Build
