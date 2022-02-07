@@ -38,7 +38,7 @@ jobs:
         with:
           dotnet-version: '3.1.x'
       - name: Install dependencies
-        run: dotnet restore
+        run: dotnet restore --verbosity detailed
       - name: Build
         run: dotnet build --configuration Release --no-restore
       - name: Test
