@@ -69,13 +69,7 @@
         <Compile Include="Settings.cs" />
     </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-    <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-         Other similar extension points exist, see Microsoft.Common.targets.
-    <Target Name="BeforeBuild">
-    </Target>
-    <Target Name="AfterBuild">
-    </Target>
-    -->
+    
     <Target Name="AfterBuild">
       <Copy SourceFiles="$(OutputPath)DarkConfig.dll" DestinationFolder="$(SolutionDir)demo/Assets/Plugins" ContinueOnError="true" />
       <Copy SourceFiles="$(OutputPath)YamlDotNet.dll" DestinationFolder="$(SolutionDir)demo/Assets/Plugins" ContinueOnError="true" />
