@@ -68,10 +68,6 @@
         <Compile Include="Properties\AssemblyInfo.cs" />
         <Compile Include="Settings.cs" />
     </ItemGroup>
-    <ItemGroup>
-      <Content Include="DocNode\.DS_Store" />
-      <Content Include="Internal\.DS_Store" />
-    </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
     <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
          Other similar extension points exist, see Microsoft.Common.targets.
