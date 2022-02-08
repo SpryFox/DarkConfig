@@ -35,4 +35,4 @@ jobs:
         run: nuget install NUnit.ConsoleRunner -Version 3.14.0 -OutputDirectory ./packages/
 
       - name: Run Unit Tests
-        run: .\packages\NUnit.ConsoleRunner.3.14.0\tools\nunit3-console.exe #test\bin\Debug\net48\DarkConfig.Tests.dll
+        run: .\packages\NUnit.ConsoleRunner.3.14.0\tools\nunit3-console.exe .\test\bin\Debug\net48\DarkConfig.Tests.dll
