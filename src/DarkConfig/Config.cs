@@ -204,17 +204,16 @@ namespace DarkConfig {
         /// <param name="docs">A list of DocNodes to combine. All DocNodes must be lists</param>
         /// <returns>The combined DocNode</returns>
         public static DocNode CombineList(List<DocNode> docs) {
-            string sourceInformation = null;
-#if DARKCONFIG_ERROR_SOURCE_INFO
-            var sb = new System.Text.StringBuilder("Combination of: [");
+            string sourceInformation = "Combination of: [";
             for (int i = 0; i < docs.Count; i++) {
-                if (i > 0) sb.Append(", ");
-                sb.Append(docs[i].SourceInformation);
+                if (i > 0) {
+                    sourceInformation += ", ";
+                }
+
+                sourceInformation += docs[i].SourceInformation;
             }
-            sb.Append("]");
-            sourceInformation = sb.ToString();
-#endif
-            
+            sourceInformation += "]";
+
             var result = new ComposedDocNode(DocNodeType.List, sourceInformation: sourceInformation);
             foreach (var t in docs) {
                 if (t.Type == DocNodeType.List) { // flatten file containing list
@@ -236,16 +235,14 @@ namespace DarkConfig {
         /// <param name="docs">A list of DocNodes to combine. All DocNodes must be dictionaries</param>
         /// <returns>The combined DocNode</returns>
         public static DocNode CombineDict(List<DocNode> docs) {
-            string sourceInformation = null;
-#if DARKCONFIG_ERROR_SOURCE_INFO
-            var sb = new System.Text.StringBuilder("Combination of: [");
+            string sourceInformation = "Combination of: [";
             for (int i = 0; i < docs.Count; i++) {
-                if (i > 0) sb.Append(", ");
-                sb.Append(docs[i].SourceInformation);
+                if (i > 0) {
+                    sourceInformation += ", ";
+                }
+                sourceInformation += docs[i].SourceInformation;
             }
-            sb.Append("]");
-            sourceInformation = sb.ToString();
-#endif
+            sourceInformation += "]";
 
             var result = new ComposedDocNode(DocNodeType.Dictionary, sourceInformation: sourceInformation);
             foreach (var doc in docs) {
