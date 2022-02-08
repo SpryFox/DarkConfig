@@ -421,8 +421,8 @@ namespace DarkConfig {
         static DocNode LoadDocFromTextReader(TextReader reader, string filename) {
             var yaml = new YamlStream();
             yaml.Load(reader);
-            //yaml.Load(reader, filename);
-            return yaml.Documents.Count <= 0 ? new YamlDocNode(null) : new YamlDocNode(yaml.Documents[0].RootNode);
+            return yaml.Documents.Count <= 0 ? new YamlDocNode(null, filename)
+                : new YamlDocNode(yaml.Documents[0].RootNode, filename);
         }
     }
 }
