@@ -30,3 +30,6 @@ jobs:
         # Add additional options to the MSBuild command line here (like platform or verbosity level).
         # See https://docs.microsoft.com/visualstudio/msbuild/msbuild-command-line-reference
         run: msbuild /m /p:Configuration=${{env.BUILD_CONFIGURATION}} ${{env.SOLUTION_FILE_PATH}}
+      
+      - name: Run Unit Tests
+        run: packages\NUnit.ConsoleRunner.3.14.0\tools\nunit3-console.exe test\bin\Debug\net48\DarkConfig.Tests.dll
