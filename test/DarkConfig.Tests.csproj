@@ -5,7 +5,6 @@
         <Nullable>disable</Nullable>
         <IsPackable>false</IsPackable>
         <LangVersion>8</LangVersion>
-        <BaseIntermediateOutputPath>..\..\obj\</BaseIntermediateOutputPath>
     </PropertyGroup>
 
     <ItemGroup>
