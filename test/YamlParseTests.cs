@@ -6,12 +6,9 @@ using DarkConfig;
 
 [TestFixture]
 public class YamlParseTests {
-    static YamlNode ParseYamlNode(string str, string filename = null) {
-        var input = new StringReader(str);
+    static YamlNode ParseYamlNode(string str) {
         var yaml = new YamlStream();
-        //yaml.Load(input, filename);
-        yaml.Load(input);
-
+        yaml.Load(new StringReader(str));
         return yaml.Documents[0].RootNode;
     }
     
@@ -30,7 +27,7 @@ public class YamlParseTests {
         [Test]
         public void JsonSubset_TraversedByDocNode() {
             string testStr = "{\"test_key\":\"test_value\"}";
-            var dn = (DocNode) new YamlDocNode(ParseYamlNode(testStr));
+            var dn = (DocNode) new YamlDocNode(ParseYamlNode(testStr), "testfilename");
 
             Assert.AreEqual(dn.Count, 1);
             Assert.AreEqual(dn["test_key"].StringValue, "test_value");
@@ -48,7 +45,7 @@ public class YamlParseTests {
 key:
     inner_key: value
 ";
-            var dn = (DocNode) new YamlDocNode(ParseYamlNode(testStr, "testfilename"));
+            var dn = (DocNode) new YamlDocNode(ParseYamlNode(testStr), "testfilename");
 
             var exception = Assert.Throws<DocNodeAccessException>(() => {
                 var x = dn["key"][3];
