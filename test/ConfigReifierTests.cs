@@ -41,7 +41,7 @@ class ConfigReifierTests {
         public int childIntKey;
         public float childFloatKey;
 
-        public static int staticIntKey;
+        public static int staticIntKey = 0;
     }
 
     class ParentClass {
@@ -103,7 +103,7 @@ class ConfigReifierTests {
         public int int2Value { get; } = 2;
         
         // Set-only property
-        public int int3Value { set { backing3Int = value; } }
+        public int int3Value { set => backing3Int = value; }
         
         // Computed property
         public int int4Value => 4;
@@ -900,6 +900,7 @@ class ConfigReifierTests {
             ConfigReifier.SetFieldsOnStruct(ref inst, doc, ReificationOptions.CaseSensitive);
         });
         // check that it found all the missing keys
+        Assert.IsNotNull(exception);
         Assert.True(exception.Message.IndexOf("childFloatKey", StringComparison.Ordinal) >= 0);
         Assert.True(exception.Message.IndexOf("staticIntKey", StringComparison.Ordinal) >= 0);
     }

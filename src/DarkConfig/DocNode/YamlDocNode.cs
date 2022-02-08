@@ -109,7 +109,7 @@ namespace DarkConfig {
             // return ((YamlMappingNode) node).Children.ContainsKey(new YamlScalarNode(key));
         }
 
-        public struct ValuesIterator : IEnumerable<DocNode> {
+        readonly struct ValuesIterator : IEnumerable<DocNode> {
             internal ValuesIterator(YamlNode node, string filename) {
                 this.node = node;
                 this.filename = filename;
@@ -137,7 +137,7 @@ namespace DarkConfig {
             }
         }
 
-        public struct PairsIterator : IEnumerable<KeyValuePair<string, DocNode>> {
+        readonly struct PairsIterator : IEnumerable<KeyValuePair<string, DocNode>> {
             internal PairsIterator(YamlNode node, string filename) {
                 this.node = node;
                 this.filename = filename;

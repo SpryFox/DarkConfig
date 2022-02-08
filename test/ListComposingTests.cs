@@ -5,9 +5,9 @@ using System.Collections.Generic;
 
 [TestFixture]
 class ListComposingTests {
-    struct Character {
-        public int Height;
-        public string Item;
+    class Character {
+        public int Height = 0;
+        public string Item = "";
     }
 
     string tempDirPath;

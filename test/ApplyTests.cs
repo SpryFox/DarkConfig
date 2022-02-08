@@ -8,20 +8,15 @@ class ApplyTests {
     FileSource fileSource;
 
     class Glass {
-        public int Capacity;
-        public float Height;
+        public int Capacity = 0;
+        public float Height = 0.0f;
     }
-    Glass drinkContainer;
 
     void CreateFile(string filename, string contents) {
         var fullPath = Path.Combine(tempDirPath, filename);
         using (var sw = new StreamWriter(fullPath, false, new System.Text.UTF8Encoding())) {
             sw.Write(contents);
         }
-    }
-
-    void DeleteFile(string filename) {
-        File.Delete(Path.Combine(tempDirPath, filename));
     }
 
     [SetUp]
@@ -39,7 +34,7 @@ class ApplyTests {
     public void TearDown() {
         Directory.Delete(tempDirPath, true);
         Config.Platform = null;
-        //Config.FileManager = null;
+        Config.Clear();
     }
 
     [Test]
@@ -52,6 +47,7 @@ class ApplyTests {
             Glass glass = null;
             Config.Apply("playerGlass", ref glass);
             Assert.AreEqual(glass.Capacity, 12);
+            Assert.AreEqual(glass.Height, 0.25f);
         }
 
         Assert.AreEqual(1, Config.FileManager.CountReloadCallbacks());
