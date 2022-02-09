@@ -1,14 +1,13 @@
 <p align="center">
     <a href="#concept">
-      <img src="https://github.com/SpryFox/DarkConfig/raw/master/Docs/DarkConfig.png">
+      <img src="/Docs/DarkConfig.png">
     </a>
 </p>
 
-DarkConfig
-===========
-
-DarkConfig is a configuration library for games which supports fast and expressive iteration.
-
+---
+<p align="center">
+**DarkConfig** is a configuration library for games which supports fast and expressive iteration.
+</p>
 Here's how DarkConfig supports fast iteration:
 
 * It hotloads files into the running game when they're changed, allowing you to see the results of tweaks in moments.
