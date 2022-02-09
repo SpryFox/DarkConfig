@@ -122,9 +122,11 @@ class ConfigReifierTests {
     }
 
     ReificationOptions defaults;
+    ConfigReifier reifier;
 
     [SetUp]
     public void DoSetup() {
+        reifier = new ConfigReifier();
         Config.Platform = new ConsolePlatform();
         defaults = Config.Settings.DefaultReifierOptions;
         Config.Settings.DefaultReifierOptions = ReificationOptions.AllowMissingExtraFields;
@@ -132,6 +134,7 @@ class ConfigReifierTests {
 
     [TearDown]
     public void TearDown() {
+        reifier = null;
         Config.Settings.DefaultReifierOptions = defaults;
     }
 
@@ -727,7 +730,7 @@ class ConfigReifierTests {
             intKey: 99088
             "
             , "ConfigReifierTests_ReifyString_TestFilename");
-        ConfigReifier.SetFieldsOnObject(ref tc, doc);
+        reifier.SetFieldsOnObject(ref tc, doc);
         Assert.AreEqual(tc.intKey, 99088);
     }
 
@@ -739,7 +742,7 @@ class ConfigReifierTests {
             intKey: 99077
             "
             , "ConfigReifierTests_ReifyString_TestFilename");
-        ConfigReifier.SetFieldsOnObject(ref tc, doc);
+        reifier.SetFieldsOnObject(ref tc, doc);
         Assert.AreEqual(((TestClass) tc).intKey, 99077);
     }
 
@@ -753,7 +756,7 @@ class ConfigReifierTests {
             childIntKey: 12345
             "
             , "ConfigReifierTests_ReifyString_TestFilename");
-        ConfigReifier.SetFieldsOnStruct(ref s, doc);
+        reifier.SetFieldsOnStruct(ref s, doc);
         Assert.AreEqual(s.childIntKey, 12345);
         Assert.AreEqual(s.childFloatKey, 1);
     }
@@ -769,7 +772,7 @@ class ConfigReifierTests {
             "
             , "ConfigReifierTests_ReifyString_TestFilename");
         object os = (object) s;
-        ConfigReifier.SetFieldsOnObject(ref os, doc);
+        reifier.SetFieldsOnObject(ref os, doc);
         Assert.AreEqual(((ChildStruct) os).childIntKey, 34567);
         Assert.AreEqual(((ChildStruct) os).childFloatKey, 1);
     }
@@ -831,7 +834,7 @@ class ConfigReifierTests {
             "
             , "ConfigReifierTests_ReifySingle_TestFilename");
         var inst = Activator.CreateInstance<SingleFieldClass>();
-        ConfigReifier.SetFieldsOnObject(ref inst, doc);
+        reifier.SetFieldsOnObject(ref inst, doc);
         Assert.AreEqual(inst.SingleField, 8342);
     }
 
@@ -843,7 +846,7 @@ class ConfigReifierTests {
             "
             , "ConfigReifierTests_ReifySingle_TestFilename");
         var inst = Activator.CreateInstance<SingleListClass>();
-        ConfigReifier.SetFieldsOnObject(ref inst, doc);
+        reifier.SetFieldsOnObject(ref inst, doc);
         Assert.AreEqual(inst.SingleList[0], "a");
         Assert.AreEqual(inst.SingleList[1], "b");
         Assert.AreEqual(inst.SingleList[2], "c");
@@ -856,7 +859,7 @@ class ConfigReifierTests {
             floatKey: 1.56
         ", "ConfigReifier_ReifiesExtraFields_TestFilename");
         var inst = Activator.CreateInstance<TestClass>();
-        ConfigReifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.AllowMissingFields);
+        reifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.AllowMissingFields);
         Assert.AreEqual(inst.floatKey, 1.56f);
     }
 
@@ -869,7 +872,7 @@ class ConfigReifierTests {
         ", "ConfigReifier_ReifiesExtraFields_TestFilename");
         var exception = Assert.Throws<ExtraFieldsException>(() => {
             var inst = Activator.CreateInstance<TestClass>();
-            ConfigReifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.CaseSensitive);
+            reifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.CaseSensitive);
         });
         // check that it found all the extra keys
         Assert.True(exception.Message.IndexOf("extraKey1", StringComparison.Ordinal) >= 0);
@@ -884,7 +887,7 @@ class ConfigReifierTests {
             staticIntKey: 332
         ", "ConfigReifier_ReifiesMissingFields_TestFilename");
         var inst = Activator.CreateInstance<ChildStruct>();
-        ConfigReifier.SetFieldsOnStruct(ref inst, doc, ReificationOptions.None);
+        reifier.SetFieldsOnStruct(ref inst, doc, ReificationOptions.None);
         Assert.AreEqual(inst.childIntKey, 42);
         Assert.AreEqual(inst.childFloatKey, 1.25);
         Assert.AreEqual(ChildStruct.staticIntKey, 332);
@@ -897,7 +900,7 @@ class ConfigReifierTests {
         ", "ConfigReifier_ReifiesMissingFields_TestFilename");
         var exception = Assert.Throws<MissingFieldsException>(() => {
             var inst = Activator.CreateInstance<ChildStruct>();
-            ConfigReifier.SetFieldsOnStruct(ref inst, doc, ReificationOptions.CaseSensitive);
+            reifier.SetFieldsOnStruct(ref inst, doc, ReificationOptions.CaseSensitive);
         });
         // check that it found all the missing keys
         Assert.IsNotNull(exception);
@@ -913,7 +916,7 @@ class ConfigReifierTests {
             StaticiNtKey: 5
         ", "ConfigReifier_ReifiesCaseInsensitive_TestFilename");
         var inst = Activator.CreateInstance<ChildStruct>();
-        ConfigReifier.SetFieldsOnStruct(ref inst, doc, ReificationOptions.None);
+        reifier.SetFieldsOnStruct(ref inst, doc, ReificationOptions.None);
         Assert.AreEqual(inst.childIntKey, 32);
         Assert.AreEqual(inst.childFloatKey, 11);
         Assert.AreEqual(ChildStruct.staticIntKey, 5);
@@ -925,7 +928,7 @@ class ConfigReifierTests {
             childintkey: 32
         ", "ConfigReifier_ReifiesCaseInsensitive_TestFilename");
         var inst = Activator.CreateInstance<ChildStruct>();
-        ConfigReifier.SetFieldsOnStruct(ref inst, doc, ReificationOptions.AllowMissingFields);
+        reifier.SetFieldsOnStruct(ref inst, doc, ReificationOptions.AllowMissingFields);
         Assert.AreEqual(inst.childIntKey, 32);
     }
 
@@ -936,7 +939,7 @@ class ConfigReifierTests {
             AllowedMissing: derp
         ", "ConfigReifier_ReifierAttributes_TestFilename");
         var inst = Activator.CreateInstance<AttributesClass>();
-        ConfigReifier.SetFieldsOnObject(ref inst, doc);
+        reifier.SetFieldsOnObject(ref inst, doc);
         Assert.AreEqual(inst.Mandatory, 10);
         Assert.AreEqual(inst.AllowedMissing, "derp");
         Assert.AreEqual(inst.Ignored, false);
@@ -949,7 +952,7 @@ class ConfigReifierTests {
         ", "ConfigReifier_ReifierAttributes_TestFilename");
         Assert.Throws<MissingFieldsException>(() => {
             var inst = Activator.CreateInstance<AttributesClass>();
-            ConfigReifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.AllowMissingFields);
+            reifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.AllowMissingFields);
         });
     }
 
@@ -960,7 +963,7 @@ class ConfigReifierTests {
             MissingOrNotDependingOnDefault: true
         ", "ConfigReifier_ReifierAttributes_TestFilename");
         var inst = Activator.CreateInstance<AttributesClass>();
-        ConfigReifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.None);
+        reifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.None);
         Assert.AreEqual(inst.Mandatory, 15);
         Assert.AreEqual(inst.AllowedMissing, "initial");
         Assert.AreEqual(inst.Ignored, false);
@@ -973,7 +976,7 @@ class ConfigReifierTests {
             Mandatory: 15
         ", "ConfigReifier_ReifierAttributes_TestFilename");
         var inst = Activator.CreateInstance<AttributesClass>();
-        ConfigReifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.AllowMissingFields);
+        reifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.AllowMissingFields);
         Assert.AreEqual(inst.Mandatory, 15);
         Assert.AreEqual(inst.AllowedMissing, "initial");
         Assert.AreEqual(inst.MissingOrNotDependingOnDefault, "initial2");
@@ -989,7 +992,7 @@ class ConfigReifierTests {
         ", "ConfigReifier_ReifierAttributes_TestFilename");
         Assert.Throws<ExtraFieldsException>(() => {
             var inst = Activator.CreateInstance<AttributesClass>();
-            ConfigReifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.None);
+            reifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.None);
         });
     }
 
@@ -1001,7 +1004,7 @@ class ConfigReifierTests {
             MissingOrNotDependingOnDefault: whip
         ", "ConfigReifier_ReifierAttributes_TestFilename");
         var inst = Activator.CreateInstance<AttributesClass>();
-        ConfigReifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.None);
+        reifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.None);
         Assert.AreEqual(inst.Mandatory, 102);
         Assert.AreEqual(inst.AllowedMissing, "herpe");
         Assert.AreEqual(inst.Ignored, false);
@@ -1015,7 +1018,7 @@ class ConfigReifierTests {
             stringField: uh
         ", "ConfigReifier_ReifierAttributes_TestFilename");
         var inst = Activator.CreateInstance<MandatoryClass>();
-        ConfigReifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.None);
+        reifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.None);
         Assert.AreEqual(inst.intField, 10);
         Assert.AreEqual(inst.stringField, "uh");
         Assert.AreEqual(inst.ignoreField, "initialignore");
@@ -1028,7 +1031,7 @@ class ConfigReifierTests {
         ", "ConfigReifier_ReifierAttributes_TestFilename");
         Assert.Throws<MissingFieldsException>(() => {
             var inst = Activator.CreateInstance<MandatoryClass>();
-            ConfigReifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.None);
+            reifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.None);
         });
     }
 
@@ -1039,7 +1042,7 @@ class ConfigReifierTests {
         ", "ConfigReifier_ReifierAttributes_TestFilename");
         Assert.Throws<MissingFieldsException>(() => {
             var inst = Activator.CreateInstance<MandatoryClass>();
-            ConfigReifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.AllowMissingFields);
+            reifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.AllowMissingFields);
         });
     }
 
@@ -1049,7 +1052,7 @@ class ConfigReifierTests {
             intField: 99
         ", "ConfigReifier_ReifierAttributes_TestFilename");
         var inst = Activator.CreateInstance<MandatoryClass>();
-        ConfigReifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.None);
+        reifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.None);
         Assert.AreEqual(inst.intField, 99);
         Assert.AreEqual(inst.stringField, "initial");
         Assert.AreEqual(inst.ignoreField, "initialignore");
@@ -1062,7 +1065,7 @@ class ConfigReifierTests {
             listField: [1]
         ", "ConfigReifier_ReifierAttributes_TestFilename");
         var inst = Activator.CreateInstance<AllowMissingClass>();
-        ConfigReifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.None);
+        reifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.None);
         Assert.AreEqual(inst.stringField, "hmm");
         Assert.AreEqual(inst.listField[0], "1");
     }
@@ -1073,7 +1076,7 @@ class ConfigReifierTests {
             stringField: wot
         ", "ConfigReifier_ReifierAttributes_TestFilename");
         var inst = Activator.CreateInstance<AllowMissingClass>();
-        ConfigReifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.AllowMissingFields);
+        reifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.AllowMissingFields);
         Assert.AreEqual(inst.stringField, "wot");
         Assert.AreEqual(inst.listField, null);
     }
@@ -1084,7 +1087,7 @@ class ConfigReifierTests {
             stringField: wot
         ", "ConfigReifier_ReifierAttributes_TestFilename");
         var inst = Activator.CreateInstance<AllowMissingClass>();
-        ConfigReifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.None);
+        reifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.None);
         Assert.AreEqual(inst.stringField, "wot");
         Assert.AreEqual(inst.listField, null);
     }
@@ -1096,7 +1099,7 @@ class ConfigReifierTests {
         ", "ConfigReifier_ReifierAttributes_TestFilename");
         Assert.Throws<MissingFieldsException>(() => {
             var inst = Activator.CreateInstance<AllowMissingClass>();
-            ConfigReifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.AllowMissingFields);
+            reifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.AllowMissingFields);
         });
     }
 
@@ -1108,7 +1111,7 @@ class ConfigReifierTests {
         ", "ConfigReifier_ReifierAttributes_TestFilename");
         Assert.Throws<ExtraFieldsException>(() => {
             var inst = Activator.CreateInstance<AllowMissingClass>();
-            ConfigReifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.AllowMissingFields);
+            reifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.AllowMissingFields);
         });
     }
 
@@ -1149,7 +1152,7 @@ class ConfigReifierTests {
             mandatoryValue: mandatory
         ", "ReifierAttributes_PropertiesClass_AcceptsSetting");
         var inst = Activator.CreateInstance<PropertiesClass>();
-        ConfigReifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.None);
+        reifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.None);
         Assert.AreEqual(inst.int1Value, 10);
         Assert.AreEqual(inst.int2Value, 2);
         Assert.AreEqual(inst.backing3Int, 3);

@@ -6,7 +6,7 @@ namespace DarkConfig.Internal {
     /// Cached type reflection data.
     /// Reflection is quite expensive especially on consoles
     /// so it's worth trying to reduce how much we need to do it as much as possible.
-    static class ReflectionCache {
+    class ReflectionCache {
         internal class TypeInfo {
             public ClassAttributesFlags AttributeFlags = ClassAttributesFlags.None;
             public MemberMetadata[] Members;
@@ -37,17 +37,17 @@ namespace DarkConfig.Internal {
         
         ////////////////////////////////////////////
 
-        internal static TypeInfo GetTypeInfo(Type type) {
+        internal TypeInfo GetTypeInfo(Type type) {
             return cachedTypeInfo.TryGetValue(type, out var info) ? info : CacheTypeInfo(type);
         }
         
         ////////////////////////////////////////////
         
-        static readonly Dictionary<Type, TypeInfo> cachedTypeInfo = new Dictionary<Type, TypeInfo>();
+        readonly Dictionary<Type, TypeInfo> cachedTypeInfo = new Dictionary<Type, TypeInfo>();
         
         ////////////////////////////////////////////
 
-        static TypeInfo CacheTypeInfo(Type type) {
+        TypeInfo CacheTypeInfo(Type type) {
             var info = new TypeInfo {
                 FromDoc = type.GetMethod("FromDoc", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static),
                 PostDoc = type.GetMethod("PostDoc", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static)
@@ -125,11 +125,11 @@ namespace DarkConfig.Internal {
         }
         
         /// Removes one letter hungarian notation prefixes from field names.
-        static string RemoveHungarianPrefix(string name) {
+        string RemoveHungarianPrefix(string name) {
             return name.Length > 1 && name[1] == '_' ? name.Substring(2) : name;
         }
 
-        static void SetMemberAttributeFlags(ref MemberMetadata metadata) {
+        void SetMemberAttributeFlags(ref MemberMetadata metadata) {
             foreach (var attribute in metadata.Info.GetCustomAttributes(true)) {
                 if (attribute is ConfigMandatoryAttribute) {
                     metadata.HasConfigMandatoryAttribute = true;
