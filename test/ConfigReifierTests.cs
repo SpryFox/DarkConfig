@@ -505,7 +505,7 @@ class ConfigReifierTests {
             nestedObject:
                 intKey: 100
             ");
-        Assert.IsTrue(object.ReferenceEquals(o.nestedObject, saved));
+        Assert.IsTrue(ReferenceEquals(o.nestedObject, saved));
         Assert.AreEqual(o.nestedObject.intKey, 100);
     }
 
@@ -533,7 +533,7 @@ class ConfigReifierTests {
                 - intKey: 4404
             ");
         Assert.AreEqual(o.nestedList.Count, 1);
-        Assert.IsTrue(object.ReferenceEquals(o.nestedList[0], saved));
+        Assert.IsTrue(ReferenceEquals(o.nestedList[0], saved));
         Assert.AreEqual(o.nestedList[0].intKey, 4404);
         Assert.AreEqual(o.nestedList[0].floatKey, 1.2f);
     }
@@ -552,7 +552,7 @@ class ConfigReifierTests {
                 - intKey: 1011
             ");
         Assert.AreEqual(o.nestedList.Count, 3);
-        Assert.IsTrue(object.ReferenceEquals(o.nestedList[0], saved));
+        Assert.IsTrue(ReferenceEquals(o.nestedList[0], saved));
         Assert.AreEqual(o.nestedList[0].intKey, 4404);
         Assert.AreEqual(o.nestedList[0].floatKey, 4.56f);
         Assert.AreEqual(o.nestedList[1].intKey, 1234);
@@ -574,7 +574,7 @@ class ConfigReifierTests {
                 - intKey: 4404
             ");
         Assert.AreEqual(o.nestedList.Count, 1);
-        Assert.IsTrue(object.ReferenceEquals(o.nestedList[0], saved));
+        Assert.IsTrue(ReferenceEquals(o.nestedList[0], saved));
         Assert.AreEqual(o.nestedList[0].intKey, 4404);
         Assert.AreEqual(o.nestedList[0].floatKey, 4.56f);
     }
@@ -635,7 +635,7 @@ class ConfigReifierTests {
             Secondi: { intKey: 12 }
         ");
         Assert.AreEqual(2, o.Count);
-        Assert.IsTrue(object.ReferenceEquals(saved, o[TestEnum.Primi]));
+        Assert.IsTrue(ReferenceEquals(saved, o[TestEnum.Primi]));
         Assert.AreEqual(99, o[TestEnum.Primi].intKey);
         Assert.AreEqual(12, o[TestEnum.Secondi].intKey);
     }
@@ -652,7 +652,7 @@ class ConfigReifierTests {
         ");
         Assert.AreEqual(1, o.Count);
         Assert.IsFalse(o.ContainsKey(TestEnum.Secondi));
-        Assert.IsTrue(object.ReferenceEquals(saved, o[TestEnum.Primi]));
+        Assert.IsTrue(ReferenceEquals(saved, o[TestEnum.Primi]));
         Assert.AreEqual(99, o[TestEnum.Primi].intKey);
     }
 
@@ -668,7 +668,7 @@ class ConfigReifierTests {
                     intKey: 56
             ");
         Assert.AreEqual(o.nestedDict.Count, 1);
-        Assert.IsTrue(object.ReferenceEquals(o.nestedDict["dictKey"], saved));
+        Assert.IsTrue(ReferenceEquals(o.nestedDict["dictKey"], saved));
         Assert.AreEqual(o.nestedDict["dictKey"].intKey, 56);
     }
 
@@ -771,7 +771,7 @@ class ConfigReifierTests {
             childIntKey: 34567
             "
             , "ConfigReifierTests_ReifyString_TestFilename");
-        object os = (object) s;
+        object os = s;
         reifier.SetFieldsOnObject(ref os, doc);
         Assert.AreEqual(((ChildStruct) os).childIntKey, 34567);
         Assert.AreEqual(((ChildStruct) os).childFloatKey, 1);
@@ -788,7 +788,7 @@ class ConfigReifierTests {
             , "ConfigReifierTests_ReifyString_TestFilename");
         Config.ReifyStatic<TestClass>(doc);
         Assert.AreEqual(TestClass.staticStringKey, "arbitrage");
-        Assert.AreEqual(TestClass.staticIntArrKey, new int[] {4, 4, 0, 0});
+        Assert.AreEqual(TestClass.staticIntArrKey, new[] {4, 4, 0, 0});
     }
 
     [Test]
@@ -875,6 +875,7 @@ class ConfigReifierTests {
             reifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.CaseSensitive);
         });
         // check that it found all the extra keys
+        Assert.IsNotNull(exception);
         Assert.True(exception.Message.IndexOf("extraKey1", StringComparison.Ordinal) >= 0);
         Assert.True(exception.Message.IndexOf("extraKey2", StringComparison.Ordinal) >= 0);
     }
