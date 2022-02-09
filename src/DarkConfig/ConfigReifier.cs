@@ -3,12 +3,17 @@ using System.Collections.Generic;
 using System.Reflection;
 
 namespace DarkConfig.Internal {
-    public static class ConfigReifier {
+    public class ConfigReifier {
         /// User-defined type reifiers
-        public static readonly Dictionary<Type, FromDocDelegate> CustomReifiers = new Dictionary<Type, FromDocDelegate>();
-        
+        public readonly Dictionary<Type, FromDocDelegate> CustomReifiers = new Dictionary<Type, FromDocDelegate>();
+
         /////////////////////////////////////////////////
         
+        public ConfigReifier() {
+            CustomReifiers[typeof(DateTime)] = BuiltInTypeRefiers.FromDateTime;
+            CustomReifiers[typeof(TimeSpan)] = BuiltInTypeRefiers.FromTimeSpan;
+        }
+
         /// <summary>
         /// Sets all members on a struct from the given dictionary DocNode
         /// </summary>
@@ -16,7 +21,7 @@ namespace DarkConfig.Internal {
         /// <param name="doc">The doc to read fields from.  Must be a dictionary.</param>
         /// <param name="options"></param>
         /// <typeparam name="T"></typeparam>
-        public static void SetFieldsOnStruct<T>(ref T obj, DocNode doc, ReificationOptions? options = null) where T : struct {
+        public void SetFieldsOnStruct<T>(ref T obj, DocNode doc, ReificationOptions? options = null) where T : struct {
             var type = typeof(T);
             object setRef = obj;
             SetFieldsOnObject(type, ref setRef, doc, options);
@@ -31,7 +36,7 @@ namespace DarkConfig.Internal {
         /// <param name="doc">The doc to read fields from.  Must be a dictionary.</param>
         /// <param name="options">(optional) Reifier options</param>
         /// <typeparam name="T"></typeparam>
-        public static void SetFieldsOnObject<T>(ref T obj, DocNode doc, ReificationOptions? options = null) where T : class {
+        public void SetFieldsOnObject<T>(ref T obj, DocNode doc, ReificationOptions? options = null) where T : class {
             Config.Platform.Assert(obj != null, "Can't SetFields on null");
             var type = typeof(T);
             if (type == typeof(object)) {
@@ -53,7 +58,7 @@ namespace DarkConfig.Internal {
         /// <param name="options"></param>
         /// <exception cref="ExtraFieldsException"></exception>
         /// <exception cref="MissingFieldsException"></exception>
-        public static void SetFieldsOnObject(Type type, ref object obj, DocNode doc, ReificationOptions? options = null) {
+        public void SetFieldsOnObject(Type type, ref object obj, DocNode doc, ReificationOptions? options = null) {
             if (doc == null) {
                 return;
             }
@@ -62,7 +67,7 @@ namespace DarkConfig.Internal {
                 options = Config.Settings.DefaultReifierOptions;
             }
 
-            var typeInfo = ReflectionCache.GetTypeInfo(type);
+            var typeInfo = reflectionCache.GetTypeInfo(type);
 
             // Grab global settings
             bool ignoreCase = (options & ReificationOptions.CaseSensitive) != ReificationOptions.CaseSensitive;
@@ -189,7 +194,7 @@ namespace DarkConfig.Internal {
         /// <exception cref="Exception"></exception>
         /// <exception cref="ParseException"></exception>
         /// <exception cref="NotSupportedException"></exception>
-        public static object ReadValueOfType(Type fieldType, object existing, DocNode doc, ReificationOptions? options) {
+        public object ReadValueOfType(Type fieldType, object existing, DocNode doc, ReificationOptions? options) {
             try {
                 if (fieldType == typeof(bool)) {
                     return Convert.ToBoolean(doc.StringValue, System.Globalization.CultureInfo.InvariantCulture);
@@ -437,7 +442,7 @@ namespace DarkConfig.Internal {
                     }
                 }
 
-                var typeInfo = ReflectionCache.GetTypeInfo(fieldType);
+                var typeInfo = reflectionCache.GetTypeInfo(fieldType);
                 var fromDocMethod = typeInfo.FromDoc;
                 if (fromDocMethod != null) {
                     // if there's a custom parser method on the class, delegate all work to that
@@ -481,17 +486,16 @@ namespace DarkConfig.Internal {
         
         /////////////////////////////////////////////////
 
-        static ConfigReifier() {
-            CustomReifiers[typeof(DateTime)] = BuiltInTypeRefiers.FromDateTime;
-            CustomReifiers[typeof(TimeSpan)] = BuiltInTypeRefiers.FromTimeSpan;
-        }
-        
-        static bool IsDelegateType(Type type) {
+        readonly ReflectionCache reflectionCache = new ReflectionCache();
+
+        /////////////////////////////////////////////////
+
+        bool IsDelegateType(Type type) {
             // http://mikehadlow.blogspot.com/2010/03/how-to-tell-if-type-is-delegate.html
             return typeof(MulticastDelegate).IsAssignableFrom(type.BaseType);
         }
         
-        static Type GetFirstNonObjectBaseClass(Type t) {
+        Type GetFirstNonObjectBaseClass(Type t) {
             var curr = t;
             while (curr.BaseType != null && curr.BaseType != typeof(System.Object)) {
                 curr = curr.BaseType;
@@ -500,7 +504,7 @@ namespace DarkConfig.Internal {
             return curr;
         }
         
-        static void SetMember(MemberInfo memberInfo, bool isField, ref object obj, DocNode doc, ReificationOptions? options) {
+        void SetMember(MemberInfo memberInfo, bool isField, ref object obj, DocNode doc, ReificationOptions? options) {
             if (isField) {
                 var fieldInfo = (FieldInfo)memberInfo;
                 if (obj == null && !fieldInfo.IsStatic) {
@@ -527,7 +531,7 @@ namespace DarkConfig.Internal {
         }
 
         /// String.Join for Lists. Only used for logging.
-        static string JoinList(IReadOnlyList<string> args, string joinStr) {
+        string JoinList(IReadOnlyList<string> args, string joinStr) {
             var sb = new System.Text.StringBuilder();
             for (int i = 0; i < args.Count; i++) {
                 sb.Append(args[i]);
@@ -547,9 +551,9 @@ namespace DarkConfig.Internal {
         /// <param name="typeInfo">(optional) the reflection type info so we don't have to get it again from the reflection cache</param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        static void CallPostDoc(Type serializedType, ref object obj, ReflectionCache.TypeInfo typeInfo = null) {
+        void CallPostDoc(Type serializedType, ref object obj, ReflectionCache.TypeInfo typeInfo = null) {
             if (typeInfo == null) {
-                typeInfo = ReflectionCache.GetTypeInfo(serializedType);
+                typeInfo = reflectionCache.GetTypeInfo(serializedType);
             }
             
             var postDoc = typeInfo.PostDoc;

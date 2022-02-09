@@ -152,7 +152,7 @@ namespace DarkConfig {
         /// </summary>
         public static void Clear() {
             _OnPreload = null;
-            Internal.ConfigReifier.CustomReifiers.Clear();
+            configReifier = new Internal.ConfigReifier();
             FileManager = new ConfigFileManager();
         }
 
@@ -294,7 +294,7 @@ namespace DarkConfig {
         /// <param name="type">Type to register the custom loader for</param>
         /// <param name="fromDoc">Custom config parsing function for the type</param>
         public static void RegisterFromDoc(Type type, FromDocDelegate fromDoc) {
-            Internal.ConfigReifier.CustomReifiers[type] = fromDoc;
+            configReifier.CustomReifiers[type] = fromDoc;
         }
 
         /// <summary>
@@ -355,7 +355,7 @@ namespace DarkConfig {
         /// </code>
         /// </example>
         public static void Reify<T>(ref T obj, Type objType, DocNode doc, ReificationOptions? options = null) {
-            obj = (T) Internal.ConfigReifier.ReadValueOfType(objType, obj, doc, options);
+            obj = (T) configReifier.ReadValueOfType(objType, obj, doc, options);
         }
 
         /// <summary>
@@ -380,7 +380,7 @@ namespace DarkConfig {
         /// <param name="options">(optional) Override default and type-defined reification behavior.</param>
         public static void ReifyStatic(Type type, DocNode doc, ReificationOptions? options = null) {
             object dummyObj = null;
-            Internal.ConfigReifier.SetFieldsOnObject(type, ref dummyObj, doc, options ?? Settings.DefaultReifierOptions);
+            configReifier.SetFieldsOnObject(type, ref dummyObj, doc, options ?? Settings.DefaultReifierOptions);
         }
 
         /// <summary>
@@ -391,7 +391,7 @@ namespace DarkConfig {
         /// <param name="options">(optional) Override default and type-defined reification behavior.</param>
         /// <typeparam name="T">The type of the object to update. Must be a class or a boxed struct type.</typeparam>
         public static void SetFieldsOnObject<T>(ref T obj, DocNode doc, ReificationOptions? options = null) where T : class {
-            Internal.ConfigReifier.SetFieldsOnObject(ref obj, doc, options);
+            configReifier.SetFieldsOnObject(ref obj, doc, options);
         }
 
         /// <summary>
@@ -402,7 +402,7 @@ namespace DarkConfig {
         /// <param name="options">(optional) Override default and type-defined reification behavior.</param>
         /// <typeparam name="T">The type of the struct to update.</typeparam>
         public static void SetFieldsOnStruct<T>(ref T obj, DocNode doc, ReificationOptions? options = null) where T : struct {
-            Internal.ConfigReifier.SetFieldsOnStruct(ref obj, doc, options);
+            configReifier.SetFieldsOnStruct(ref obj, doc, options);
         }
 
         public static void Update(float dt) {
@@ -412,6 +412,7 @@ namespace DarkConfig {
         /////////////////////////////////////////////////
 
         static Action _OnPreload;
+        static Internal.ConfigReifier configReifier = new Internal.ConfigReifier();
 
         /////////////////////////////////////////////////
 
