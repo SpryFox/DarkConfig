@@ -4,13 +4,13 @@
     </a>
 </p>
 
----
-<p align="center">
-**DarkConfig** is a configuration library for games which supports fast and expressive iteration.
-</p>
-Here's how DarkConfig supports fast iteration:
 
-* It hotloads files into the running game when they're changed, allowing you to see the results of tweaks in moments.
+<p align="center">
+    <b>DarkConfig</b> is a configuration library for games that supports<br/>fast and expressive iteration with YAML or JSON.
+</p>
+
+## 🎯 Features
+* Reduce your iteration time to seconds.  Hotload game data and see the results of your changes immediately in a running game.
 * It requires very little code to get running, and supports arbitrary classes.
 * It uses YAML, a stress-free format for authoring and editing.
 * When there are syntax errors in the YAML files, it reports line and column numbers, so you can find the problem quickly.
