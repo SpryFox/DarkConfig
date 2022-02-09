@@ -281,6 +281,10 @@ namespace DarkConfig.Internal {
                     int rank = fieldType.GetArrayRank();
                     var elementType = fieldType.GetElementType();
                     var arrayValue = existing as Array;
+
+                    if (elementType == null) {
+                        throw new Exception("Null element type for array.");
+                    }
                     
                     if (rank == 1) { // simple arrays
                         if (doc.Count == 0) {
@@ -383,7 +387,7 @@ namespace DarkConfig.Internal {
                             existing = Activator.CreateInstance(fieldType);
                         }
 
-                        var iexisting = (System.Collections.IDictionary) existing;
+                        var existingDict = (System.Collections.IDictionary) existing;
                         var keyType = typeParameters[0];
                         var valueType = typeParameters[1];
                         var keyNode = new ComposedDocNode(DocNodeType.Scalar, sourceInformation: doc.SourceInformation); // can reuse this one object
@@ -394,28 +398,28 @@ namespace DarkConfig.Internal {
                             keyNode.StringValue = kv.Key;
                             object existingKey = ReadValueOfType(keyType, null, keyNode, options);
                             object existingValue = null;
-                            if (iexisting.Contains(existingKey)) {
-                                existingValue = iexisting[existingKey];
+                            if (existingDict.Contains(existingKey)) {
+                                existingValue = existingDict[existingKey];
                             }
 
                             var updated = ReadValueOfType(valueType, existingValue, kv.Value, options);
-                            iexisting[existingKey] = updated;
+                            existingDict[existingKey] = updated;
                             usedKeys.Add(existingKey);
                         }
 
                         // remove any pairs not in the doc
                         var keysToRemove = new List<object>();
-                        foreach (var k in iexisting.Keys) {
+                        foreach (var k in existingDict.Keys) {
                             if (!usedKeys.Contains(k)) {
                                 keysToRemove.Add(k);
                             }
                         }
 
                         foreach (var k in keysToRemove) {
-                            iexisting.Remove(k);
+                            existingDict.Remove(k);
                         }
 
-                        return iexisting;
+                        return existingDict;
                     }
 
                     if (fieldType.GetGenericTypeDefinition() == typeof(List<>)) {
@@ -424,18 +428,19 @@ namespace DarkConfig.Internal {
                         if (existing == null) {
                             existing = Activator.CreateInstance(fieldType);
                         }
-                        var iexisting = (System.Collections.IList) existing;
                         
-                        while (iexisting.Count > doc.Count) {
-                            iexisting.RemoveAt(iexisting.Count - 1);
+                        var existingList = (System.Collections.IList) existing;
+                        
+                        while (existingList.Count > doc.Count) {
+                            existingList.RemoveAt(existingList.Count - 1);
                         }
 
-                        for (int i = 0; i < iexisting.Count; i++) {
-                            iexisting[i] = ReadValueOfType(typeParameters[0], iexisting[i], doc[i], options);
+                        for (int i = 0; i < existingList.Count; i++) {
+                            existingList[i] = ReadValueOfType(typeParameters[0], existingList[i], doc[i], options);
                         }
 
-                        while (iexisting.Count < doc.Count) {
-                            iexisting.Add(ReadValueOfType(typeParameters[0], null, doc[iexisting.Count], options));
+                        while (existingList.Count < doc.Count) {
+                            existingList.Add(ReadValueOfType(typeParameters[0], null, doc[existingList.Count], options));
                         }
 
                         return existing;
@@ -497,7 +502,7 @@ namespace DarkConfig.Internal {
         
         Type GetFirstNonObjectBaseClass(Type t) {
             var curr = t;
-            while (curr.BaseType != null && curr.BaseType != typeof(System.Object)) {
+            while (curr.BaseType != null && curr.BaseType != typeof(object)) {
                 curr = curr.BaseType;
             }
 
