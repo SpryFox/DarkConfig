@@ -1,6 +1,7 @@
-﻿using System.Collections.Generic;
-using System;
+﻿using System;
 using System.IO;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using YamlDotNet.RepresentationModel;
 
 namespace DarkConfig {
@@ -25,13 +26,22 @@ namespace DarkConfig {
     public delegate bool ReloadDelegate(DocNode doc);
 
     public static class Config {
+        const string LOG_GUARD = "DC_LOGGING_ENABLED";
+        const string ASSERT_GUARD = "DC_ASSERTS_ENABLED";
+        const string LogPrefix = "[DarkConfig] ";
+        
+        public delegate void AssertFunc(bool test, string message);
+        public delegate void LogFunc(LogVerbosity verbosity, string message);
+
+        /////////////////////////////////////////////////
+        
         /// Configuration settings for Dark Config itself.
         public static Settings Settings = new Settings();
-        
-        /// Provides DarkConfig with platform-specific resources like logging, coroutines, etc.
-        public static Platform Platform;
-        
+
         public static ConfigFileManager FileManager { get; private set; } = new ConfigFileManager();
+        
+        public static AssertFunc AssertCallback = null;
+        public static LogFunc LogCallback = null;
         
         /// True if config file preloading is complete, false otherwise.
         public static bool IsPreloaded => FileManager.IsPreloaded;
@@ -147,13 +157,15 @@ namespace DarkConfig {
         }
         
         /// <summary>
-        /// Cleans up DarkConfig's state, removing all listeners, loaded files,
-        /// and so on, as if Preload had never been called.
+        /// Cleans up DarkConfig's state, removing all listeners, loaded files, and so on.
+        /// Does not reset Settings values.
         /// </summary>
         public static void Clear() {
             _OnPreload = null;
             configReifier = new Internal.ConfigReifier();
             FileManager = new ConfigFileManager();
+            LogCallback = null;
+            AssertCallback = null;
         }
 
         /// <summary>
@@ -246,7 +258,7 @@ namespace DarkConfig {
 
             var result = new ComposedDocNode(DocNodeType.Dictionary, sourceInformation: sourceInformation);
             foreach (var doc in docs) {
-                Platform.Assert(doc.Type == DocNodeType.Dictionary,
+                Assert(doc.Type == DocNodeType.Dictionary,
                     "Expected all DocNodes to be dictionaries in CombineDict.");
                 foreach (var kv in doc.Pairs) {
                     result[kv.Key] = kv.Value;
@@ -404,11 +416,38 @@ namespace DarkConfig {
         public static void SetFieldsOnStruct<T>(ref T obj, DocNode doc, ReificationOptions? options = null) where T : struct {
             configReifier.SetFieldsOnStruct(ref obj, doc, options);
         }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void LogInfo(string message) {
+            Log(LogVerbosity.Info, message);
+        }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void LogWarning(string message) {
+            Log(LogVerbosity.Warn, message);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void LogError(string message) {
+            Log(LogVerbosity.Error, message);
+        }
+        
         public static void Update(float dt) {
             FileManager.Update(dt);
         }
 
+        /////////////////////////////////////////////////
+
+        [System.Diagnostics.Conditional(ASSERT_GUARD)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static void Assert(bool test, string message) {
+            if (AssertCallback != null) {
+                AssertCallback(test, message);
+            } else {
+                DefaultAssertCallback(test, message);
+            }
+        }
+        
         /////////////////////////////////////////////////
 
         static Action _OnPreload;
@@ -421,6 +460,31 @@ namespace DarkConfig {
             yaml.Load(reader);
             return yaml.Documents.Count <= 0 ? new YamlDocNode(null, filename)
                 : new YamlDocNode(yaml.Documents[0].RootNode, filename);
+        }
+
+        static void DefaultAssertCallback(bool test, string message) {
+            System.Diagnostics.Debug.Assert(test, message);
+        }
+        
+        [System.Diagnostics.Conditional(LOG_GUARD)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static void Log(LogVerbosity level, string msg) {
+            if (level > Settings.LogLevel) {
+                return;
+            }
+            if (LogCallback != null) {
+                LogCallback(level, LogPrefix + msg);
+            } else {
+                DefaultLogCallback(level, LogPrefix + msg);
+            }
+        }
+        
+        static void DefaultLogCallback(LogVerbosity verbosity, string message) {
+            if (verbosity == LogVerbosity.Info) {
+                Console.Out.WriteLine(message);
+            } else {
+                Console.Error.WriteLine(message);
+            }
         }
     }
 }

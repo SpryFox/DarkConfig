@@ -23,7 +23,7 @@ public class LoadGame : MonoBehaviour {
         Config.Settings.DefaultReifierOptions = ConfigOptions.AllowMissingExtraFields;
 #endif
 
-        Config.Platform = new UnityPlatform();
+        UnityPlatform.Setup();
         Config.FileManager.AddSource(new FileSource(Application.dataPath + "/Demo/Resources/Configs", ".bytes", hotload: true));
         stopwatch = Stopwatch.StartNew();
 

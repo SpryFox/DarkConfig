@@ -35,16 +35,6 @@ class PostDocTests {
         return result;
     }
 
-    [SetUp]
-    public void DoSetUp() {
-        Config.Platform = new ConsolePlatform();
-    }
-
-    [TearDown]
-    public void DoTeardown() {
-        Config.Platform = null;
-    }
-
     [Test]
     public void PostDoc_IsCalled() {
         var instance = ReifyString<PostDocClass>("baseKey: 10");

@@ -24,7 +24,7 @@ namespace DarkConfig {
             // Load the index file.
             indexFile = ReadFile(INDEX_FILENAME);
             if (indexFile == null) {
-                Platform.LogError($"Index file is missing at Resources path {INDEX_FILENAME}.");
+                Config.LogError($"Index file is missing at Resources path {INDEX_FILENAME}.");
                 return;
             }
             
@@ -42,7 +42,7 @@ namespace DarkConfig {
             // First try to load the index in case any files were added or removed.
             var newIndex = ReadFile(INDEX_FILENAME);
             if (newIndex == null) {
-                Platform.LogError($"Index file is missing at Resources path {INDEX_FILENAME}.");
+                Config.LogError($"Index file is missing at Resources path {INDEX_FILENAME}.");
                 return;
             }
             

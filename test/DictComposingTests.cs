@@ -11,16 +11,11 @@ class DictComposingTests {
         File.WriteAllText(Path.Combine(tempDirPath, filename), contents);
     }
 
-    void DeleteFile(string filename) {
-        File.Delete(Path.Combine(tempDirPath, filename));
-    }
-
     [SetUp]
     public void SetUp() {
         tempDirPath = Path.Combine(Path.GetTempPath(), "DictComposingTests");
         Directory.CreateDirectory(tempDirPath);
-
-        Config.Platform = new ConsolePlatform();
+        
         Config.Settings.EnableHotloading = true;
         Config.Settings.HotloadCheckFrequencySeconds = 0.1f;
         fileSource = new FileSource(tempDirPath, hotload:true);
@@ -30,7 +25,6 @@ class DictComposingTests {
     [TearDown]
     public void TearDown() {
         Directory.Delete(tempDirPath, true);
-        Config.Platform = null;
         Config.Clear();
     }
 

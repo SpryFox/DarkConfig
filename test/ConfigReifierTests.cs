@@ -127,7 +127,6 @@ class ConfigReifierTests {
     [SetUp]
     public void DoSetup() {
         reifier = new ConfigReifier();
-        Config.Platform = new ConsolePlatform();
         defaults = Config.Settings.DefaultReifierOptions;
         Config.Settings.DefaultReifierOptions = ReificationOptions.AllowMissingExtraFields;
     }

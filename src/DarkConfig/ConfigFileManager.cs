@@ -33,16 +33,15 @@ namespace DarkConfig {
         /// this (via Config.Preload, not directly) before using anything else
         /// in DarkConfig.
         /// </summary>
-        /// <param name="callback">Called when preloading is complete</param>
         public void Preload() {
             if (IsPreloaded) {
                 return;
             }
 
             // Preload all sources.            
-            Platform.LogInfo($"Preloading {sources.Count} sources");
+            Config.LogInfo($"Preloading {sources.Count} sources");
             foreach (var source in sources) {
-                Platform.LogInfo($"Preloading source {source}");
+                Config.LogInfo($"Preloading source {source}");
                 source.Preload();
             }
 
@@ -54,7 +53,7 @@ namespace DarkConfig {
             IsPreloaded = true;
             nextHotloadTime = Config.Settings.HotloadCheckFrequencySeconds;
 
-            Platform.LogInfo($"Done preloading, IsHotloadingFiles: {IsHotloadingFiles}");
+            Config.LogInfo($"Done preloading, IsHotloadingFiles: {IsHotloadingFiles}");
         }
 
         /// <summary>
@@ -181,7 +180,7 @@ namespace DarkConfig {
         /// <summary>
         /// Stop producing a combined file.
         /// </summary>
-        /// <param name="combinedConfigName">Generated name of the combined file.</param>
+        /// <param name="combinedFilename">Generated name of the combined file.</param>
         public void UnregisterCombinedFile(string combinedFilename) {
             CheckPreload();
 
@@ -323,7 +322,7 @@ namespace DarkConfig {
 
         /////////////////////////////////////////////////
         
-        float nextHotloadTime = 0;
+        float nextHotloadTime;
         readonly List<ConfigSource> sources = new List<ConfigSource>();
         readonly Dictionary<string, List<ReloadDelegate>> reloadCallbacks = new Dictionary<string, List<ReloadDelegate>>();
         
@@ -344,7 +343,7 @@ namespace DarkConfig {
             }
 
             Preload();
-            Platform.LogInfo($"Done on-demand preloading, IsHotloadingFiles: {IsHotloadingFiles}");
+            Config.LogInfo($"Done on-demand preloading, IsHotloadingFiles: {IsHotloadingFiles}");
         }
 
         void BuildCombinedConfig(CombinerData combinerData) {
