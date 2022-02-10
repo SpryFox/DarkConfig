@@ -50,16 +50,6 @@ class FromDocTests {
         return instance;
     }
 
-    [SetUp]
-    public void Setup() {
-        Config.Platform = new ConsolePlatform();
-    }
-
-    [TearDown]
-    public void Teardown() {
-        Config.Platform = null;
-    }
-
     [Test]
     public void FromDoc_CalledToReify() {
         var tc = ReifyString<TestClass>("[\"Base\", 12]");

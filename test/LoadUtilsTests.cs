@@ -24,13 +24,11 @@ class LoadUtilsTests {
     [SetUp]
     public void SetUp() {
         Config.Settings.DefaultReifierOptions = ReificationOptions.AllowMissingFields;
-        Config.Platform = new ConsolePlatform();
     }
 
     [TearDown]
     public void TearDown() {
         Config.Settings.DefaultReifierOptions = ReificationOptions.AllowMissingExtraFields | ReificationOptions.CaseSensitive;
-        Config.Platform = null;
     }
 
     [Test]

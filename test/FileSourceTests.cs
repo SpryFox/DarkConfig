@@ -12,13 +12,11 @@ class FileSourceTests {
     public void SetUp() {
         tempDirPath = Path.Combine(Path.GetTempPath(), "FileSourceTests");
         Directory.CreateDirectory(tempDirPath);
-        Config.Platform = new ConsolePlatform();
     }
 
     [TearDown]
     public void TearDown() {
         Directory.Delete(tempDirPath, true);
-        Config.Platform = null;
     }
 
     void CreateFile(string filename, string contents) {

@@ -18,8 +18,7 @@ class MissingFilesTests {
     public void SetUp() {
         tempDirPath = Path.Combine(Path.GetTempPath(), "ListComposingTests");
         Directory.CreateDirectory(tempDirPath);
-
-        Config.Platform = new ConsolePlatform();
+        
         Config.Settings.EnableHotloading = true;
         Config.Settings.HotloadCheckFrequencySeconds = 0.1f;
         Config.FileManager.AddSource(new FileSource(tempDirPath, hotload:true));
@@ -28,7 +27,6 @@ class MissingFilesTests {
     [TearDown]
     public void TearDown() {
         Directory.Delete(tempDirPath, true);
-        Config.Platform = null;
         Config.Clear();
     }
 

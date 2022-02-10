@@ -23,8 +23,7 @@ class ApplyTests {
     public void Setup() {
         tempDirPath = Path.Combine(Path.GetTempPath(), "ApplyTests");
         Directory.CreateDirectory(tempDirPath);
-
-        Config.Platform = new ConsolePlatform();
+        
         Config.Settings.HotloadCheckFrequencySeconds = 0.1f;
         fileSource = new FileSource(tempDirPath, hotload:true);
         Config.FileManager.AddSource(fileSource);
@@ -33,7 +32,6 @@ class ApplyTests {
     [TearDown]
     public void TearDown() {
         Directory.Delete(tempDirPath, true);
-        Config.Platform = null;
         Config.Clear();
     }
 

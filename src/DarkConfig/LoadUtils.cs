@@ -24,7 +24,7 @@ namespace DarkConfig {
                 var basedOn = getBasedOn(val);
                 if (basedOn == null) continue;
                 if (!container.ContainsKey(basedOn)) {
-                    Platform.LogError($"In file {doc.SourceInformation}, {val} is based on {basedOn}, which doesn't exist");
+                    Config.LogError($"In file {doc.SourceInformation}, {val} is based on {basedOn}, which doesn't exist");
                     continue;
                 }
 
@@ -64,7 +64,7 @@ namespace DarkConfig {
                 return fieldValue;
             }
             if (recursionDepth > 100) {
-                Platform.LogError($"Might be a loop in the basedOn references at: {conf}, parent {parent}");
+                Config.LogError($"Might be a loop in the basedOn references at: {conf}, parent {parent}");
                 return fieldValue;
             }
             // if fieldValue is null, we need to get the default from the parent

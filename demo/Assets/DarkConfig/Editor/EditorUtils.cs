@@ -66,7 +66,10 @@ namespace DarkConfig {
         /// <returns></returns>
         public static int WriteIndexFile(List<string> filesInIndex, string indexFile) {
             int resourcesIdx = indexFile.IndexOf("Resources/", StringComparison.Ordinal);
-            Config.Platform.Assert(resourcesIdx >= 0, $"Index file {indexFile} should have Resources directory in its path");
+            if (resourcesIdx < 0) {
+                Debug.LogError($"Index file {indexFile} should have Resources directory in its path");
+                return 0;
+            }
 
             string relToResources = indexFile.Substring(resourcesIdx + "Resources/".Length);
 

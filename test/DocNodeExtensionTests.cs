@@ -4,16 +4,6 @@ using System.Collections.Generic;
 
 [TestFixture]
 class DocNodeExtensionTests {
-    [SetUp]
-    public void DoSetup() {
-        Config.Platform = new ConsolePlatform();
-    }
-
-    [TearDown]
-    public void DoTeardown() {
-        Config.Platform = null;
-    }
-
     DocNode GetDocNode(string str) {
         var doc = Config.LoadDocFromString(str, "ConfigReifierTests_ReifyString_TestFilename");
         return doc;

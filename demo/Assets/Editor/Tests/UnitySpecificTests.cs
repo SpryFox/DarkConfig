@@ -25,12 +25,12 @@ public class UnityTypesConfigReifierTests : UnityTestFixture {
 
     [SetUp]
     public void DoSetUp() {
-        Config.Platform = new UnityPlatform();
+        UnityPlatform.Setup();
     }
 
     [TearDown]
     public void DoTearDown() {
-        Config.Platform = null;
+        Config.Clear();
     }
     
     [Test]
@@ -115,12 +115,12 @@ public class UnityMonoBehaviourReifyTests : UnityTestFixture {
 
     [SetUp]
     public void DoSetUp() {
-        Config.Platform = new UnityPlatform();
+        UnityPlatform.Setup();
     }
 
     [TearDown]
     public void DoTearDown() {
-        Config.Platform = null;
+        Config.Clear();
     }
 
     [Test]
@@ -142,12 +142,12 @@ public class UnityMonoBehaviourReifyTests : UnityTestFixture {
 public class UnityColorRefierTests : UnityTestFixture {
     [SetUp]
     public void DoSetUp() {
-        Config.Platform = new UnityPlatform();
+        UnityPlatform.Setup();
     }
 
     [TearDown]
     public void DoTearDown() {
-        Config.Platform = null;
+        Config.Clear();
     }
     
     [Test]
@@ -233,14 +233,14 @@ public class UnityEditorUtilsTests : UnityTestFixture {
     public void DoSetUp() {
         fullDirPath = Path.Combine(Application.dataPath, tempDirPath);
         Directory.CreateDirectory(fullDirPath);
-        Config.Platform = new UnityPlatform();
+        UnityPlatform.Setup();
     }
     
     [TearDown]
     public void TearDown() {
         // clean up entire test directory
         Directory.Delete(fullDirPath, true);
-        Config.Platform = null;
+        Config.Clear();
     }
 
     [Test]
@@ -293,12 +293,12 @@ public class UnityDocNodeExtensionsTests : UnityTestFixture {
 
     [SetUp]
     public void DoSetUp() {
-        Config.Platform = new UnityPlatform();
+        UnityPlatform.Setup();
     }
 
     [TearDown]
     public void DoTearDown() {
-        Config.Platform = null;
+        Config.Clear();
     }
     
     [Test]
