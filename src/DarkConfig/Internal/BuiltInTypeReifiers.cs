@@ -1,7 +1,7 @@
 using System;
 
 namespace DarkConfig.Internal {
-    static class BuiltInTypeRefiers {
+    static class BuiltInTypeReifiers {
         internal static object FromDateTime(object existing, DocNode doc) {
             return DateTime.Parse(doc.StringValue, System.Globalization.CultureInfo.InvariantCulture);
         }
