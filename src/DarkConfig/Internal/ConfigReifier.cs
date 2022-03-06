@@ -10,8 +10,8 @@ namespace DarkConfig.Internal {
         /////////////////////////////////////////////////
         
         public ConfigReifier() {
-            CustomReifiers[typeof(DateTime)] = BuiltInTypeRefiers.FromDateTime;
-            CustomReifiers[typeof(TimeSpan)] = BuiltInTypeRefiers.FromTimeSpan;
+            CustomReifiers[typeof(DateTime)] = BuiltInTypeReifiers.FromDateTime;
+            CustomReifiers[typeof(TimeSpan)] = BuiltInTypeReifiers.FromTimeSpan;
         }
 
         /// <summary>
