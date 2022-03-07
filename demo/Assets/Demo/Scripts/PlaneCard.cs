@@ -66,11 +66,11 @@ public class PlaneCard {
 
     public static void LoadConfigs() {
         // loads all config files in the Planes directory
-        Config.FileManager.RegisterCombinedFile(
-            Config.FileManager.GetFilenamesMatchingGlob("Planes/**"),
+        Configs.FileManager.RegisterCombinedFile(
+            Configs.FileManager.GetFilenamesMatchingGlob("Planes/**"),
             "PlaneCards",
-            Config.CombineDict);
-        Config.Apply("PlaneCards", ref _Cards);
+            Configs.CombineDict);
+        Configs.Apply("PlaneCards", ref _Cards);
     }
 
     // We have a few places in the code which need to be notified when their

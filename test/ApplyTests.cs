@@ -24,38 +24,38 @@ class ApplyTests {
         tempDirPath = Path.Combine(Path.GetTempPath(), "ApplyTests");
         Directory.CreateDirectory(tempDirPath);
         
-        Config.Settings.HotloadCheckFrequencySeconds = 0.1f;
+        Configs.Settings.HotloadCheckFrequencySeconds = 0.1f;
         fileSource = new FileSource(tempDirPath, hotload:true);
-        Config.FileManager.AddSource(fileSource);
+        Configs.FileManager.AddSource(fileSource);
     }
 
     [TearDown]
     public void TearDown() {
         Directory.Delete(tempDirPath, true);
-        Config.Clear();
+        Configs.Clear();
     }
 
     [Test]
     [Ignore("(temp)Disabled for now...")]
     public void Apply_RemoveReloadCallbackOnGC() {
         CreateFile("playerGlass.yaml", "{\"Capacity\": 12, \"Height\": 0.25}");
-        Config.Preload();
+        Configs.Preload();
         
         {
             Glass glass = null;
-            Config.Apply("playerGlass", ref glass);
+            Configs.Apply("playerGlass", ref glass);
             Assert.AreEqual(glass.Capacity, 12);
             Assert.AreEqual(glass.Height, 0.25f);
         }
 
-        Assert.AreEqual(1, Config.FileManager.CountReloadCallbacks());
+        Assert.AreEqual(1, Configs.FileManager.CountReloadCallbacks());
 
         // trigger garbage collection here so temporary Glass gets GC'd
         System.GC.Collect();
 
         // Trigger a hotload to clean up reload callbacks.
-        Config.FileManager.DoHotload();
+        Configs.FileManager.DoHotload();
 
-        Assert.AreEqual(0, Config.FileManager.CountReloadCallbacks());
+        Assert.AreEqual(0, Configs.FileManager.CountReloadCallbacks());
     }
 }

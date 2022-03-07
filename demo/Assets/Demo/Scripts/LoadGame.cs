@@ -16,22 +16,22 @@ public class LoadGame : MonoBehaviour {
         // notified of any mistakes.  It will warn for any missing fields
         // (which haven't been annotated with ConfigAllowMissing) and for any
         // extra fields.
-        Config.Settings.DefaultReifierOptions = ReificationOptions.None;
+        Configs.Settings.DefaultReifierOptions = ReificationOptions.None;
 #else
         // In production mode, ignore missing/extra checks.  This makes 
         // loading faster.  ConfigMandatory fields are still checked.
-        Config.Settings.DefaultReifierOptions = ConfigOptions.AllowMissingExtraFields;
+        Configs.Settings.DefaultReifierOptions = ConfigOptions.AllowMissingExtraFields;
 #endif
 
         UnityPlatform.Setup();
-        Config.FileManager.AddSource(new FileSource(Application.dataPath + "/Demo/Resources/Configs", ".bytes", hotload: true));
+        Configs.FileManager.AddSource(new FileSource(Application.dataPath + "/Demo/Resources/Configs", ".bytes", hotload: true));
         stopwatch = Stopwatch.StartNew();
 
         // uncomment to disable periodic hotloading of files, it'll have to be manual
-        //Config.FileManager.IsHotloadingFiles = false;
+        //Configs.FileManager.IsHotloadingFiles = false;
 
         // preload will call StartGame when it's finished
-        Config.Preload(StartGame);
+        Configs.Preload(StartGame);
     }
 
     void StartGame() {

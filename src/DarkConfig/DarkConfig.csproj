@@ -50,7 +50,7 @@
     </ItemGroup>
     <ItemGroup>
         <Compile Include="Attributes.cs" />
-        <Compile Include="Config.cs" />
+        <Compile Include="Configs.cs" />
         <Compile Include="ConfigFileInfo.cs" />
         <Compile Include="ConfigFileManager.cs" />
         <Compile Include="ConfigSource.cs" />

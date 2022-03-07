@@ -29,9 +29,9 @@ class PostDocTests {
     }
 
     static T ReifyString<T>(string str) where T : new() {
-        var doc = Config.LoadDocFromString(str, FILENAME);
+        var doc = Configs.LoadDocFromString(str, FILENAME);
         var result = default(T);
-        Config.Reify(ref result, doc);
+        Configs.Reify(ref result, doc);
         return result;
     }
 
@@ -43,18 +43,18 @@ class PostDocTests {
 
     [Test]
     public void PostDoc_DoesntExist() {
-        var doc = Config.LoadDocFromString("baseKey: 10", FILENAME);
+        var doc = Configs.LoadDocFromString("baseKey: 10", FILENAME);
         PostDocClass2 instance = null;
-        Config.Reify(ref instance, doc);
+        Configs.Reify(ref instance, doc);
         Assert.NotNull(instance);
         Assert.AreEqual(instance.baseKey, 10);
     }
 
     [Test]
     public void PostDoc_CanReplaceWithReturnValue() {
-        var doc = Config.LoadDocFromString("baseKey: 10", FILENAME);
+        var doc = Configs.LoadDocFromString("baseKey: 10", FILENAME);
         PostDocClass3 instance = null;
-        Config.Reify(ref instance, doc);
+        Configs.Reify(ref instance, doc);
         Assert.NotNull(instance);
         Assert.AreEqual(instance.baseKey, 99);
     }

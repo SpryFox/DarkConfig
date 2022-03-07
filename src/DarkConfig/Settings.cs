@@ -35,8 +35,8 @@ namespace DarkConfig {
 		/// If enabled DarkConfig will scan files for changes every HotloadCheckInterval seconds.
 		/// Setting it to false stops hotloading.  Useful during production when configs are under rapid iteration.
 		public bool EnableHotloading {
-			get => Config.FileManager.IsHotloadingFiles;
-			set => Config.FileManager.IsHotloadingFiles = value;
+			get => Configs.FileManager.IsHotloadingFiles;
+			set => Configs.FileManager.IsHotloadingFiles = value;
 		}
 		
 		/// How often, in seconds, to scan files for changes.

@@ -24,15 +24,15 @@ class ListComposingTests {
         tempDirPath = Path.Combine(Path.GetTempPath(), "ListComposingTests");
         Directory.CreateDirectory(tempDirPath);
 
-        Config.Settings.EnableHotloading = true;
-        Config.Settings.HotloadCheckFrequencySeconds = 0.1f;
-        Config.FileManager.AddSource(new FileSource(tempDirPath, hotload:true));
+        Configs.Settings.EnableHotloading = true;
+        Configs.Settings.HotloadCheckFrequencySeconds = 0.1f;
+        Configs.FileManager.AddSource(new FileSource(tempDirPath, hotload:true));
     }
 
     [TearDown]
     public void TearDown() {
         Directory.Delete(tempDirPath, true);
-        Config.Clear();
+        Configs.Clear();
     }
 
     [Test]
@@ -42,14 +42,14 @@ class ListComposingTests {
         CreateFile("beorn.yaml", "Height: 18\nItem: Bear");
         CreateFile("celeborn.yaml", "Height: 14\nItem: Silver");
 
-        Config.Preload();
+        Configs.Preload();
 
         var CharactersEndingInOrn = new List<Character>();;
 
         // load all files from the ListDir into one list
-        Config.LoadFilesAsList("*", d => {
+        Configs.LoadFilesAsList("*", d => {
             Assert.AreEqual(4, d.Count);
-            Config.Reify(ref CharactersEndingInOrn, d);
+            Configs.Reify(ref CharactersEndingInOrn, d);
             return true;
         });
     
@@ -61,7 +61,7 @@ class ListComposingTests {
         CreateFile("aragorn.yaml", "Height: 12\nItem: Throne");
 
         // Force hotload
-        Config.Update(1.0f);
+        Configs.Update(1.0f);
         
         Assert.AreEqual(4, CharactersEndingInOrn.Count);
         Assert.AreEqual(12, CharactersEndingInOrn[0].Height);

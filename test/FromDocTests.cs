@@ -44,9 +44,9 @@ class FromDocTests {
     const string FILENAME = "FromDocTests_TestFileName";
 
     T ReifyString<T>(string str) where T : new() {
-        var doc = Config.LoadDocFromString(str, "FromDocTests_ReifyString_TestFileName");
+        var doc = Configs.LoadDocFromString(str, "FromDocTests_ReifyString_TestFileName");
         var instance = default(T);
-        Config.Reify(ref instance, doc);
+        Configs.Reify(ref instance, doc);
         return instance;
     }
 
@@ -67,8 +67,8 @@ class FromDocTests {
     public void FromDoc_UpdatesTestClass() {
         var tc = new TestClass {baseKey = 15};
         var saved = tc;
-        var doc = Config.LoadDocFromString("[\"Base\", 99]", FILENAME);
-        Config.Reify(ref tc, doc);
+        var doc = Configs.LoadDocFromString("[\"Base\", 99]", FILENAME);
+        Configs.Reify(ref tc, doc);
         Assert.AreSame(tc, saved);
         Assert.AreEqual(tc.baseKey, 99);
     }
@@ -77,8 +77,8 @@ class FromDocTests {
     public void FromDoc_UpdatesDerived() {
         TestClass tc = new TestClassDerived {baseKey = 1, derivedKey = 2};
         var saved = tc;
-        var doc = Config.LoadDocFromString("[\"Derived\", 66]", FILENAME);
-        Config.Reify(ref tc, doc);
+        var doc = Configs.LoadDocFromString("[\"Derived\", 66]", FILENAME);
+        Configs.Reify(ref tc, doc);
         Assert.AreSame(tc, saved);
         Assert.AreEqual(tc.baseKey, 1);
         Assert.AreEqual(((TestClassDerived) tc).derivedKey, 66);
@@ -88,8 +88,8 @@ class FromDocTests {
     public void FromDoc_UpdatesDerived_AsBase() {
         TestClass tc = new TestClassDerived {baseKey = 4, derivedKey = 5};
         var saved = tc;
-        var doc = Config.LoadDocFromString("[\"Base\", 123]", FILENAME);
-        Config.Reify(ref tc, doc);
+        var doc = Configs.LoadDocFromString("[\"Base\", 123]", FILENAME);
+        Configs.Reify(ref tc, doc);
         Assert.AreSame(tc, saved);
         Assert.AreEqual(tc.baseKey, 123);
         Assert.AreEqual(((TestClassDerived) tc).derivedKey, 5);
@@ -99,8 +99,8 @@ class FromDocTests {
     public void FromDoc_OverwritesBase_WithDerived() {
         TestClass tc = new TestClass {baseKey = 19};
         var saved = tc;
-        var doc = Config.LoadDocFromString("[\"Derived\", 321]", FILENAME);
-        Config.Reify(ref tc, doc);
+        var doc = Configs.LoadDocFromString("[\"Derived\", 321]", FILENAME);
+        Configs.Reify(ref tc, doc);
         Assert.IsFalse(object.ReferenceEquals(tc, saved));
         Assert.IsTrue(tc is TestClassDerived);
         Assert.AreEqual(((TestClassDerived) tc).derivedKey, 321);
@@ -122,8 +122,8 @@ class FromDocTests {
     [Test]
     public void FromDoc_CalledWhenReifyingNullClass() {
         TestClass tc = null;
-        var doc = Config.LoadDocFromString("[\"Base\", 451]", FILENAME);
-        Config.Reify(ref tc, doc);
+        var doc = Configs.LoadDocFromString("[\"Base\", 451]", FILENAME);
+        Configs.Reify(ref tc, doc);
         Assert.IsNotNull(tc);
         Assert.AreEqual(tc.baseKey, 451);
     }
@@ -131,8 +131,8 @@ class FromDocTests {
     [Test]
     public void FromDoc_CalledWhenReifyingEmptyList() {
         List<TestClass> lst = new List<TestClass>();
-        var doc = Config.LoadDocFromString("[[\"Base\", 451]]", FILENAME);
-        Config.Reify(ref lst, doc);
+        var doc = Configs.LoadDocFromString("[[\"Base\", 451]]", FILENAME);
+        Configs.Reify(ref lst, doc);
         Assert.AreEqual(1, lst.Count);
         Assert.AreEqual(lst[0].baseKey, 451);
     }

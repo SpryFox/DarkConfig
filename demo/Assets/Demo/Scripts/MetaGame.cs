@@ -57,7 +57,7 @@ public class MetaGame : MonoBehaviour {
     }
 
     void Update() {
-        Config.Update(Time.deltaTime);
+        Configs.Update(Time.deltaTime);
         
         switch (currentState) {
             case GameState.Title:
@@ -79,13 +79,13 @@ public class MetaGame : MonoBehaviour {
         // Shift+H to hotload
         if (Input.GetKeyDown(KeyCode.H) && (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))) {
             Debug.Log("Hotloading configs");
-            Config.FileManager.DoHotload();
+            Configs.FileManager.DoHotload();
         }
 
         // Q toggles hotloading
         if (Input.GetKeyDown(KeyCode.Q)) {
-            Config.FileManager.IsHotloadingFiles = !Config.FileManager.IsHotloadingFiles;
-            Debug.Log("Setting auto hotloading to: " + Config.FileManager.IsHotloadingFiles);
+            Configs.FileManager.IsHotloadingFiles = !Configs.FileManager.IsHotloadingFiles;
+            Debug.Log("Setting auto hotloading to: " + Configs.FileManager.IsHotloadingFiles);
         }
     }
 

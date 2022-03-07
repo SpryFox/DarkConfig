@@ -19,15 +19,15 @@ class MissingFilesTests {
         tempDirPath = Path.Combine(Path.GetTempPath(), "ListComposingTests");
         Directory.CreateDirectory(tempDirPath);
         
-        Config.Settings.EnableHotloading = true;
-        Config.Settings.HotloadCheckFrequencySeconds = 0.1f;
-        Config.FileManager.AddSource(new FileSource(tempDirPath, hotload:true));
+        Configs.Settings.EnableHotloading = true;
+        Configs.Settings.HotloadCheckFrequencySeconds = 0.1f;
+        Configs.FileManager.AddSource(new FileSource(tempDirPath, hotload:true));
     }
 
     [TearDown]
     public void TearDown() {
         Directory.Delete(tempDirPath, true);
-        Config.Clear();
+        Configs.Clear();
     }
 
     [Test]
@@ -35,19 +35,19 @@ class MissingFilesTests {
         CreateFile("spinner.yaml", "key: ok");
 
         // check the index after preload
-        var filenames = Config.FileManager.GetFilenamesMatchingRegex(new Regex(".*"));
+        var filenames = Configs.FileManager.GetFilenamesMatchingRegex(new Regex(".*"));
         Assert.Greater(filenames.Count, 0);
 
         Assert.IsTrue(filenames.Contains("spinner"));
 
         // check that we can load existing files
-        var spinnerDoc = Config.Load("spinner");
+        var spinnerDoc = Configs.Load("spinner");
 
         // this file should be present so this should pass
         Assert.IsTrue(spinnerDoc.ContainsKey("key"));
 
         Assert.Throws<ConfigFileNotFoundException>(() => {
-            Config.Load("nonexistent", (d) => {
+            Configs.Load("nonexistent", (d) => {
                 Assert.Fail("Callback shouldn't be called");
                 return false;
             });

@@ -16,16 +16,16 @@ class DictComposingTests {
         tempDirPath = Path.Combine(Path.GetTempPath(), "DictComposingTests");
         Directory.CreateDirectory(tempDirPath);
         
-        Config.Settings.EnableHotloading = true;
-        Config.Settings.HotloadCheckFrequencySeconds = 0.1f;
+        Configs.Settings.EnableHotloading = true;
+        Configs.Settings.HotloadCheckFrequencySeconds = 0.1f;
         fileSource = new FileSource(tempDirPath, hotload:true);
-        Config.FileManager.AddSource(fileSource);
+        Configs.FileManager.AddSource(fileSource);
     }
 
     [TearDown]
     public void TearDown() {
         Directory.Delete(tempDirPath, true);
-        Config.Clear();
+        Configs.Clear();
     }
 
     [Test]
@@ -34,12 +34,12 @@ class DictComposingTests {
         CreateFile("items.yaml", "Treehouse: true");
         CreateFile("rooms.yaml", "Version: 1.3\nrooms:\n  - Overthorax\n  - Chirpinghouse\n  - Antennagate\n  - Subchitin");
 
-        Config.Preload();
+        Configs.Preload();
 
         DocNode MixedDict = null;
 
         // load all files from the DictDir into one dict
-        Config.LoadFilesAsMergedDict("*", d => {
+        Configs.LoadFilesAsMergedDict("*", d => {
             MixedDict = d;
             return true;
         });
@@ -55,7 +55,7 @@ class DictComposingTests {
         CreateFile("items.yaml", "Chitin: 1000");
         
         // force a reload
-        Config.Update(1.0f);
+        Configs.Update(1.0f);
 
         Assert.AreEqual(5, MixedDict.Count);
         Assert.False(MixedDict.ContainsKey("Treehouse"));

@@ -15,10 +15,10 @@ public class PlayerController : MonoBehaviour {
     void Start() {
         // Get keyboard bindings from the config, and also automatically 
         // hotload them.
-        Config.ApplyThis("player", this);
+        Configs.ApplyThis("player", this);
         // The previous call to ApplyThis won't have touched the StartingCard
         // field, so for that we call ApplyStatic.
-        Config.ApplyStatic<PlayerController>("player");
+        Configs.ApplyStatic<PlayerController>("player");
 
         Controller.Setup(PlaneCard.Cards[StartingCard]);
     }
