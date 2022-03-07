@@ -14,7 +14,7 @@ namespace DarkConfig {
                 _IsHotloadingFiles = value;
                 if (_IsHotloadingFiles) {
                     // Don't immediately hotload.
-                    nextHotloadTime = Config.Settings.HotloadCheckFrequencySeconds;
+                    nextHotloadTime = Configs.Settings.HotloadCheckFrequencySeconds;
                 }
             }
         }
@@ -39,9 +39,9 @@ namespace DarkConfig {
             }
 
             // Preload all sources.            
-            Config.LogInfo($"Preloading {sources.Count} sources");
+            Configs.LogInfo($"Preloading {sources.Count} sources");
             foreach (var source in sources) {
-                Config.LogInfo($"Preloading source {source}");
+                Configs.LogInfo($"Preloading source {source}");
                 source.Preload();
             }
 
@@ -51,9 +51,9 @@ namespace DarkConfig {
             }
 
             IsPreloaded = true;
-            nextHotloadTime = Config.Settings.HotloadCheckFrequencySeconds;
+            nextHotloadTime = Configs.Settings.HotloadCheckFrequencySeconds;
 
-            Config.LogInfo($"Done preloading, IsHotloadingFiles: {IsHotloadingFiles}");
+            Configs.LogInfo($"Done preloading, IsHotloadingFiles: {IsHotloadingFiles}");
         }
 
         /// <summary>
@@ -240,7 +240,7 @@ namespace DarkConfig {
             if (!IsHotloadingFiles) {
                 return;
             }
-            nextHotloadTime = Config.Settings.HotloadCheckFrequencySeconds;
+            nextHotloadTime = Configs.Settings.HotloadCheckFrequencySeconds;
 
             // Hotload from all sources.  Keep a list of the files that were changed.
             var modifiedFiles = new List<string>();
@@ -343,7 +343,7 @@ namespace DarkConfig {
             }
 
             Preload();
-            Config.LogInfo($"Done on-demand preloading, IsHotloadingFiles: {IsHotloadingFiles}");
+            Configs.LogInfo($"Done on-demand preloading, IsHotloadingFiles: {IsHotloadingFiles}");
         }
 
         void BuildCombinedConfig(CombinerData combinerData) {

@@ -24,7 +24,7 @@ namespace DarkConfig {
             // Load the index file.
             indexFile = ReadFile(INDEX_FILENAME);
             if (indexFile == null) {
-                Config.LogError($"Index file is missing at Resources path {INDEX_FILENAME}.");
+                Configs.LogError($"Index file is missing at Resources path {INDEX_FILENAME}.");
                 return;
             }
             
@@ -42,7 +42,7 @@ namespace DarkConfig {
             // First try to load the index in case any files were added or removed.
             var newIndex = ReadFile(INDEX_FILENAME);
             if (newIndex == null) {
-                Config.LogError($"Index file is missing at Resources path {INDEX_FILENAME}.");
+                Configs.LogError($"Index file is missing at Resources path {INDEX_FILENAME}.");
                 return;
             }
             
@@ -96,7 +96,7 @@ namespace DarkConfig {
                 // default DateTime value. We'll instead rely on checksums to detect differences that need hotloading.
                 Modified = new DateTime(),
                 Size = asset.text.Length,
-                Parsed = Config.LoadDocFromString(asset.text, filename)
+                Parsed = Configs.LoadDocFromString(asset.text, filename)
             };
         }
     }

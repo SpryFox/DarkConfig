@@ -91,7 +91,7 @@ namespace DarkConfig {
                     // File has changed. Hotload it.
                     fileInfo.Checksum = checksum;
                     fileInfo.Modified = modified;
-                    fileInfo.Parsed = Config.LoadDocFromStream(fileStream, file);
+                    fileInfo.Parsed = Configs.LoadDocFromStream(fileStream, file);
                     
                     changedFiles.Add(fileName);
                 }
@@ -143,7 +143,7 @@ namespace DarkConfig {
                     Checksum = checksum,
                     Size = new FileInfo(filePath).Length,
                     Modified = File.GetLastWriteTimeUtc(filePath),
-                    Parsed = Config.LoadDocFromStream(fileStream, filePath)
+                    Parsed = Configs.LoadDocFromStream(fileStream, filePath)
                 };
             }
         }

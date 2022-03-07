@@ -25,7 +25,7 @@ namespace DarkConfig {
     /// <returns>False if the delegate should be un-registered for future reload callbacks.  True otherwise.</returns>
     public delegate bool ReloadDelegate(DocNode doc);
 
-    public static class Config {
+    public static class Configs {
         const string LOG_GUARD = "DC_LOGGING_ENABLED";
         const string ASSERT_GUARD = "DC_ASSERTS_ENABLED";
         const string LogPrefix = "[DarkConfig] ";

@@ -24,7 +24,7 @@ public class GunCard {
     public static Dictionary<string, GunCard> Cards {
         get {
             if (_Cards == null) {
-                Config.Apply("guns", ref _Cards);
+                Configs.Apply("guns", ref _Cards);
             }
             return _Cards;
         }

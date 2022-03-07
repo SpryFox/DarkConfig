@@ -58,7 +58,7 @@ namespace DarkConfig {
         
         public T As<T>() {
             var result = default(T);
-            Config.Reify(ref result, this);
+            Configs.Reify(ref result, this);
             return result;
         }
 
@@ -142,7 +142,7 @@ namespace DarkConfig {
 
             switch (lhs.Type) {
                 case DocNodeType.List:
-                    return Config.CombineList(new List<DocNode> {lhs, rhs});
+                    return Configs.CombineList(new List<DocNode> {lhs, rhs});
                 case DocNodeType.Dictionary: {
                     var mergedDict = new ComposedDocNode(DocNodeType.Dictionary,
                         sourceInformation: "Merging of: [" + lhs.SourceInformation + ", " + rhs.SourceInformation + "]");

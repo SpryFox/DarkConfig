@@ -61,7 +61,7 @@ namespace DarkConfig.Internal {
                 }
             }
             
-            Config.Assert(info.AttributeFlags != ClassAttributesFlags.Invalid, $"Type {type.Name} has both ConfigAllowMissing and ConfigMandatory attributes.");
+            Configs.Assert(info.AttributeFlags != ClassAttributesFlags.Invalid, $"Type {type.Name} has both ConfigAllowMissing and ConfigMandatory attributes.");
             
             var memberBindingFlags = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static;
             var properties = type.GetProperties(memberBindingFlags);

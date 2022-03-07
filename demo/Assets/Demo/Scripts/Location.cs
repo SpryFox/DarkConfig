@@ -23,12 +23,12 @@ public class Location {
 
         if (doc.Type == DocNodeType.List) {
             // it's a list, so we treat it as a position only, and size is 1,1
-            Config.Reify(ref existing.Pos, doc);
+            Configs.Reify(ref existing.Pos, doc);
             existing.Size = new Vector2(1, 1);
         } else {
             // Do the default parsing for an object.  Note that calling
             // Config.Reify on the same type would trigger infinite recursion.
-            Config.SetFieldsOnObject(ref existing, doc);
+            Configs.SetFieldsOnObject(ref existing, doc);
         }
 
         return existing;

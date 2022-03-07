@@ -22,16 +22,16 @@ public class EnemySpawner : MonoBehaviour {
         // This code runs in the editor, in the PlaneDemo scene, if LoadGame
         // hasn't run yet.
         // What happens here is that we add the source and then call ApplyThis
-        // without calling Config.Preload.  In the Unity editor (or as 
+        // without calling Configs.Preload.  In the Unity editor (or as 
         // determined by the Platform implementation), it will trigger an 
         // "immediate preload" inside ApplyThis that will load/parse all the 
         // config files within the function call (so it'll be slow and drop a 
         // frame).
-        if (Config.FileManager.CountSources() == 0) {
-            Config.FileManager.AddSource(new FileSource(Application.dataPath + "/Demo/Resources/Configs", ".bytes"));
+        if (Configs.FileManager.CountSources() == 0) {
+            Configs.FileManager.AddSource(new FileSource(Application.dataPath + "/Demo/Resources/Configs", ".bytes"));
         }
 
-        Config.ApplyThis("enemy_spawning", this);
+        Configs.ApplyThis("enemy_spawning", this);
     }
 
     void Update() {

@@ -7,9 +7,9 @@ using System.IO;
 
 public class UnityTestFixture {
     protected T ReifyString<T>(string str) where T : new() {
-        var doc = Config.LoadDocFromString(str, "UnityTypesConfigReifierTests_ReifyString_TestFilename");
+        var doc = Configs.LoadDocFromString(str, "UnityTypesConfigReifierTests_ReifyString_TestFilename");
         var result = default(T);
-        Config.Reify(ref result, doc);
+        Configs.Reify(ref result, doc);
         return result;
     }
 }
@@ -30,7 +30,7 @@ public class UnityTypesConfigReifierTests : UnityTestFixture {
 
     [TearDown]
     public void DoTearDown() {
-        Config.Clear();
+        Configs.Clear();
     }
     
     [Test]
@@ -120,18 +120,18 @@ public class UnityMonoBehaviourReifyTests : UnityTestFixture {
 
     [TearDown]
     public void DoTearDown() {
-        Config.Clear();
+        Configs.Clear();
     }
 
     [Test]
     public void ReifierAttributes_MonoBehaviour_ForcesAllowMissing() {
-        var doc = Config.LoadDocFromString(@"---
+        var doc = Configs.LoadDocFromString(@"---
             field1: 1
         ", "ConfigReifier_ReifierAttributes_TestFilename");
 
         var obj = new GameObject("Test_ReifierAttributes");
         var mb = obj.AddComponent<MonoBehaviourSubclass>();
-        Config.Reify(ref mb, doc, ReificationOptions.None);
+        Configs.Reify(ref mb, doc, ReificationOptions.None);
         Assert.AreEqual(mb.field1, 1);
 
         Object.DestroyImmediate(obj);
@@ -147,7 +147,7 @@ public class UnityColorRefierTests : UnityTestFixture {
 
     [TearDown]
     public void DoTearDown() {
-        Config.Clear();
+        Configs.Clear();
     }
     
     [Test]
@@ -240,7 +240,7 @@ public class UnityEditorUtilsTests : UnityTestFixture {
     public void TearDown() {
         // clean up entire test directory
         Directory.Delete(fullDirPath, true);
-        Config.Clear();
+        Configs.Clear();
     }
 
     [Test]
@@ -276,7 +276,7 @@ public class UnityEditorUtilsTests : UnityTestFixture {
 ", contents);
 
         // verify that we can actually read the index file
-        var doc = Config.LoadDocFromString(contents, indexFilename);
+        var doc = Configs.LoadDocFromString(contents, indexFilename);
         Assert.AreEqual(DocNodeType.List, doc.Type);
         Assert.AreEqual(1, doc.Count);
         Assert.AreEqual("Derp/Derp.bytes", doc[0].StringValue);
@@ -287,7 +287,7 @@ public class UnityEditorUtilsTests : UnityTestFixture {
 [TestFixture]
 public class UnityDocNodeExtensionsTests : UnityTestFixture {
     DocNode GetDocNode(string str) {
-        var doc = Config.LoadDocFromString(str, "ConfigReifierTests_ReifyString_TestFilename");
+        var doc = Configs.LoadDocFromString(str, "ConfigReifierTests_ReifyString_TestFilename");
         return doc;
     }
 
@@ -298,7 +298,7 @@ public class UnityDocNodeExtensionsTests : UnityTestFixture {
 
     [TearDown]
     public void DoTearDown() {
-        Config.Clear();
+        Configs.Clear();
     }
     
     [Test]

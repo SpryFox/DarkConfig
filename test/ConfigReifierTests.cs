@@ -127,26 +127,26 @@ class ConfigReifierTests {
     [SetUp]
     public void DoSetup() {
         reifier = new ConfigReifier();
-        defaults = Config.Settings.DefaultReifierOptions;
-        Config.Settings.DefaultReifierOptions = ReificationOptions.AllowMissingExtraFields;
+        defaults = Configs.Settings.DefaultReifierOptions;
+        Configs.Settings.DefaultReifierOptions = ReificationOptions.AllowMissingExtraFields;
     }
 
     [TearDown]
     public void TearDown() {
         reifier = null;
-        Config.Settings.DefaultReifierOptions = defaults;
+        Configs.Settings.DefaultReifierOptions = defaults;
     }
 
     T ReifyString<T>(string str) where T : new() {
-        var doc = Config.LoadDocFromString(str, "ConfigReifierTests_ReifyString_TestFilename");
+        var doc = Configs.LoadDocFromString(str, "ConfigReifierTests_ReifyString_TestFilename");
         T tc = default(T);
-        Config.Reify(ref tc, doc);
+        Configs.Reify(ref tc, doc);
         return tc;
     }
 
     T UpdateFromString<T>(ref T obj, string str) {
-        var doc = Config.LoadDocFromString(str, "ConfigReifierTests_UpdateFromString_TestFilename");
-        Config.Reify(ref obj, doc);
+        var doc = Configs.LoadDocFromString(str, "ConfigReifierTests_UpdateFromString_TestFilename");
+        Configs.Reify(ref obj, doc);
         return obj;
     }
 
@@ -724,7 +724,7 @@ class ConfigReifierTests {
     [Test]
     public void ConfigReifier_SetFieldsOnObject_PlainObject() {
         var tc = new TestClass();
-        var doc = Config.LoadDocFromString(
+        var doc = Configs.LoadDocFromString(
             @"---
             intKey: 99088
             "
@@ -736,7 +736,7 @@ class ConfigReifierTests {
     [Test]
     public void ConfigReifier_SetFieldsOnObject_CastedObject() {
         var tc = (object) new TestClass();
-        var doc = Config.LoadDocFromString(
+        var doc = Configs.LoadDocFromString(
             @"---
             intKey: 99077
             "
@@ -750,7 +750,7 @@ class ConfigReifierTests {
         var s = new ChildStruct();
         s.childIntKey = 1;
         s.childFloatKey = 1;
-        var doc = Config.LoadDocFromString(
+        var doc = Configs.LoadDocFromString(
             @"---
             childIntKey: 12345
             "
@@ -765,7 +765,7 @@ class ConfigReifierTests {
         var s = new ChildStruct();
         s.childIntKey = 1;
         s.childFloatKey = 1;
-        var doc = Config.LoadDocFromString(
+        var doc = Configs.LoadDocFromString(
             @"---
             childIntKey: 34567
             "
@@ -778,56 +778,56 @@ class ConfigReifierTests {
 
     [Test]
     public void ReifiesStatic_Class() {
-        var doc = Config.LoadDocFromString(
+        var doc = Configs.LoadDocFromString(
             @"---
             staticStringKey: arbitrage
             staticIntArrKey: [4, 4, 0, 0]
             intKey: 10   # test non-static fields
             "
             , "ConfigReifierTests_ReifyString_TestFilename");
-        Config.ReifyStatic<TestClass>(doc);
+        Configs.ReifyStatic<TestClass>(doc);
         Assert.AreEqual(TestClass.staticStringKey, "arbitrage");
         Assert.AreEqual(TestClass.staticIntArrKey, new[] {4, 4, 0, 0});
     }
 
     [Test]
     public void ReifiesStatic_IgnoresNonStaticFields() {
-        var doc = Config.LoadDocFromString(
+        var doc = Configs.LoadDocFromString(
             @"---
             intKey: 10   # try to bogusly set a non-static field
             "
             , "ConfigReifierTests_ReifyString_TestFilename");
 
         // passes if there are no exceptions
-        Config.ReifyStatic<TestClass>(doc);
+        Configs.ReifyStatic<TestClass>(doc);
     }
 
     [Test]
     public void ReifiesStatic_Struct() {
-        var doc = Config.LoadDocFromString(
+        var doc = Configs.LoadDocFromString(
             @"---
             staticIntKey: 3049
             "
             , "ConfigReifierTests_ReifyString_TestFilename");
-        Config.ReifyStatic<ChildStruct>(doc);
+        Configs.ReifyStatic<ChildStruct>(doc);
         Assert.AreEqual(ChildStruct.staticIntKey, 3049);
     }
 
     [Test]
     public void ReifiesStatic_StaticClass() {
-        var doc = Config.LoadDocFromString(
+        var doc = Configs.LoadDocFromString(
             @"---
             staticStringList: [herp, derp]
             "
             , "ConfigReifierTests_ReifyString_TestFilename");
-        Config.ReifyStatic(typeof(PureStatic), doc);
+        Configs.ReifyStatic(typeof(PureStatic), doc);
         Assert.AreEqual(PureStatic.staticStringList[0], "herp");
         Assert.AreEqual(PureStatic.staticStringList[1], "derp");
     }
 
     [Test]
     public void ReifiesSingle_CreateSingleFieldClass() {
-        var doc = Config.LoadDocFromString(
+        var doc = Configs.LoadDocFromString(
             @"---
             8342
             "
@@ -839,7 +839,7 @@ class ConfigReifierTests {
 
     [Test]
     public void ReifiesSingle_CreateSingleListClass() {
-        var doc = Config.LoadDocFromString(
+        var doc = Configs.LoadDocFromString(
             @"---
             [a, b, c, d]
             "
@@ -854,7 +854,7 @@ class ConfigReifierTests {
 
     [Test]
     public void RefiesExtraFields_NoException() {
-        var doc = Config.LoadDocFromString(@"---
+        var doc = Configs.LoadDocFromString(@"---
             floatKey: 1.56
         ", "ConfigReifier_ReifiesExtraFields_TestFilename");
         var inst = Activator.CreateInstance<TestClass>();
@@ -864,7 +864,7 @@ class ConfigReifierTests {
 
     [Test]
     public void RefiesExtraFields_Raises() {
-        var doc = Config.LoadDocFromString(@"---
+        var doc = Configs.LoadDocFromString(@"---
             floatKey: 1.56
             extraKey1: derp
             extraKey2: herp
@@ -881,7 +881,7 @@ class ConfigReifierTests {
 
     [Test]
     public void RefiesMissingFields_NoException() {
-        var doc = Config.LoadDocFromString(@"---
+        var doc = Configs.LoadDocFromString(@"---
             childIntKey: 42
             childFloatKey: 1.25
             staticIntKey: 332
@@ -895,7 +895,7 @@ class ConfigReifierTests {
 
     [Test]
     public void RefiesMissingFields_Raises() {
-        var doc = Config.LoadDocFromString(@"---
+        var doc = Configs.LoadDocFromString(@"---
             childIntKey: 32
         ", "ConfigReifier_ReifiesMissingFields_TestFilename");
         var exception = Assert.Throws<MissingFieldsException>(() => {
@@ -910,7 +910,7 @@ class ConfigReifierTests {
 
     [Test]
     public void RefiesCaseInsensitive() {
-        var doc = Config.LoadDocFromString(@"---
+        var doc = Configs.LoadDocFromString(@"---
             childintkey: 32
             CHILDFLOATKEY: 11
             StaticiNtKey: 5
@@ -924,7 +924,7 @@ class ConfigReifierTests {
 
     [Test]
     public void RefiesCaseInsensitive_Missing() {
-        var doc = Config.LoadDocFromString(@"---
+        var doc = Configs.LoadDocFromString(@"---
             childintkey: 32
         ", "ConfigReifier_ReifiesCaseInsensitive_TestFilename");
         var inst = Activator.CreateInstance<ChildStruct>();
@@ -934,7 +934,7 @@ class ConfigReifierTests {
 
     [Test]
     public void ReifierAttributes_Mandatory_AllowsSetting() {
-        var doc = Config.LoadDocFromString(@"---
+        var doc = Configs.LoadDocFromString(@"---
             Mandatory: 10
             AllowedMissing: derp
         ", "ConfigReifier_ReifierAttributes_TestFilename");
@@ -947,7 +947,7 @@ class ConfigReifierTests {
 
     [Test]
     public void ReifierAttributes_Mandatory_ExceptsIfNotSet() {
-        var doc = Config.LoadDocFromString(@"---
+        var doc = Configs.LoadDocFromString(@"---
             AllowedMissing: derp
         ", "ConfigReifier_ReifierAttributes_TestFilename");
         Assert.Throws<MissingFieldsException>(() => {
@@ -958,7 +958,7 @@ class ConfigReifierTests {
 
     [Test]
     public void ReifierAttributes_AllowedMissing_NoExceptionIfMissing() {
-        var doc = Config.LoadDocFromString(@"---
+        var doc = Configs.LoadDocFromString(@"---
             Mandatory: 15
             MissingOrNotDependingOnDefault: true
         ", "ConfigReifier_ReifierAttributes_TestFilename");
@@ -972,7 +972,7 @@ class ConfigReifierTests {
 
     [Test]
     public void ReifierAttributes_AllowedMissing_ByDefaultInClassWithMandatory() {
-        var doc = Config.LoadDocFromString(@"---
+        var doc = Configs.LoadDocFromString(@"---
             Mandatory: 15
         ", "ConfigReifier_ReifierAttributes_TestFilename");
         var inst = Activator.CreateInstance<AttributesClass>();
@@ -984,7 +984,7 @@ class ConfigReifierTests {
 
     [Test]
     public void ReifierAttributes_Ignore_SpecifyingFailsOnExtras() {
-        var doc = Config.LoadDocFromString(@"---
+        var doc = Configs.LoadDocFromString(@"---
             Mandatory: 101
             AllowedMissing: herp
             Ignored: true
@@ -998,7 +998,7 @@ class ConfigReifierTests {
 
     [Test]
     public void ReifierAttributes_Ignore_MissingIgnored() {
-        var doc = Config.LoadDocFromString(@"---
+        var doc = Configs.LoadDocFromString(@"---
             Mandatory: 102
             AllowedMissing: herpe
             MissingOrNotDependingOnDefault: whip
@@ -1013,7 +1013,7 @@ class ConfigReifierTests {
 
     [Test]
     public void ReifierAttributes_MandatoryClass_AcceptsSetting() {
-        var doc = Config.LoadDocFromString(@"---
+        var doc = Configs.LoadDocFromString(@"---
             intField: 10
             stringField: uh
         ", "ConfigReifier_ReifierAttributes_TestFilename");
@@ -1026,7 +1026,7 @@ class ConfigReifierTests {
 
     [Test]
     public void ReifierAttributes_MandatoryClass_FailsOnMissing() {
-        var doc = Config.LoadDocFromString(@"---
+        var doc = Configs.LoadDocFromString(@"---
             stringField: uh
         ", "ConfigReifier_ReifierAttributes_TestFilename");
         Assert.Throws<MissingFieldsException>(() => {
@@ -1037,7 +1037,7 @@ class ConfigReifierTests {
 
     [Test]
     public void ReifierAttributes_MandatoryClass_OverridesOptions() {
-        var doc = Config.LoadDocFromString(@"---
+        var doc = Configs.LoadDocFromString(@"---
             stringField: uh
         ", "ConfigReifier_ReifierAttributes_TestFilename");
         Assert.Throws<MissingFieldsException>(() => {
@@ -1048,7 +1048,7 @@ class ConfigReifierTests {
 
     [Test]
     public void ReifierAttributes_MandatoryClass_AllowsMissingField() {
-        var doc = Config.LoadDocFromString(@"---
+        var doc = Configs.LoadDocFromString(@"---
             intField: 99
         ", "ConfigReifier_ReifierAttributes_TestFilename");
         var inst = Activator.CreateInstance<MandatoryClass>();
@@ -1060,7 +1060,7 @@ class ConfigReifierTests {
 
     [Test]
     public void ReifierAttributes_AllowMissingClass_AcceptsSetting() {
-        var doc = Config.LoadDocFromString(@"---
+        var doc = Configs.LoadDocFromString(@"---
             stringField: hmm
             listField: [1]
         ", "ConfigReifier_ReifierAttributes_TestFilename");
@@ -1072,7 +1072,7 @@ class ConfigReifierTests {
 
     [Test]
     public void ReifierAttributes_AllowMissingClass_AllowsMissing() {
-        var doc = Config.LoadDocFromString(@"---
+        var doc = Configs.LoadDocFromString(@"---
             stringField: wot
         ", "ConfigReifier_ReifierAttributes_TestFilename");
         var inst = Activator.CreateInstance<AllowMissingClass>();
@@ -1083,7 +1083,7 @@ class ConfigReifierTests {
 
     [Test]
     public void ReifierAttributes_AllowMissingClass_OverridesOptions() {
-        var doc = Config.LoadDocFromString(@"---
+        var doc = Configs.LoadDocFromString(@"---
             stringField: wot
         ", "ConfigReifier_ReifierAttributes_TestFilename");
         var inst = Activator.CreateInstance<AllowMissingClass>();
@@ -1094,7 +1094,7 @@ class ConfigReifierTests {
 
     [Test]
     public void ReifierAttributes_AllowMissingClass_ChecksMandatoryField() {
-        var doc = Config.LoadDocFromString(@"---
+        var doc = Configs.LoadDocFromString(@"---
             listField: [a,b]
         ", "ConfigReifier_ReifierAttributes_TestFilename");
         Assert.Throws<MissingFieldsException>(() => {
@@ -1105,7 +1105,7 @@ class ConfigReifierTests {
 
     [Test]
     public void ReifierAttributes_AllowMissingClass_DoesCheckExtraFieldsToo() {
-        var doc = Config.LoadDocFromString(@"---
+        var doc = Configs.LoadDocFromString(@"---
             stringField: hi
             extra_field: 33333
         ", "ConfigReifier_ReifierAttributes_TestFilename");
@@ -1132,21 +1132,21 @@ class ConfigReifierTests {
 
     [Test]
     public void EmptyDoc_ReturnsDocNode() {
-        var doc = Config.LoadDocFromString("", "EmptyDoc");
+        var doc = Configs.LoadDocFromString("", "EmptyDoc");
         Assert.IsNotNull(doc);
         Assert.IsInstanceOf<DocNode>(doc);
     }
 
     [Test]
     public void EmptyDoc_Stream_ReturnsDocNode() {
-        var doc = Config.LoadDocFromStream(new System.IO.MemoryStream(), "EmptyDoc");
+        var doc = Configs.LoadDocFromStream(new System.IO.MemoryStream(), "EmptyDoc");
         Assert.IsNotNull(doc);
         Assert.IsInstanceOf<DocNode>(doc);
     }
     
     [Test]
     public void ReifierAttributes_PropertiesClass() {
-        var doc = Config.LoadDocFromString(@"---
+        var doc = Configs.LoadDocFromString(@"---
             int1Value: 10
             staticStringValue: newValue
             mandatoryValue: mandatory
