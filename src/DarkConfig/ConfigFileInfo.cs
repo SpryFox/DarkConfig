@@ -16,7 +16,7 @@ namespace DarkConfig {
         /// Last modified time of the file when it was loaded. Used to detect changes when hotloading.
         public DateTime Modified;
         
-        /// Parsed file contents..
+        /// Parsed file contents.
         public DocNode Parsed;
 
         public override string ToString() {
