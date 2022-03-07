@@ -29,11 +29,11 @@ namespace DarkConfig {
         /// access the node as if it was a list
         public override DocNode this[int index] {
             get {
-                AssertTypeIs(DocNodeType.List);
+                CheckTypeIs(DocNodeType.List);
                 return list[index];
             }
             set {
-                AssertTypeIs(DocNodeType.List);
+                CheckTypeIs(DocNodeType.List);
                 list[index] = value;
             }
         }
@@ -41,11 +41,11 @@ namespace DarkConfig {
         /// access the node as if it was a Dictionary
         public override DocNode this[string key] {
             get {
-                AssertTypeIs(DocNodeType.Dictionary);
+                CheckTypeIs(DocNodeType.Dictionary);
                 return dictionary[key];
             }
             set {
-                AssertTypeIs(DocNodeType.Dictionary);
+                CheckTypeIs(DocNodeType.Dictionary);
                 dictionary[key] = value;
             }
         }
@@ -56,15 +56,14 @@ namespace DarkConfig {
                     case DocNodeType.Dictionary: return dictionary.Count;
                     case DocNodeType.List: return list.Count;
                     default:
-                        var message = GenerateAccessExceptionMessage("Countable (Dictionary or List)");
-                        throw new DocNodeAccessException(message);
+                        throw new DocNodeAccessException(GenerateAccessExceptionMessage("Countable (Dictionary or List)"));
                 }
             }
         }
 
         public override bool ContainsKey(string key, bool ignoreCase = false) {
-            AssertTypeIs(DocNodeType.Dictionary);
-            foreach (var dictKey in dictionary.Keys) {
+            CheckTypeIs(DocNodeType.Dictionary);
+            foreach (string dictKey in dictionary.Keys) {
                 if (string.Equals(dictKey, key, ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal)) {
                     return true;
                 }
@@ -73,7 +72,7 @@ namespace DarkConfig {
         }
 
         public override bool TryGetValue(string key, bool ignoreCase, out DocNode result) {
-            AssertTypeIs(DocNodeType.Dictionary);
+            CheckTypeIs(DocNodeType.Dictionary);
             foreach (var kvp in dictionary) {
                 if (string.Equals(kvp.Key, key, ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal)) {
                     result = kvp.Value;
@@ -87,25 +86,25 @@ namespace DarkConfig {
 
         public override IEnumerable<DocNode> Values {
             get {
-                AssertTypeIs(DocNodeType.List);
+                CheckTypeIs(DocNodeType.List);
                 return list;
             }
         }
 
         public override IEnumerable<KeyValuePair<string, DocNode>> Pairs {
             get {
-                AssertTypeIs(DocNodeType.Dictionary);
+                CheckTypeIs(DocNodeType.Dictionary);
                 return dictionary;
             }
         }
 
         public override string StringValue {
             get {
-                AssertTypeIs(DocNodeType.Scalar);
+                CheckTypeIs(DocNodeType.Scalar);
                 return scalar;
             }
             set {
-                AssertTypeIs(DocNodeType.Scalar);
+                CheckTypeIs(DocNodeType.Scalar);
                 scalar = value;
             }
         }
@@ -118,12 +117,12 @@ namespace DarkConfig {
         #endregion
 
         public void Add(DocNode d) {
-            AssertTypeIs(DocNodeType.List);
+            CheckTypeIs(DocNodeType.List);
             list.Add(d);
         }
 
         public void Add(string key, DocNode value) {
-            AssertTypeIs(DocNodeType.Dictionary);
+            CheckTypeIs(DocNodeType.Dictionary);
             dictionary.Add(key, value);
         }
 
@@ -137,10 +136,9 @@ namespace DarkConfig {
 
         /////////////////////////////////////////////////
 
-        void AssertTypeIs(DocNodeType requiredType) {
+        void CheckTypeIs(DocNodeType requiredType) {
             if (Type != requiredType) {
-                var message = GenerateAccessExceptionMessage(requiredType.ToString());
-                throw new DocNodeAccessException(message);
+                throw new DocNodeAccessException(GenerateAccessExceptionMessage(requiredType.ToString()));
             }
         }
         
