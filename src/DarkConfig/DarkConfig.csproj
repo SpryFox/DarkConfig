@@ -54,11 +54,11 @@
         <Compile Include="ConfigFileInfo.cs" />
         <Compile Include="ConfigFileManager.cs" />
         <Compile Include="ConfigSource.cs" />
+        <Compile Include="ConfigSource\FileSource.cs" />
+        <Compile Include="DocNode.cs" />
         <Compile Include="DocNode\ComposedDocNode.cs" />
-        <Compile Include="DocNode\DocNode.cs" />
         <Compile Include="DocNode\YamlDocNode.cs" />
         <Compile Include="Exceptions.cs" />
-        <Compile Include="FileSource.cs" />
         <Compile Include="Internal\BuiltInTypeReifiers.cs" />
         <Compile Include="Internal\ChecksumUtils.cs" />
         <Compile Include="Internal\ConfigReifier.cs" />
