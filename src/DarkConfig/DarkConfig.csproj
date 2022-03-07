@@ -64,7 +64,6 @@
         <Compile Include="Internal\ConfigReifier.cs" />
         <Compile Include="Internal\ReflectionCache.cs" />
         <Compile Include="Internal\RegexUtils.cs" />
-        <Compile Include="LoadUtils.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
         <Compile Include="Settings.cs" />
     </ItemGroup>
