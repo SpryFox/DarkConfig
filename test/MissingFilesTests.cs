@@ -21,7 +21,7 @@ class MissingFilesTests {
         
         Configs.Settings.EnableHotloading = true;
         Configs.Settings.HotloadCheckFrequencySeconds = 0.1f;
-        Configs.FileManager.AddSource(new FileSource(tempDirPath, hotload:true));
+        Configs.AddConfigSource(new FileSource(tempDirPath, hotload:true));
     }
 
     [TearDown]
@@ -35,7 +35,7 @@ class MissingFilesTests {
         CreateFile("spinner.yaml", "key: ok");
 
         // check the index after preload
-        var filenames = Configs.FileManager.GetFilenamesMatchingRegex(new Regex(".*"));
+        var filenames = Configs.GetFilenamesMatchingRegex(new Regex(".*"));
         Assert.Greater(filenames.Count, 0);
 
         Assert.IsTrue(filenames.Contains("spinner"));

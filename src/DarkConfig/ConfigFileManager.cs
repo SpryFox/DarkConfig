@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
-namespace DarkConfig {
+namespace DarkConfig.Internal {
     public class ConfigFileManager {
         /// If true, DarkConfig will periodically scan config files for changes and reload them as necessary.
         /// Setting it to false stops hotloading.  Enabling hotloading is only recommended during development, not in shipping builds.
@@ -20,11 +20,9 @@ namespace DarkConfig {
         }
         bool _IsHotloadingFiles;
 
-        /// This event is called for every file that gets hotloaded.
-        public event Action<string> OnHotloadFile;
-        
         /// True if all sources have been preloaded.
         internal bool IsPreloaded { get; private set; }
+        internal readonly List<ConfigSource> sources = new List<ConfigSource>();
         
         /////////////////////////////////////////////////   
 
@@ -54,32 +52,6 @@ namespace DarkConfig {
             nextHotloadTime = Configs.Settings.HotloadCheckFrequencySeconds;
 
             Configs.LogInfo($"Done preloading, IsHotloadingFiles: {IsHotloadingFiles}");
-        }
-
-        /// <summary>
-        /// Add a config file source.
-        /// Sources are used when loading or hotloading.
-        /// Multiple sources of config files can be registered.
-        /// </summary>
-        /// <param name="source">The new source to register</param>
-        public void AddSource(ConfigSource source) {
-            sources.Add(source);
-        }
-
-        /// <summary>
-        /// Remove a config file source.
-        /// </summary>
-        /// <param name="source">The source to </param>
-        public void RemoveSource(ConfigSource source) {
-            sources.Remove(source);
-        }
-
-        /// <summary>
-        /// Get the number of sources currently registered.
-        /// </summary>
-        /// <returns>number of sources currently registered</returns>
-        public int CountSources() {
-            return sources.Count;
         }
 
         /// <summary>
@@ -215,7 +187,7 @@ namespace DarkConfig {
         /// <param name="glob">Glob to match file names with.</param>
         /// <returns>List of file names matching the given glob.</returns>
         public List<string> GetFilenamesMatchingGlob(string glob) {
-            return GetFilenamesMatchingRegex(Internal.RegexUtils.GlobToRegex(glob));
+            return GetFilenamesMatchingRegex(RegexUtils.GlobToRegex(glob));
         }
 
         /// <summary>
@@ -229,7 +201,7 @@ namespace DarkConfig {
             var results = new List<string>();
             
             foreach (var source in sources) {
-                Internal.RegexUtils.FilterMatching(pattern, source.AllFiles.Keys, results);
+                RegexUtils.FilterMatching(pattern, source.AllFiles.Keys, results);
             }
             
             return results;
@@ -273,8 +245,6 @@ namespace DarkConfig {
                         }
                     }
                 }
-                
-                OnHotloadFile?.Invoke(filename);
             }
         }
 
@@ -303,27 +273,9 @@ namespace DarkConfig {
             }
         }
 
-        public int CountReloadCallbacks() {
-            int callbackCount = 0;
-            foreach (var kvp in reloadCallbacks) {
-                callbackCount += kvp.Value.Count;
-            }
-            return callbackCount;
-        }
-
-        public bool HasFile(string filename) {
-            foreach (var source in sources) {
-                if (source.AllFiles.ContainsKey(filename)) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
         /////////////////////////////////////////////////
         
         float nextHotloadTime;
-        readonly List<ConfigSource> sources = new List<ConfigSource>();
         readonly Dictionary<string, List<ReloadDelegate>> reloadCallbacks = new Dictionary<string, List<ReloadDelegate>>();
         
         class CombinerData {
