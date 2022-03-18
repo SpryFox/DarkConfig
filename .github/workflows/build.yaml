@@ -4,10 +4,6 @@ on:
   - push
   - pull_request
 
-env:
-  SOLUTION_FILE_PATH: ./DarkConfig.sln
-  BUILD_CONFIGURATION: Debug
-
 jobs:
   win32:
     runs-on: windows-latest
@@ -28,14 +24,14 @@ jobs:
  
       - name: Restore NuGet packages
         working-directory: ${{env.GITHUB_WORKSPACE}}
-        run: nuget restore ${{env.SOLUTION_FILE_PATH}}
+        run: nuget restore ./DarkConfig.sln
 
       - name: Build
         working-directory: ${{env.GITHUB_WORKSPACE}}
-        run: msbuild /m /p:Configuration=${{env.BUILD_CONFIGURATION}} ${{env.SOLUTION_FILE_PATH}}
+        run: msbuild /m /p:Configuration=${{ matrix.configuration }} ./DarkConfig.sln
 
       - name: Install NUnit test runner
         run: nuget install NUnit.ConsoleRunner -Version 3.14.0 -OutputDirectory ./packages/
 
       - name: Run Unit Tests
-        run: .\packages\NUnit.ConsoleRunner.3.14.0\tools\nunit3-console.exe .\test\bin\${{env.BUILD_CONFIGURATION}}\net48\DarkConfig.Tests.dll
+        run: .\packages\NUnit.ConsoleRunner.3.14.0\tools\nunit3-console.exe .\test\bin\${{ matrix.configuration }}\net48\DarkConfig.Tests.dll
