@@ -34,28 +34,4 @@ class ApplyTests {
         Directory.Delete(tempDirPath, true);
         Configs.Clear();
     }
-
-    [Test]
-    [Ignore("(temp)Disabled for now...")]
-    public void Apply_RemoveReloadCallbackOnGC() {
-        CreateFile("playerGlass.yaml", "{\"Capacity\": 12, \"Height\": 0.25}");
-        Configs.Preload();
-        
-        {
-            Glass glass = null;
-            Configs.Apply("playerGlass", ref glass);
-            Assert.AreEqual(glass.Capacity, 12);
-            Assert.AreEqual(glass.Height, 0.25f);
-        }
-
-        Assert.AreEqual(1, Configs.FileManager.CountReloadCallbacks());
-
-        // trigger garbage collection here so temporary Glass gets GC'd
-        System.GC.Collect();
-
-        // Trigger a hotload to clean up reload callbacks.
-        Configs.FileManager.DoHotload();
-
-        Assert.AreEqual(0, Configs.FileManager.CountReloadCallbacks());
-    }
 }
