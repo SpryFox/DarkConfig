@@ -2,6 +2,7 @@
 using System.IO;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 using YamlDotNet.RepresentationModel;
 
 namespace DarkConfig {
@@ -30,26 +31,47 @@ namespace DarkConfig {
         const string ASSERT_GUARD = "DC_ASSERTS_ENABLED";
         const string LogPrefix = "[DarkConfig] ";
         
-        public delegate void AssertFunc(bool test, string message);
-        public delegate void LogFunc(LogVerbosity verbosity, string message);
+        public delegate void AssertHandler(bool test, string message);
+        public delegate void LogHandler(LogVerbosity verbosity, string message);
 
         /////////////////////////////////////////////////
         
         /// Configuration settings for Dark Config itself.
         public static Settings Settings = new Settings();
 
-        public static ConfigFileManager FileManager { get; private set; } = new ConfigFileManager();
+        internal static Internal.ConfigFileManager FileManager { get; private set; } = new Internal.ConfigFileManager();
         
-        public static AssertFunc AssertCallback = null;
-        public static LogFunc LogCallback = null;
+        public static AssertHandler AssertCallback;
+        public static LogHandler LogCallback;
         
         /// True if config file preloading is complete, false otherwise.
         public static bool IsPreloaded => FileManager.IsPreloaded;
 
         /////////////////////////////////////////////////
+        
+        #region ConfigSources
+        /// <summary>
+        /// Add a config file source.
+        /// Sources are used when loading or hotloading.
+        /// Multiple sources of config files can be registered.
+        /// </summary>
+        /// <param name="source">The new source to register</param>
+        public static void AddConfigSource(ConfigSource source) {
+            FileManager.sources.Add(source);
+        }
 
+        /// <summary>
+        /// Remove a config file source.
+        /// </summary>
+        /// <param name="source">The source to </param>
+        public static void RemoveConfigSource(ConfigSource source) {
+            FileManager.sources.Remove(source);
+        }
+        #endregion
+        
         /// Event that's called once preloading is complete.
-        /// Adding a delegate to this event after preloading has completed will call the new delegate immediately.
+        /// Adding a delegate to this event after preloading has completed
+        /// will call the new delegate immediately.
         public static event Action OnPreload {
             add {
                 _OnPreload += value;
@@ -73,6 +95,11 @@ namespace DarkConfig {
             _OnPreload?.Invoke();
         }
 
+        /// If hotloading is enabled, triggers an immediate hotload.
+        public static void DoHotload() {
+            FileManager.DoHotload();
+        }
+
         /// <summary>
         /// Load a file and register a reload callback.
         /// 
@@ -88,84 +115,6 @@ namespace DarkConfig {
         /// </param>
         public static void Load(string filename, ReloadDelegate callback) {
             FileManager.LoadConfig(filename, callback);
-        }
-
-        /// Load the configuration from *filename*.
-        /// 
-        /// Preloading must be complete before calling Load.
-        public static DocNode Load(string filename) {
-            return FileManager.LoadConfig(filename);
-        }
-
-        /// <summary>
-        /// Use a config file to update an object.
-        ///
-        /// Registers the object for updates whenever the config file changes in the future.
-        /// To avoid leaking memory, updates cease when *obj* compares to null -- appropriate
-        /// for MonoBehaviours.
-        ///
-        /// Preloading must be complete before calling Apply
-        /// </summary>
-        /// <param name="filename">Config filename</param>
-        /// <param name="obj">Object to update</param>
-        /// <typeparam name="T">Type of object to update</typeparam>
-        public static void Apply<T>(string filename, ref T obj) {
-            Reify(ref obj, FileManager.LoadConfig(filename));
-            if (obj == null) {
-                return;
-            }
-            
-            var weakReference = new WeakReference(obj);
-            FileManager.RegisterReloadCallback(filename, doc => {
-                var t = (T) weakReference.Target;
-                if (t == null) {
-                    // The object was GC'd
-                    return false;
-                }
-                Reify(ref t, doc);
-                return true;
-            });
-        }
-        
-        /// <summary>
-        /// Use a config file to update an object.
-        /// 
-        /// It is not a ref parameter, so it's suitable for use with the 'this' keyword.
-        /// 
-        /// Preloading must be complete before calling ApplyThis.
-        /// </summary>
-        /// <param name="filename">Config filename</param>
-        /// <param name="obj">Object to update</param>
-        /// <typeparam name="T">Type of object to update</typeparam>
-        public static void ApplyThis<T>(string filename, T obj) {
-            Apply(filename, ref obj);
-        }
-        
-        /// <summary>
-        /// Use a config file to update the static members of a type.
-        /// 
-        /// Preloading must be complete before calling ApplyStatic.
-        /// </summary>
-        /// <param name="filename">Config filename</param>
-        /// <typeparam name="T">Type to set static members on</typeparam>
-        public static void ApplyStatic<T>(string filename) {
-            ReifyStatic<T>(FileManager.LoadConfig(filename));
-            FileManager.RegisterReloadCallback(filename, d => {
-                ReifyStatic<T>(d);
-                return true;
-            });
-        }
-        
-        /// <summary>
-        /// Cleans up DarkConfig's state, removing all listeners, loaded files, and so on.
-        /// Does not reset Settings values.
-        /// </summary>
-        public static void Clear() {
-            _OnPreload = null;
-            configReifier = new Internal.ConfigReifier();
-            FileManager = new ConfigFileManager();
-            LogCallback = null;
-            AssertCallback = null;
         }
 
         /// <summary>
@@ -269,6 +218,26 @@ namespace DarkConfig {
         }
 
         /// <summary>
+        /// Cleans up DarkConfig's state, removing all listeners, loaded files, and so on.
+        /// Does not reset Settings values.
+        /// </summary>
+        public static void Clear() {
+            _OnPreload = null;
+            configReifier = new Internal.ConfigReifier();
+            FileManager = new Internal.ConfigFileManager();
+            LogCallback = null;
+            AssertCallback = null;
+        }
+
+        #region Loading YAML
+        /// Load the configuration from *filename*.
+        /// 
+        /// Preloading must be complete before calling Load.
+        public static DocNode Load(string filename) {
+            return FileManager.LoadConfig(filename);
+        }
+
+        /// <summary>
         /// Low-level function to read a YAML string into a DocNode.
         /// </summary>
         /// <param name="contents">the YAML to read</param>
@@ -287,7 +256,8 @@ namespace DarkConfig {
         public static DocNode LoadDocFromStream(Stream stream, string filename) {
             return LoadDocFromTextReader(new StreamReader(stream), filename);
         }
-
+        #endregion
+        
         /// <summary>
         /// Register a handler for loading a particular type.
         /// 
@@ -307,6 +277,66 @@ namespace DarkConfig {
         /// <param name="fromDoc">Custom config parsing function for the type</param>
         public static void RegisterFromDoc(Type type, FromDocDelegate fromDoc) {
             configReifier.CustomReifiers[type] = fromDoc;
+        }
+
+        #region Reify, Apply, SetFields
+        /// <summary>
+        /// Use a config file to update an object.
+        ///
+        /// Registers the object for updates whenever the config file changes in the future.
+        /// To avoid leaking memory, updates cease when *obj* compares to null -- appropriate
+        /// for MonoBehaviours.
+        ///
+        /// Preloading must be complete before calling Apply
+        /// </summary>
+        /// <param name="filename">Config filename</param>
+        /// <param name="obj">Object to update</param>
+        /// <typeparam name="T">Type of object to update</typeparam>
+        public static void Apply<T>(string filename, ref T obj) {
+            Reify(ref obj, FileManager.LoadConfig(filename));
+            if (obj == null) {
+                return;
+            }
+            
+            var weakReference = new WeakReference(obj);
+            FileManager.RegisterReloadCallback(filename, doc => {
+                var t = (T) weakReference.Target;
+                if (t == null) {
+                    // The object was GC'd
+                    return false;
+                }
+                Reify(ref t, doc);
+                return true;
+            });
+        }
+        
+        /// <summary>
+        /// Use a config file to update an object.
+        /// 
+        /// It is not a ref parameter, so it's suitable for use with the 'this' keyword.
+        /// 
+        /// Preloading must be complete before calling ApplyThis.
+        /// </summary>
+        /// <param name="filename">Config filename</param>
+        /// <param name="obj">Object to update</param>
+        /// <typeparam name="T">Type of object to update</typeparam>
+        public static void ApplyThis<T>(string filename, T obj) {
+            Apply(filename, ref obj);
+        }
+        
+        /// <summary>
+        /// Use a config file to update the static members of a type.
+        /// 
+        /// Preloading must be complete before calling ApplyStatic.
+        /// </summary>
+        /// <param name="filename">Config filename</param>
+        /// <typeparam name="T">Type to set static members on</typeparam>
+        public static void ApplyStatic<T>(string filename) {
+            ReifyStatic<T>(FileManager.LoadConfig(filename));
+            FileManager.RegisterReloadCallback(filename, d => {
+                ReifyStatic<T>(d);
+                return true;
+            });
         }
 
         /// <summary>
@@ -416,7 +446,9 @@ namespace DarkConfig {
         public static void SetFieldsOnStruct<T>(ref T obj, DocNode doc, ReificationOptions? options = null) where T : struct {
             configReifier.SetFieldsOnStruct(ref obj, doc, options);
         }
+        #endregion
         
+        #region Logging
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void LogInfo(string message) {
             Log(LogVerbosity.Info, message);
@@ -431,9 +463,18 @@ namespace DarkConfig {
         public static void LogError(string message) {
             Log(LogVerbosity.Error, message);
         }
+        #endregion
         
         public static void Update(float dt) {
             FileManager.Update(dt);
+        }
+
+        public static List<string> GetFilenamesMatchingGlob(string glob) {
+            return FileManager.GetFilenamesMatchingGlob(glob);
+        }
+        
+        public static List<string> GetFilenamesMatchingRegex(Regex pattern) {
+            return FileManager.GetFilenamesMatchingRegex(pattern);
         }
 
         /////////////////////////////////////////////////

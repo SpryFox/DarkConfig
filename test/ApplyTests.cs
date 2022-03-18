@@ -26,7 +26,7 @@ class ApplyTests {
         
         Configs.Settings.HotloadCheckFrequencySeconds = 0.1f;
         fileSource = new FileSource(tempDirPath, hotload:true);
-        Configs.FileManager.AddSource(fileSource);
+        Configs.AddConfigSource(fileSource);
     }
 
     [TearDown]

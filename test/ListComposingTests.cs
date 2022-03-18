@@ -26,7 +26,7 @@ class ListComposingTests {
 
         Configs.Settings.EnableHotloading = true;
         Configs.Settings.HotloadCheckFrequencySeconds = 0.1f;
-        Configs.FileManager.AddSource(new FileSource(tempDirPath, hotload:true));
+        Configs.AddConfigSource(new FileSource(tempDirPath, hotload:true));
     }
 
     [TearDown]
