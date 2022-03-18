@@ -4,14 +4,14 @@ using System.Reflection;
 
 namespace DarkConfig.Internal {
     public class ConfigReifier {
-        /// User-defined type reifiers
-        public readonly Dictionary<Type, FromDocDelegate> CustomReifiers = new Dictionary<Type, FromDocDelegate>();
+        /// Manually-registered FromDoc's
+        public readonly Dictionary<Type, FromDocDelegate> RegisteredFromDocs = new Dictionary<Type, FromDocDelegate>();
 
         /////////////////////////////////////////////////
         
         public ConfigReifier() {
-            CustomReifiers[typeof(DateTime)] = BuiltInTypeReifiers.FromDateTime;
-            CustomReifiers[typeof(TimeSpan)] = BuiltInTypeReifiers.FromTimeSpan;
+            RegisteredFromDocs[typeof(DateTime)] = BuiltInTypeReifiers.FromDateTime;
+            RegisteredFromDocs[typeof(TimeSpan)] = BuiltInTypeReifiers.FromTimeSpan;
         }
 
         /// <summary>
@@ -270,7 +270,7 @@ namespace DarkConfig.Internal {
                 }
 
                 // Custom reifier
-                if (CustomReifiers.TryGetValue(fieldType, out var fromDoc)) {
+                if (RegisteredFromDocs.TryGetValue(fieldType, out var fromDoc)) {
                     existing = fromDoc(existing, doc);
                     CallPostDoc(fieldType, ref existing);
                     return existing;

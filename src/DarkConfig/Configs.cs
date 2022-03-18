@@ -25,15 +25,18 @@ namespace DarkConfig {
     /// <param name="doc">The new file DocNode</param>
     /// <returns>False if the delegate should be un-registered for future reload callbacks.  True otherwise.</returns>
     public delegate bool ReloadDelegate(DocNode doc);
+    
+    /// A custom assertion function
+    public delegate void AssertHandler(bool test, string message);
+    
+    /// A callback when DarkConfig logs a message, warning or error.
+    public delegate void LogHandler(LogVerbosity verbosity, string message);
 
     public static class Configs {
         const string LOG_GUARD = "DC_LOGGING_ENABLED";
         const string ASSERT_GUARD = "DC_ASSERTS_ENABLED";
         const string LogPrefix = "[DarkConfig] ";
         
-        public delegate void AssertHandler(bool test, string message);
-        public delegate void LogHandler(LogVerbosity verbosity, string message);
-
         /////////////////////////////////////////////////
         
         /// Configuration settings for Dark Config itself.
@@ -46,6 +49,19 @@ namespace DarkConfig {
         
         /// True if config file preloading is complete, false otherwise.
         public static bool IsPreloaded => FileManager.IsPreloaded;
+
+        /// Event that's called once preloading is complete.
+        /// Adding a delegate to this event after preloading has completed
+        /// will call the new delegate immediately.
+        public static event Action OnPreload {
+            add {
+                _OnPreload += value;
+                if (IsPreloaded) {
+                    value();
+                }
+            }
+            remove => _OnPreload -= value;
+        }
 
         /////////////////////////////////////////////////
         
@@ -67,21 +83,13 @@ namespace DarkConfig {
         public static void RemoveConfigSource(ConfigSource source) {
             FileManager.sources.Remove(source);
         }
+
+        /// Removes all config file sources.
+        public static void ClearConfigSources() {
+            FileManager.sources.Clear();
+        }
         #endregion
         
-        /// Event that's called once preloading is complete.
-        /// Adding a delegate to this event after preloading has completed
-        /// will call the new delegate immediately.
-        public static event Action OnPreload {
-            add {
-                _OnPreload += value;
-                if (IsPreloaded) {
-                    value();
-                }
-            }
-            remove => _OnPreload -= value;
-        }
-
         /// <summary>
         /// Preloads all config files into memory.
         /// Must be completed before using any other DarkConfig functionality.
@@ -98,64 +106,6 @@ namespace DarkConfig {
         /// If hotloading is enabled, triggers an immediate hotload.
         public static void DoHotload() {
             FileManager.DoHotload();
-        }
-
-        /// <summary>
-        /// Load a file and register a reload callback.
-        /// 
-        /// The callback is called immediately when Load is called, and every time the file contents change.
-        /// The callback function should return false to unsubscribe itself from future calls, true otherwise.
-        /// 
-        /// Preloading must be complete before calling Load.
-        /// </summary>
-        /// <param name="filename">The filename to load</param>
-        /// <param name="callback">
-        /// The reload callback to register.
-        /// Called immediately with the initial file contents.
-        /// </param>
-        public static void Load(string filename, ReloadDelegate callback) {
-            FileManager.LoadConfig(filename, callback);
-        }
-
-        /// <summary>
-        /// A function that loads multiple files and delivers it as a single list.
-        /// Each file's contents becomes an entry in the list, or if a file contains a list,
-        /// it is flattened into the combined doc.
-        /// 
-        /// The callback is called with the combined config data immediately and also
-        /// whenever any of the matching files changes.
-        /// </summary>
-        /// <param name="glob">Glob describing the files to load</param>
-        /// <param name="callback">
-        /// Called when the files are loaded.
-        /// Registered as a reload callback for the merged files.
-        /// </param>
-        public static void LoadFilesAsList(string glob, ReloadDelegate callback) {
-            var matchingFiles = FileManager.GetFilenamesMatchingGlob(glob);
-            string destFile = glob + "_file";
-            FileManager.RegisterCombinedFile(matchingFiles, destFile, CombineList);
-            FileManager.LoadConfig(destFile, callback);
-        }
-
-        /// <summary>
-        /// A function that loads multiple files and delivers it as a single dictionary.
-        /// Each file's contents should be a dictionary, and the resulting dictionary
-        /// merges all the keys from all the dictionaries.
-        /// Duplicate keys are overridden by later files in the index,
-        /// same as if they were later keys in the same file.
-        ///
-        /// The callback is called with the combined config data immediately and also
-        /// whenever any of the matching files changes. 
-        /// </summary>
-        /// <param name="glob">Glob describing the files to load</param>
-        /// <param name="callback">
-        /// Called when the files are loaded.
-        /// Registered as a reload callback for the merged files.
-        /// </param>
-        public static void LoadFilesAsMergedDict(string glob, ReloadDelegate callback) {
-            string combinedFilename = glob + "_file";
-            FileManager.RegisterCombinedFile(FileManager.GetFilenamesMatchingGlob(glob), combinedFilename, CombineDict);
-            FileManager.LoadConfig(combinedFilename, callback);
         }
 
         /// <summary>
@@ -228,13 +178,38 @@ namespace DarkConfig {
             LogCallback = null;
             AssertCallback = null;
         }
-
+        
+        public static List<string> GetFilenamesMatchingGlob(string glob) {
+            return FileManager.GetFilenamesMatchingGlob(glob);
+        }
+        
+        public static List<string> GetFilenamesMatchingRegex(Regex pattern) {
+            return FileManager.GetFilenamesMatchingRegex(pattern);
+        }
+        
         #region Loading YAML
         /// Load the configuration from *filename*.
         /// 
         /// Preloading must be complete before calling Load.
         public static DocNode Load(string filename) {
             return FileManager.LoadConfig(filename);
+        }
+
+        /// <summary>
+        /// Load a file and register a reload callback.
+        /// 
+        /// The callback is called immediately when Load is called, and every time the file contents change.
+        /// The callback function should return false to unsubscribe itself from future calls, true otherwise.
+        /// 
+        /// Preloading must be complete before calling Load.
+        /// </summary>
+        /// <param name="filename">The filename to load</param>
+        /// <param name="callback">
+        /// The reload callback to register.
+        /// Called immediately with the initial file contents.
+        /// </param>
+        public static void Load(string filename, ReloadDelegate callback) {
+            FileManager.LoadConfig(filename, callback);
         }
 
         /// <summary>
@@ -256,6 +231,47 @@ namespace DarkConfig {
         public static DocNode LoadDocFromStream(Stream stream, string filename) {
             return LoadDocFromTextReader(new StreamReader(stream), filename);
         }
+        
+        /// <summary>
+        /// A function that loads multiple files and delivers it as a single list.
+        /// Each file's contents becomes an entry in the list, or if a file contains a list,
+        /// it is flattened into the combined doc.
+        /// 
+        /// The callback is called with the combined config data immediately and also
+        /// whenever any of the matching files changes.
+        /// </summary>
+        /// <param name="glob">Glob describing the files to load</param>
+        /// <param name="callback">
+        /// Called when the files are loaded.
+        /// Registered as a reload callback for the merged files.
+        /// </param>
+        public static void LoadFilesAsList(string glob, ReloadDelegate callback) {
+            var matchingFiles = FileManager.GetFilenamesMatchingGlob(glob);
+            string destFile = glob + "_file";
+            FileManager.RegisterCombinedFile(matchingFiles, destFile, CombineList);
+            FileManager.LoadConfig(destFile, callback);
+        }
+
+        /// <summary>
+        /// A function that loads multiple files and delivers it as a single dictionary.
+        /// Each file's contents should be a dictionary, and the resulting dictionary
+        /// merges all the keys from all the dictionaries.
+        /// Duplicate keys are overridden by later files in the index,
+        /// same as if they were later keys in the same file.
+        ///
+        /// The callback is called with the combined config data immediately and also
+        /// whenever any of the matching files changes. 
+        /// </summary>
+        /// <param name="glob">Glob describing the files to load</param>
+        /// <param name="callback">
+        /// Called when the files are loaded.
+        /// Registered as a reload callback for the merged files.
+        /// </param>
+        public static void LoadFilesAsMergedDict(string glob, ReloadDelegate callback) {
+            string combinedFilename = glob + "_file";
+            FileManager.RegisterCombinedFile(FileManager.GetFilenamesMatchingGlob(glob), combinedFilename, CombineDict);
+            FileManager.LoadConfig(combinedFilename, callback);
+        }
         #endregion
         
         /// <summary>
@@ -276,7 +292,7 @@ namespace DarkConfig {
         /// <param name="type">Type to register the custom loader for</param>
         /// <param name="fromDoc">Custom config parsing function for the type</param>
         public static void RegisterFromDoc(Type type, FromDocDelegate fromDoc) {
-            configReifier.CustomReifiers[type] = fromDoc;
+            configReifier.RegisteredFromDocs[type] = fromDoc;
         }
 
         #region Reify, Apply, SetFields
@@ -467,14 +483,6 @@ namespace DarkConfig {
         
         public static void Update(float dt) {
             FileManager.Update(dt);
-        }
-
-        public static List<string> GetFilenamesMatchingGlob(string glob) {
-            return FileManager.GetFilenamesMatchingGlob(glob);
-        }
-        
-        public static List<string> GetFilenamesMatchingRegex(Regex pattern) {
-            return FileManager.GetFilenamesMatchingRegex(pattern);
         }
 
         /////////////////////////////////////////////////
