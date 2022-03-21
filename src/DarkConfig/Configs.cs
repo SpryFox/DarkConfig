@@ -187,39 +187,39 @@ namespace DarkConfig {
             return FileManager.GetFilenamesMatchingRegex(pattern);
         }
         
-        #region Loading YAML
-        /// Load the configuration from *filename*.
-        /// 
-        /// Preloading must be complete before calling Load.
-        public static DocNode Load(string filename) {
-            return FileManager.LoadConfig(filename);
+        #region Parsing YAML
+        /// <summary>
+        /// Parses the YAML of a config file
+        /// Caches the result internally so future calls don't re-parse the file data. 
+        /// </summary>
+        /// <param name="filename">The name of the file to parse</param>
+        /// <returns>The parsed yaml data</returns>
+        public static DocNode ParseFile(string filename) {
+            return FileManager.ParseFile(filename);
         }
 
         /// <summary>
-        /// Load a file and register a reload callback.
+        /// Parse a file and register a callback to be called when the file is loaded or hotloaded.
         /// 
         /// The callback is called immediately when Load is called, and every time the file contents change.
         /// The callback function should return false to unsubscribe itself from future calls, true otherwise.
         /// 
-        /// Preloading must be complete before calling Load.
+        /// Preloading must be complete before calling ParseFile.
         /// </summary>
-        /// <param name="filename">The filename to load</param>
-        /// <param name="callback">
-        /// The reload callback to register.
-        /// Called immediately with the initial file contents.
-        /// </param>
-        public static void Load(string filename, ReloadDelegate callback) {
-            FileManager.LoadConfig(filename, callback);
+        /// <param name="filename">The file to parse</param>
+        /// <param name="callback">Reload callback to register. Called immediately with the parsed file data.</param>
+        public static void ParseFile(string filename, ReloadDelegate callback) {
+            FileManager.ParseFile(filename, callback);
         }
 
         /// <summary>
         /// Low-level function to read a YAML string into a DocNode.
         /// </summary>
-        /// <param name="contents">the YAML to read</param>
-        /// <param name="filename">A filename used for error reporting</param>
+        /// <param name="yamlData">the YAML to read</param>
+        /// <param name="debugFilename">A filename used for error reporting</param>
         /// <returns>The parsed DocNode</returns>
-        public static DocNode LoadDocFromString(string contents, string filename) {
-            return LoadDocFromTextReader(new StringReader(contents), filename);
+        public static DocNode ParseString(string yamlData, string debugFilename) {
+            return LoadDocFromTextReader(new StringReader(yamlData), debugFilename);
         }
 
         /// <summary>
@@ -233,7 +233,7 @@ namespace DarkConfig {
         }
         
         /// <summary>
-        /// A function that loads multiple files and delivers it as a single list.
+        /// A function that parses multiple files and delivers it as a single list.
         /// Each file's contents becomes an entry in the list, or if a file contains a list,
         /// it is flattened into the combined doc.
         /// 
@@ -246,10 +246,9 @@ namespace DarkConfig {
         /// Registered as a reload callback for the merged files.
         /// </param>
         public static void LoadFilesAsList(string glob, ReloadDelegate callback) {
-            var matchingFiles = FileManager.GetFilenamesMatchingGlob(glob);
             string destFile = glob + "_file";
-            FileManager.RegisterCombinedFile(matchingFiles, destFile, CombineList);
-            FileManager.LoadConfig(destFile, callback);
+            FileManager.RegisterCombinedFile(FileManager.GetFilenamesMatchingGlob(glob), destFile, CombineList);
+            FileManager.ParseFile(destFile, callback);
         }
 
         /// <summary>
@@ -270,7 +269,7 @@ namespace DarkConfig {
         public static void LoadFilesAsMergedDict(string glob, ReloadDelegate callback) {
             string combinedFilename = glob + "_file";
             FileManager.RegisterCombinedFile(FileManager.GetFilenamesMatchingGlob(glob), combinedFilename, CombineDict);
-            FileManager.LoadConfig(combinedFilename, callback);
+            FileManager.ParseFile(combinedFilename, callback);
         }
         #endregion
         
@@ -309,7 +308,7 @@ namespace DarkConfig {
         /// <param name="obj">Object to update</param>
         /// <typeparam name="T">Type of object to update</typeparam>
         public static void Apply<T>(string filename, ref T obj) {
-            Reify(ref obj, FileManager.LoadConfig(filename));
+            Reify(ref obj, FileManager.ParseFile(filename));
             if (obj == null) {
                 return;
             }
@@ -348,7 +347,7 @@ namespace DarkConfig {
         /// <param name="filename">Config filename</param>
         /// <typeparam name="T">Type to set static members on</typeparam>
         public static void ApplyStatic<T>(string filename) {
-            ReifyStatic<T>(FileManager.LoadConfig(filename));
+            ReifyStatic<T>(FileManager.ParseFile(filename));
             FileManager.RegisterReloadCallback(filename, d => {
                 ReifyStatic<T>(d);
                 return true;
