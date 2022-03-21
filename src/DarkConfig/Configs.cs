@@ -17,20 +17,20 @@ namespace DarkConfig {
     /// <param name="obj">the existing object (if any)</param>
     /// <param name="doc">the DocNode that is meant to update the object</param>
     /// <returns>The updated/created object</returns>
-    public delegate object FromDocDelegate(object obj, DocNode doc);
+    public delegate object FromDocFunc(object obj, DocNode doc);
 
     /// <summary>
     /// A callback to be called when a file is hotloaded.
     /// </summary>
     /// <param name="doc">The new file DocNode</param>
     /// <returns>False if the delegate should be un-registered for future reload callbacks.  True otherwise.</returns>
-    public delegate bool ReloadDelegate(DocNode doc);
+    public delegate bool ReloadFunc(DocNode doc);
     
     /// A custom assertion function
-    public delegate void AssertHandler(bool test, string message);
+    public delegate void AssertFunc(bool test, string message);
     
     /// A callback when DarkConfig logs a message, warning or error.
-    public delegate void LogHandler(LogVerbosity verbosity, string message);
+    public delegate void LogFunc(LogVerbosity verbosity, string message);
 
     public static class Configs {
         const string LOG_GUARD = "DC_LOGGING_ENABLED";
@@ -44,8 +44,8 @@ namespace DarkConfig {
 
         internal static Internal.ConfigFileManager FileManager { get; private set; } = new Internal.ConfigFileManager();
         
-        public static AssertHandler AssertCallback;
-        public static LogHandler LogCallback;
+        public static AssertFunc AssertCallback;
+        public static LogFunc LogCallback;
         
         /// True if config file preloading is complete, false otherwise.
         public static bool IsPreloaded => FileManager.IsPreloaded;
@@ -208,7 +208,7 @@ namespace DarkConfig {
         /// </summary>
         /// <param name="filename">The file to parse</param>
         /// <param name="callback">Reload callback to register. Called immediately with the parsed file data.</param>
-        public static void ParseFile(string filename, ReloadDelegate callback) {
+        public static void ParseFile(string filename, ReloadFunc callback) {
             FileManager.ParseFile(filename, callback);
         }
 
@@ -245,7 +245,7 @@ namespace DarkConfig {
         /// Called when the files are loaded.
         /// Registered as a reload callback for the merged files.
         /// </param>
-        public static void LoadFilesAsList(string glob, ReloadDelegate callback) {
+        public static void LoadFilesAsList(string glob, ReloadFunc callback) {
             string destFile = glob + "_file";
             FileManager.RegisterCombinedFile(FileManager.GetFilenamesMatchingGlob(glob), destFile, CombineList);
             FileManager.ParseFile(destFile, callback);
@@ -266,7 +266,7 @@ namespace DarkConfig {
         /// Called when the files are loaded.
         /// Registered as a reload callback for the merged files.
         /// </param>
-        public static void LoadFilesAsMergedDict(string glob, ReloadDelegate callback) {
+        public static void LoadFilesAsMergedDict(string glob, ReloadFunc callback) {
             string combinedFilename = glob + "_file";
             FileManager.RegisterCombinedFile(FileManager.GetFilenamesMatchingGlob(glob), combinedFilename, CombineDict);
             FileManager.ParseFile(combinedFilename, callback);
@@ -280,7 +280,7 @@ namespace DarkConfig {
         /// </summary>
         /// <param name="fromDoc">Custom config parsing function for the type</param>
         /// <typeparam name="T">Type to register the custom loader for</typeparam>
-        public static void RegisterFromDoc<T>(FromDocDelegate fromDoc) {
+        public static void RegisterFromDoc<T>(FromDocFunc fromDoc) {
             RegisterFromDoc(typeof(T), fromDoc);
         }
 
@@ -290,7 +290,7 @@ namespace DarkConfig {
         /// </summary>
         /// <param name="type">Type to register the custom loader for</param>
         /// <param name="fromDoc">Custom config parsing function for the type</param>
-        public static void RegisterFromDoc(Type type, FromDocDelegate fromDoc) {
+        public static void RegisterFromDoc(Type type, FromDocFunc fromDoc) {
             configReifier.RegisteredFromDocs[type] = fromDoc;
         }
 

@@ -5,7 +5,7 @@ using System.Reflection;
 namespace DarkConfig.Internal {
     public class ConfigReifier {
         /// Manually-registered FromDoc's
-        public readonly Dictionary<Type, FromDocDelegate> RegisteredFromDocs = new Dictionary<Type, FromDocDelegate>();
+        public readonly Dictionary<Type, FromDocFunc> RegisteredFromDocs = new Dictionary<Type, FromDocFunc>();
 
         /////////////////////////////////////////////////
         

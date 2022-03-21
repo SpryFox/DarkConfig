@@ -83,7 +83,7 @@ namespace DarkConfig.Internal {
         /// <param name="filename">Name of the config to load.</param>
         /// <param name="callback">Called whenever the file is loaded or changed.</param>
         /// <exception cref="ConfigFileNotFoundException">Thrown if a config can't be found with the given name.</exception>
-        public void ParseFile(string filename, ReloadDelegate callback) {
+        public void ParseFile(string filename, ReloadFunc callback) {
             CheckPreload();
             
             foreach (var source in sources) {
@@ -253,14 +253,14 @@ namespace DarkConfig.Internal {
         /// </summary>
         /// <param name="filename">Config file name.</param>
         /// <param name="callback">Called whenever the file is loaded.</param>
-        public void RegisterReloadCallback(string filename, ReloadDelegate callback) {
-            if (!reloadCallbacks.TryGetValue(filename, out var delegates)) {
-                reloadCallbacks[filename] = new List<ReloadDelegate> {callback};
+        public void RegisterReloadCallback(string filename, ReloadFunc callback) {
+            if (!reloadCallbacks.TryGetValue(filename, out var callbacks)) {
+                reloadCallbacks[filename] = new List<ReloadFunc> {callback};
                 return;
             }
 
-            if (!delegates.Contains(callback)) {
-                delegates.Add(callback);
+            if (!callbacks.Contains(callback)) {
+                callbacks.Add(callback);
             }
         }
 
@@ -276,7 +276,7 @@ namespace DarkConfig.Internal {
         /////////////////////////////////////////////////
         
         float nextHotloadTime;
-        readonly Dictionary<string, List<ReloadDelegate>> reloadCallbacks = new Dictionary<string, List<ReloadDelegate>>();
+        readonly Dictionary<string, List<ReloadFunc>> reloadCallbacks = new Dictionary<string, List<ReloadFunc>>();
         
         class CombinerData {
             public string[] Filenames;
