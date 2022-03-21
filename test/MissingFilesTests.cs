@@ -41,13 +41,13 @@ class MissingFilesTests {
         Assert.IsTrue(filenames.Contains("spinner"));
 
         // check that we can load existing files
-        var spinnerDoc = Configs.Load("spinner");
+        var spinnerDoc = Configs.ParseFile("spinner");
 
         // this file should be present so this should pass
         Assert.IsTrue(spinnerDoc.ContainsKey("key"));
 
         Assert.Throws<ConfigFileNotFoundException>(() => {
-            Configs.Load("nonexistent", (d) => {
+            Configs.ParseFile("nonexistent", (d) => {
                 Assert.Fail("Callback shouldn't be called");
                 return false;
             });

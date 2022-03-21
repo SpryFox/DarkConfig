@@ -5,7 +5,7 @@ using System.Collections.Generic;
 [TestFixture]
 class DocNodeExtensionTests {
     DocNode GetDocNode(string str) {
-        var doc = Configs.LoadDocFromString(str, "ConfigReifierTests_ReifyString_TestFilename");
+        var doc = Configs.ParseString(str, "ConfigReifierTests_ReifyString_TestFilename");
         return doc;
     }
 

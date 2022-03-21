@@ -27,8 +27,8 @@ namespace DarkConfig.Internal {
         /////////////////////////////////////////////////   
 
         /// <summary>
-        /// Loads index file and start loading all config files.  Must call
-        /// this (via Config.Preload, not directly) before using anything else
+        /// Start parsing all config files.  Must call
+        /// this via Configs.Preload before using anything else
         /// in DarkConfig.
         /// </summary>
         public void Preload() {
@@ -57,52 +57,52 @@ namespace DarkConfig.Internal {
         /// <summary>
         /// Get the parsed contents of a preloaded file.
         /// </summary>
-        /// <param name="configName">Name of the config to load.</param>
-        /// <returns>The parsed config file contents.</returns>
+        /// <param name="filename">Name of the file to parse</param>
+        /// <returns>The parsed yaml data</returns>
         /// <exception cref="ConfigFileNotFoundException">Thrown if a config can't be found with the given name.</exception>
-        public DocNode LoadConfig(string configName) {
+        public DocNode ParseFile(string filename) {
             CheckPreload();
 
             foreach (var source in sources) {
-                if (source.AllFiles.TryGetValue(configName, out var configInfo)) {
+                if (source.AllFiles.TryGetValue(filename, out var configInfo)) {
                     return configInfo.Parsed;
                 }
             }
 
-            if (combiners.TryGetValue(configName, out var combinerData)) {
+            if (combiners.TryGetValue(filename, out var combinerData)) {
                 return combinerData.Parsed;
             }
 
-            throw new ConfigFileNotFoundException(configName);
+            throw new ConfigFileNotFoundException(filename);
         }
 
         /// <summary>
         /// Load a config file, parse the contents, and pass it to the given callback.
         /// Register the callback to be called every time the file is hotloaded.
         /// </summary>
-        /// <param name="configName">Name of the config to load.</param>
+        /// <param name="filename">Name of the config to load.</param>
         /// <param name="callback">Called whenever the file is loaded or changed.</param>
         /// <exception cref="ConfigFileNotFoundException">Thrown if a config can't be found with the given name.</exception>
-        public void LoadConfig(string configName, ReloadDelegate callback) {
+        public void ParseFile(string filename, ReloadDelegate callback) {
             CheckPreload();
             
             foreach (var source in sources) {
-                if (source.AllFiles.TryGetValue(configName, out var configInfo)) {
+                if (source.AllFiles.TryGetValue(filename, out var configInfo)) {
                     if (callback(configInfo.Parsed)) {
-                        RegisterReloadCallback(configName, callback);
+                        RegisterReloadCallback(filename, callback);
                     }
                     return;
                 }
             }
 
-            if (combiners.TryGetValue(configName, out var combinerData)) {
+            if (combiners.TryGetValue(filename, out var combinerData)) {
                 if (callback(combinerData.Parsed)) {
-                    RegisterReloadCallback(configName, callback);
+                    RegisterReloadCallback(filename, callback);
                 }
                 return;
             }
             
-            throw new ConfigFileNotFoundException(configName);
+            throw new ConfigFileNotFoundException(filename);
         }
 
         /// <summary>
@@ -239,7 +239,7 @@ namespace DarkConfig.Internal {
             foreach (string filename in modifiedFiles) {
                 if (reloadCallbacks.TryGetValue(filename, out var callbacks)) {
                     for (int j = 0; j < callbacks.Count; j++) {
-                        if (!callbacks[j](LoadConfig(filename))) {
+                        if (!callbacks[j](ParseFile(filename))) {
                             callbacks.RemoveAt(j);
                             j--;
                         }
@@ -304,7 +304,7 @@ namespace DarkConfig.Internal {
                 if (filename == combinerData.CombinedFilename) {
                     continue; // prevent trivial infinite loops
                 }
-                docs.Add(LoadConfig(filename));
+                docs.Add(ParseFile(filename));
             }
             combinerData.Parsed = combinerData.Combiner(docs);
         }
