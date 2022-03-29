@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using System.Reflection;
 
 namespace DarkConfig.Internal {
-    public class ConfigReifier {
+    public class TypeReifier {
         /// Manually-registered FromDoc's
         public readonly Dictionary<Type, FromDocFunc> RegisteredFromDocs = new Dictionary<Type, FromDocFunc>();
 
         /////////////////////////////////////////////////
         
-        public ConfigReifier() {
+        public TypeReifier() {
             RegisteredFromDocs[typeof(DateTime)] = BuiltInTypeReifiers.FromDateTime;
             RegisteredFromDocs[typeof(TimeSpan)] = BuiltInTypeReifiers.FromTimeSpan;
         }
