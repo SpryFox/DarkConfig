@@ -61,7 +61,7 @@
         <Compile Include="Exceptions.cs" />
         <Compile Include="Internal\BuiltInTypeReifiers.cs" />
         <Compile Include="Internal\ChecksumUtils.cs" />
-        <Compile Include="Internal\ConfigReifier.cs" />
+        <Compile Include="Internal\TypeReifier.cs" />
         <Compile Include="Internal\ReflectionCache.cs" />
         <Compile Include="Internal\RegexUtils.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />

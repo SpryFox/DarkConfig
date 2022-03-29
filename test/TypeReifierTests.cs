@@ -4,16 +4,13 @@ using DarkConfig;
 using DarkConfig.Internal;
 using System.Collections.Generic;
 
-[TestFixture]
-class ConfigReifierTests {
-    // disable variable unused in function body warnings; there's a lot in here
-#pragma warning disable 168
-    enum TestEnum {
+class TestTypes {
+    protected enum TestEnum {
         Primi,
         Secondi
     }
 
-    class TestClass {
+    protected class TestClass {
         // scalars
         public bool boolKeyDefaultFalse = false;
         public bool boolKeyDefaultTrue = true;
@@ -37,14 +34,14 @@ class ConfigReifierTests {
         public static int[] staticIntArrKey = null;
     }
 
-    struct ChildStruct {
+    protected struct ChildStruct {
         public int childIntKey;
         public float childFloatKey;
 
         public static int staticIntKey = 0;
     }
 
-    class ParentClass {
+    protected class ParentClass {
 #pragma warning disable 649
         public TestClass nestedObject;
         public List<TestClass> nestedList;
@@ -54,19 +51,19 @@ class ConfigReifierTests {
 #pragma warning restore 649
     }
 
-    static class PureStatic {
+    protected static class PureStatic {
         public static List<string> staticStringList = null;
     }
 
-    class SingleFieldClass {
+    protected class SingleFieldClass {
         public int SingleField = 0;
     }
 
-    class SingleListClass {
+    protected class SingleListClass {
         public List<string> SingleList = null;
     }
 
-    class AttributesClass {
+    protected class AttributesClass {
         [ConfigMandatory] public int Mandatory = -1;
 
         [ConfigAllowMissing] public string AllowedMissing = "initial";
@@ -77,7 +74,7 @@ class ConfigReifierTests {
     }
 
     [ConfigMandatory]
-    class MandatoryClass {
+    protected class MandatoryClass {
         public int intField = -1;
 
         [ConfigAllowMissing] public string stringField = "initial";
@@ -86,13 +83,13 @@ class ConfigReifierTests {
     }
 
     [ConfigAllowMissing]
-    class AllowMissingClass {
+    protected class AllowMissingClass {
         [ConfigMandatory] public string stringField = "init";
 
         public List<string> listField = null;
     }
 
-    class PropertiesClass {
+    protected class PropertiesClass {
         [ConfigIgnore]
         public int backing3Int = 3;
         
@@ -116,17 +113,17 @@ class ConfigReifierTests {
 
         [ConfigAllowMissing]
         public string allowMissing { get; set; } = "missing";
-        
-        [ConfigMandatory]
-        public string mandatoryValue { get; set; }
-    }
 
-    ReificationOptions defaults;
-    ConfigReifier reifier;
+        [ConfigMandatory]
+        public string mandatoryValue { get; set; } = null;
+    }
+    
+    protected ReificationOptions defaults;
+    protected TypeReifier reifier;
 
     [SetUp]
     public void DoSetup() {
-        reifier = new ConfigReifier();
+        reifier = new TypeReifier();
         defaults = Configs.Settings.DefaultReifierOptions;
         Configs.Settings.DefaultReifierOptions = ReificationOptions.AllowMissingExtraFields;
     }
@@ -137,21 +134,25 @@ class ConfigReifierTests {
         Configs.Settings.DefaultReifierOptions = defaults;
     }
 
-    T ReifyString<T>(string str) where T : new() {
-        var doc = Configs.ParseString(str, "ConfigReifierTests_ReifyString_TestFilename");
+    protected T ReifyString<T>(string str) where T : new() {
+        var doc = Configs.ParseString(str, "TestFilename");
         T tc = default(T);
         Configs.Reify(ref tc, doc);
         return tc;
     }
 
-    T UpdateFromString<T>(ref T obj, string str) {
-        var doc = Configs.ParseString(str, "ConfigReifierTests_UpdateFromString_TestFilename");
+    protected T UpdateFromString<T>(ref T obj, string str) {
+        var doc = Configs.ParseString(str, "TestFilename");
         Configs.Reify(ref obj, doc);
         return obj;
     }
+}
 
+[TestFixture]
+[TestOf(typeof(TypeReifier))]
+class TypeReifierTests : TestTypes {
     [Test]
-    public void ConfigReifier_SetsString() {
+    public void SetsString() {
         var tc = ReifyString<TestClass>(@"---
             stringKey: right
             ");
@@ -159,7 +160,7 @@ class ConfigReifierTests {
     }
 
     [Test]
-    public void ConfigReifier_SetsBool_True() {
+    public void SetsBoolToTrue() {
         var tc = ReifyString<TestClass>(@"---
             boolKeyDefaultFalse: true
             ");
@@ -167,7 +168,7 @@ class ConfigReifierTests {
     }
 
     [Test]
-    public void ConfigReifier_SetsBool_True_Capital() {
+    public void SetsBoolToTrueWithCapital() {
         var tc = ReifyString<TestClass>(@"---
             boolKeyDefaultFalse: True
             ");
@@ -175,7 +176,7 @@ class ConfigReifierTests {
     }
 
     [Test]
-    public void ConfigReifier_SetsBool_False() {
+    public void SetsBoolToFalse() {
         var tc = ReifyString<TestClass>(@"---
             boolKeyDefaultTrue: false
             ");
@@ -183,7 +184,7 @@ class ConfigReifierTests {
     }
 
     [Test]
-    public void ConfigReifier_SetsBool_False_Capital() {
+    public void SetsBoolToFalseWithCapital() {
         var tc = ReifyString<TestClass>(@"---
             boolKeyDefaultTrue: False
             ");
@@ -191,7 +192,7 @@ class ConfigReifierTests {
     }
 
     [Test]
-    public void ConfigReifier_SetsInt() {
+    public void SetsInt() {
         var tc = ReifyString<TestClass>(@"---
             intKey: 100
             ");
@@ -199,7 +200,7 @@ class ConfigReifierTests {
     }
 
     [Test]
-    public void ConfigReifier_SetsFloat() {
+    public void SetsFloat() {
         var tc = ReifyString<TestClass>(@"---
             floatKey: 1.56
             ");
@@ -207,25 +208,17 @@ class ConfigReifierTests {
     }
 
     [Test]
-    public void ConfigReifier_SetsFloat_CultureInvariant() {
-        var oldCulture = System.Threading.Thread.CurrentThread.CurrentCulture;
-        var oldUICulture = System.Threading.Thread.CurrentThread.CurrentUICulture;
-
-        var portugese = new System.Globalization.CultureInfo("pt-BR");
-        System.Threading.Thread.CurrentThread.CurrentCulture = portugese;
-        System.Threading.Thread.CurrentThread.CurrentUICulture = portugese;
-
+    [SetCulture("pt-BR")]
+    [SetUICulture("pt-BR")]
+    public void SetsFloatWithCultureInvariant() {
         var tc = ReifyString<TestClass>(@"---
             floatKey: 1.56
             ");
         Assert.AreEqual(1.56f, tc.floatKey);
-
-        System.Threading.Thread.CurrentThread.CurrentCulture = oldCulture;
-        System.Threading.Thread.CurrentThread.CurrentUICulture = oldUICulture;
     }
 
     [Test]
-    public void ConfigReifier_SetsDouble() {
+    public void SetsDouble() {
         var tc = ReifyString<TestClass>(@"---
             doubleKey: 1.10101
             ");
@@ -233,7 +226,7 @@ class ConfigReifierTests {
     }
 
     [Test]
-    public void ConfigReifier_SetsByte() {
+    public void SetsByte() {
         var tc = ReifyString<TestClass>(@"---
             byteKey: 55
             ");
@@ -241,7 +234,7 @@ class ConfigReifierTests {
     }
 
     [Test]
-    public void ConfigReifier_SetsEnum() {
+    public void SetsEnum() {
         var tc = ReifyString<TestClass>(@"---
             enumKey: Secondi
             ");
@@ -249,15 +242,16 @@ class ConfigReifierTests {
     }
 
     [Test]
-    public void ConfigReifier_SetsNullable() {
+    public void SetsNullable() {
         var tc = ReifyString<TestClass>(@"---
             nullableIntKey: 194
             ");
+        Assert.IsTrue(tc.nullableIntKey.HasValue);
         Assert.AreEqual(tc.nullableIntKey.Value, 194);
     }
 
     [Test]
-    public void ConfigReifier_SetsNullabletoNull() {
+    public void SetsNullableToNull() {
         var tc = ReifyString<TestClass>(@"---
             nullableIntKey: null
             ");
@@ -266,15 +260,16 @@ class ConfigReifierTests {
     }
 
     [Test]
-    public void ConfigReifier_SetsNullableStruct() {
+    public void SetsNullableStruct() {
         var tc = ReifyString<TestClass>(@"---
             nullableChildStructKey: { childIntKey: 4202 }
             ");
+        Assert.True(tc.nullableChildStructKey.HasValue);
         Assert.AreEqual(tc.nullableChildStructKey.Value.childIntKey, 4202);
     }
 
     [Test]
-    public void ConfigReifier_SetsNullableStructToNull() {
+    public void SetsNullableStructToNull() {
         var tc = ReifyString<TestClass>(@"---
             nullableChildStructKey: null
             ");
@@ -283,7 +278,7 @@ class ConfigReifierTests {
     }
 
     [Test]
-    public void ConfigReifier_SetsListOfInts() {
+    public void SetsListOfInts() {
         var instance = ReifyString<TestClass>(@"---
             listIntKey: [0, 1, 2, 3, 4]
             ");
@@ -291,7 +286,7 @@ class ConfigReifierTests {
     }
 
     [Test]
-    public void ConfigReifier_SetsArrayOfInts() {
+    public void SetsArrayOfInts() {
         var instance = ReifyString<TestClass>(@"---
             arrayIntKey: [0, 1, 2, 3, 4]
             ");
@@ -299,7 +294,7 @@ class ConfigReifierTests {
     }
 
     [Test]
-    public void ConfigReifier_Array_UpdatesInPlace() {
+    public void ArrayUpdatesInPlace() {
         var array = new[] {
             new TestClass {intKey = 62, floatKey = 4.56f},
             new TestClass {intKey = 1234, floatKey = 8.98f}
@@ -318,7 +313,7 @@ class ConfigReifierTests {
     }
 
     [Test]
-    public void ConfigReifier_Array_UpdatesInPlace_AddItems() {
+    public void ArrayUpdatesInPlaceWhenAddingItems() {
         var array = new[] {
             new TestClass {intKey = 62, floatKey = 4.56f},
             new TestClass {intKey = 1234, floatKey = 8.98f}
@@ -340,7 +335,7 @@ class ConfigReifierTests {
     }
 
     [Test]
-    public void ConfigReifier_Array_UpdatesInPlace_RemoveItems() {
+    public void ArrayUpdatesInPlaceWhenRemovingItems() {
         var array = new[] {
             new TestClass {intKey = 62, floatKey = 4.56f},
             new TestClass {intKey = 1234, floatKey = 8.98f},
@@ -357,7 +352,7 @@ class ConfigReifierTests {
     }
 
     [Test]
-    public void ConfigReifier_SetsArray2DOfFloats() {
+    public void SetsArray2DOfFloats() {
         var instance = ReifyString<TestClass>(@"---
             array2dFloatKey:
                 - [9, 8, 7]
@@ -372,7 +367,7 @@ class ConfigReifierTests {
     }
 
     [Test]
-    public void ConfigReifier_SetsArray3DOfFloats() {
+    public void SetsArray3DOfFloats() {
         var instance = ReifyString<TestClass>(@"---
             array3dFloatKey: [
                 [
@@ -399,7 +394,7 @@ class ConfigReifierTests {
     }
     
     [Test]
-    public void ConfigReifier_Array2D_UpdatesInPlace() {
+    public void Array2DUpdatesInPlace() {
         var array = new TestClass[1, 2];
         array[0, 0] = new TestClass { intKey = 62, floatKey = 4.56f };
         array[0, 1] = new TestClass {intKey = 1234, floatKey = 8.98f};
@@ -422,7 +417,7 @@ class ConfigReifierTests {
     }
 
     [Test]
-    public void ConfigReifier_Array2D_UpdatesInPlace_AddItems() {
+    public void Array2DUpdatesInPlaceWhenAddingItems() {
         var array = new TestClass[1, 2];
         array[0, 0] = new TestClass { intKey = 62, floatKey = 4.56f };
         array[0, 1] = new TestClass { intKey = 1234, floatKey = 8.98f };
@@ -446,7 +441,7 @@ class ConfigReifierTests {
     }
 
     [Test]
-    public void ConfigReifier_Array2D_UpdatesInPlace_RemoveItems() {
+    public void Array2DUpdatesInPlaceWhenRemovingItems() {
         var array = new TestClass[1, 3];
         array[0, 0] = new TestClass { intKey = 62, floatKey = 4.56f };
         array[0, 1] = new TestClass { intKey = 1234, floatKey = 8.98f };
@@ -464,7 +459,7 @@ class ConfigReifierTests {
     }
 
     [Test]
-    public void ConfigReifier_SetsStruct() {
+    public void SetsStruct() {
         var pc = ReifyString<ParentClass>(@"---
             nestedStruct:
                 childIntKey: 1201                
@@ -473,7 +468,7 @@ class ConfigReifierTests {
     }
 
     [Test]
-    public void ConfigReifier_CreatesNestedObject() {
+    public void CreatesNestedObject() {
         var pc = ReifyString<ParentClass>(@"---
             nestedObject:
                 intKey: 41
@@ -482,7 +477,7 @@ class ConfigReifierTests {
     }
 
     [Test]
-    public void ConfigReifier_CreatesNestedListObjects() {
+    public void CreatesNestedListObjects() {
         var pc = ReifyString<ParentClass>(@"---
             nestedList:
                 - intKey: 35
@@ -496,7 +491,7 @@ class ConfigReifierTests {
     }
 
     [Test]
-    public void ConfigReifier_NestedObject_UpdateDoesntCreateNewObject() {
+    public void NestedObjectUpdateDoesntCreateNewObject() {
         var o = new ParentClass();
         o.nestedObject = new TestClass();
         var saved = o.nestedObject;
@@ -509,7 +504,7 @@ class ConfigReifierTests {
     }
 
     [Test]
-    public void ConfigReifier_NestedObject_UpdateDoesntClobberStruct() {
+    public void NestedObjectUpdateDoesntClobberStruct() {
         var o = new ParentClass();
         o.nestedStruct.childIntKey = 10;
         o.nestedStruct.childFloatKey = 10;
@@ -522,7 +517,7 @@ class ConfigReifierTests {
     }
 
     [Test]
-    public void ConfigReifier_NestedList_UpdatesInPlace() {
+    public void NestedListUpdatesInPlace() {
         var o = new ParentClass();
         o.nestedList = new List<TestClass>();
         o.nestedList.Add(new TestClass {intKey = 78, floatKey = 1.2f});
@@ -538,7 +533,7 @@ class ConfigReifierTests {
     }
 
     [Test]
-    public void ConfigReifier_NestedList_UpdatesInPlace_AddItems() {
+    public void NestedListUpdatesInPlaceWhenAddingItems() {
         var o = new ParentClass();
         o.nestedList = new List<TestClass>();
         o.nestedList.Add(new TestClass {intKey = 62, floatKey = 4.56f});
@@ -561,7 +556,7 @@ class ConfigReifierTests {
     }
 
     [Test]
-    public void ConfigReifier_NestedList_UpdatesInPlace_RemoveItems() {
+    public void NestedListUpdatesInPlaceWhenRemovingItems() {
         var o = new ParentClass();
         o.nestedList = new List<TestClass>();
         o.nestedList.Add(new TestClass {intKey = 62, floatKey = 4.56f});
@@ -579,7 +574,7 @@ class ConfigReifierTests {
     }
 
     [Test]
-    public void ConfigReifier_NestedList_UpdatesInPlace_SameCount() {
+    public void NestedListUpdatesInPlaceWhenTheSameCount() {
         var o = new ParentClass();
         o.nestedList = new List<TestClass>();
         o.nestedList.Add(new TestClass {intKey = 62, floatKey = 4.56f});
@@ -601,7 +596,7 @@ class ConfigReifierTests {
     }
 
     [Test]
-    public void ConfigReifier_Dict_EnumKeys() {
+    public void DictEnumKeys() {
         var o = new Dictionary<TestEnum, int>();
         UpdateFromString(ref o, @"---
             Primi: 1024
@@ -613,7 +608,7 @@ class ConfigReifierTests {
     }
 
     [Test]
-    public void ConfigReifier_Dict_IntKeys() {
+    public void DictIntKeys() {
         var o = new Dictionary<int, int>();
         UpdateFromString(ref o, @"---
             101: 1024
@@ -625,7 +620,7 @@ class ConfigReifierTests {
     }
 
     [Test]
-    public void ConfigReifier_Dict_EnumKeys_AddsNewWithoutDeletingExisting() {
+    public void DictEnumKeysAddsNewWithoutDeletingExisting() {
         var o = new Dictionary<TestEnum, TestClass>();
         var saved = new TestClass {intKey = 101};
         o[TestEnum.Primi] = saved;
@@ -640,7 +635,7 @@ class ConfigReifierTests {
     }
 
     [Test]
-    public void ConfigReifier_Dict_EnumKeys_RemovesMissingWithoutDeletingExisting() {
+    public void DictEnumKeysRemovesMissingWithoutDeletingExisting() {
         var o = new Dictionary<TestEnum, TestClass>();
         var saved = new TestClass {intKey = 101};
         o[TestEnum.Primi] = saved;
@@ -656,7 +651,7 @@ class ConfigReifierTests {
     }
 
     [Test]
-    public void ConfigReifier_NestedDict_UpdatesInPlace() {
+    public void NestedDictUpdatesInPlace() {
         var o = new ParentClass();
         o.nestedDict = new Dictionary<string, TestClass>();
         o.nestedDict["dictKey"] = new TestClass {intKey = 22, floatKey = 4.56f};
@@ -672,7 +667,7 @@ class ConfigReifierTests {
     }
 
     [Test]
-    public void ConfigReifier_NestedDict_UpdatesInPlaceStructs() {
+    public void NestedDictUpdatesInPlaceStructs() {
         var o = new ParentClass();
         o.nestedStructDict = new Dictionary<string, ChildStruct>();
         o.nestedStructDict["dictKey"] = new ChildStruct {childIntKey = 11, childFloatKey = 6.54f};
@@ -687,7 +682,7 @@ class ConfigReifierTests {
     }
 
     [Test]
-    public void ConfigReifier_NestedDict_AddsNewPairs() {
+    public void NestedDictAddsNewPairs() {
         var o = new ParentClass();
         o.nestedDict = new Dictionary<string, TestClass>();
         o.nestedDict["dictKey"] = new TestClass {intKey = 67, floatKey = 1.06f};
@@ -707,7 +702,7 @@ class ConfigReifierTests {
     }
 
     [Test]
-    public void ConfigReifier_NestedDict_RemovesMissingPairs() {
+    public void NestedDictRemovesMissingPairs() {
         var o = new ParentClass();
         o.nestedDict = new Dictionary<string, TestClass>();
         o.nestedDict["dictKey"] = new TestClass {intKey = 200, floatKey = 10099.2f};
@@ -722,31 +717,31 @@ class ConfigReifierTests {
     }
 
     [Test]
-    public void ConfigReifier_SetFieldsOnObject_PlainObject() {
+    public void SetFieldsOnObjectForAPlainObject() {
         var tc = new TestClass();
         var doc = Configs.ParseString(
             @"---
             intKey: 99088
             "
-            , "ConfigReifierTests_ReifyString_TestFilename");
+            , "TestFilename");
         reifier.SetFieldsOnObject(ref tc, doc);
         Assert.AreEqual(tc.intKey, 99088);
     }
 
     [Test]
-    public void ConfigReifier_SetFieldsOnObject_CastedObject() {
+    public void SetFieldsOnObjectForACastedObject() {
         var tc = (object) new TestClass();
         var doc = Configs.ParseString(
             @"---
             intKey: 99077
             "
-            , "ConfigReifierTests_ReifyString_TestFilename");
+            , "TestFilename");
         reifier.SetFieldsOnObject(ref tc, doc);
         Assert.AreEqual(((TestClass) tc).intKey, 99077);
     }
 
     [Test]
-    public void ConfigReifier_SetFieldsOnStruct_TemplatedStructCall() {
+    public void SetFieldsOnStructForATemplatedStructCall() {
         var s = new ChildStruct();
         s.childIntKey = 1;
         s.childFloatKey = 1;
@@ -754,14 +749,14 @@ class ConfigReifierTests {
             @"---
             childIntKey: 12345
             "
-            , "ConfigReifierTests_ReifyString_TestFilename");
+            , "TestFilename");
         reifier.SetFieldsOnStruct(ref s, doc);
         Assert.AreEqual(s.childIntKey, 12345);
         Assert.AreEqual(s.childFloatKey, 1);
     }
 
     [Test]
-    public void ConfigReifier_SetFieldsOnObject_BoxedStructArgument() {
+    public void SetFieldsOnObjectForABoxedStructArgument() {
         var s = new ChildStruct();
         s.childIntKey = 1;
         s.childFloatKey = 1;
@@ -769,7 +764,7 @@ class ConfigReifierTests {
             @"---
             childIntKey: 34567
             "
-            , "ConfigReifierTests_ReifyString_TestFilename");
+            , "TestFilename");
         object os = s;
         reifier.SetFieldsOnObject(ref os, doc);
         Assert.AreEqual(((ChildStruct) os).childIntKey, 34567);
@@ -777,73 +772,108 @@ class ConfigReifierTests {
     }
 
     [Test]
-    public void ReifiesStatic_Class() {
+    public void EmptyEnumThrowsParseException() {
+        Assert.Throws<ParseException>(() => { ReifyString<TestClass>("enumKey: \"\""); });
+    }
+
+    [Test]
+    public void BadIntThrowsParseException() {
+        Assert.Throws<ParseException>(() => { ReifyString<TestClass>("intKey: incorrect"); });
+    }
+
+    [Test]
+    public void BadBoolThrowsParseException() {
+        Assert.Throws<ParseException>(() => { ReifyString<TestClass>("boolKeyDefaultFalse: incorrect"); });
+    }
+
+    [Test]
+    public void EmptyDocReturnsDocNode() {
+        var doc = Configs.ParseString("", "TestFilename");
+        Assert.IsNotNull(doc);
+        Assert.IsInstanceOf<DocNode>(doc);
+    }
+
+    [Test]
+    public void EmptyDocStreamReturnsDocNode() {
+        var doc = Configs.LoadDocFromStream(new System.IO.MemoryStream(), "EmptyDoc");
+        Assert.IsNotNull(doc);
+        Assert.IsInstanceOf<DocNode>(doc);
+    }
+}
+
+[TestFixture]
+class ReifiesStatic : TestTypes {
+    [Test]
+    public void Class() {
         var doc = Configs.ParseString(
             @"---
             staticStringKey: arbitrage
             staticIntArrKey: [4, 4, 0, 0]
             intKey: 10   # test non-static fields
             "
-            , "ConfigReifierTests_ReifyString_TestFilename");
+            , "TestFilename");
         Configs.ReifyStatic<TestClass>(doc);
         Assert.AreEqual(TestClass.staticStringKey, "arbitrage");
         Assert.AreEqual(TestClass.staticIntArrKey, new[] {4, 4, 0, 0});
     }
 
     [Test]
-    public void ReifiesStatic_IgnoresNonStaticFields() {
+    public void IgnoresNonStaticFields() {
         var doc = Configs.ParseString(
             @"---
             intKey: 10   # try to bogusly set a non-static field
             "
-            , "ConfigReifierTests_ReifyString_TestFilename");
+            , "TestFilename");
 
         // passes if there are no exceptions
         Configs.ReifyStatic<TestClass>(doc);
     }
 
     [Test]
-    public void ReifiesStatic_Struct() {
+    public void Struct() {
         var doc = Configs.ParseString(
             @"---
             staticIntKey: 3049
             "
-            , "ConfigReifierTests_ReifyString_TestFilename");
+            , "TestFilename");
         Configs.ReifyStatic<ChildStruct>(doc);
         Assert.AreEqual(ChildStruct.staticIntKey, 3049);
     }
 
     [Test]
-    public void ReifiesStatic_StaticClass() {
+    public void StaticClass() {
         var doc = Configs.ParseString(
             @"---
             staticStringList: [herp, derp]
             "
-            , "ConfigReifierTests_ReifyString_TestFilename");
+            , "TestFilename");
         Configs.ReifyStatic(typeof(PureStatic), doc);
         Assert.AreEqual(PureStatic.staticStringList[0], "herp");
         Assert.AreEqual(PureStatic.staticStringList[1], "derp");
     }
+}
 
+[TestFixture]
+class ReifiesSingle : TestTypes {
     [Test]
-    public void ReifiesSingle_CreateSingleFieldClass() {
+    public void CreateSingleFieldClass() {
         var doc = Configs.ParseString(
             @"---
             8342
             "
-            , "ConfigReifierTests_ReifySingle_TestFilename");
+            , "TestFilename");
         var inst = Activator.CreateInstance<SingleFieldClass>();
         reifier.SetFieldsOnObject(ref inst, doc);
         Assert.AreEqual(inst.SingleField, 8342);
     }
 
     [Test]
-    public void ReifiesSingle_CreateSingleListClass() {
+    public void CreateSingleListClass() {
         var doc = Configs.ParseString(
             @"---
             [a, b, c, d]
             "
-            , "ConfigReifierTests_ReifySingle_TestFilename");
+            , "TestFilename");
         var inst = Activator.CreateInstance<SingleListClass>();
         reifier.SetFieldsOnObject(ref inst, doc);
         Assert.AreEqual(inst.SingleList[0], "a");
@@ -851,24 +881,27 @@ class ConfigReifierTests {
         Assert.AreEqual(inst.SingleList[2], "c");
         Assert.AreEqual(inst.SingleList[3], "d");
     }
+}
 
+[TestFixture]
+class ReifiesExtraFields : TestTypes {
     [Test]
-    public void RefiesExtraFields_NoException() {
+    public void NoException() {
         var doc = Configs.ParseString(@"---
             floatKey: 1.56
-        ", "ConfigReifier_ReifiesExtraFields_TestFilename");
+        ", "TestFilename");
         var inst = Activator.CreateInstance<TestClass>();
         reifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.AllowMissingFields);
         Assert.AreEqual(inst.floatKey, 1.56f);
     }
 
     [Test]
-    public void RefiesExtraFields_Raises() {
+    public void Raises() {
         var doc = Configs.ParseString(@"---
             floatKey: 1.56
             extraKey1: derp
             extraKey2: herp
-        ", "ConfigReifier_ReifiesExtraFields_TestFilename");
+        ", "TestFilename");
         var exception = Assert.Throws<ExtraFieldsException>(() => {
             var inst = Activator.CreateInstance<TestClass>();
             reifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.CaseSensitive);
@@ -878,14 +911,17 @@ class ConfigReifierTests {
         Assert.True(exception.Message.IndexOf("extraKey1", StringComparison.Ordinal) >= 0);
         Assert.True(exception.Message.IndexOf("extraKey2", StringComparison.Ordinal) >= 0);
     }
+}
 
+[TestFixture]
+class ReifiesMissingFields : TestTypes {
     [Test]
-    public void RefiesMissingFields_NoException() {
+    public void NoException() {
         var doc = Configs.ParseString(@"---
             childIntKey: 42
             childFloatKey: 1.25
             staticIntKey: 332
-        ", "ConfigReifier_ReifiesMissingFields_TestFilename");
+        ", "TestFilename");
         var inst = Activator.CreateInstance<ChildStruct>();
         reifier.SetFieldsOnStruct(ref inst, doc, ReificationOptions.None);
         Assert.AreEqual(inst.childIntKey, 42);
@@ -894,10 +930,10 @@ class ConfigReifierTests {
     }
 
     [Test]
-    public void RefiesMissingFields_Raises() {
+    public void Raises() {
         var doc = Configs.ParseString(@"---
             childIntKey: 32
-        ", "ConfigReifier_ReifiesMissingFields_TestFilename");
+        ", "TestFilename");
         var exception = Assert.Throws<MissingFieldsException>(() => {
             var inst = Activator.CreateInstance<ChildStruct>();
             reifier.SetFieldsOnStruct(ref inst, doc, ReificationOptions.CaseSensitive);
@@ -907,14 +943,17 @@ class ConfigReifierTests {
         Assert.True(exception.Message.IndexOf("childFloatKey", StringComparison.Ordinal) >= 0);
         Assert.True(exception.Message.IndexOf("staticIntKey", StringComparison.Ordinal) >= 0);
     }
+}
 
+[TestFixture]
+class ReifiesCaseInsensitive : TestTypes {
     [Test]
     public void RefiesCaseInsensitive() {
         var doc = Configs.ParseString(@"---
             childintkey: 32
             CHILDFLOATKEY: 11
             StaticiNtKey: 5
-        ", "ConfigReifier_ReifiesCaseInsensitive_TestFilename");
+        ", "TestFilename");
         var inst = Activator.CreateInstance<ChildStruct>();
         reifier.SetFieldsOnStruct(ref inst, doc, ReificationOptions.None);
         Assert.AreEqual(inst.childIntKey, 32);
@@ -923,21 +962,24 @@ class ConfigReifierTests {
     }
 
     [Test]
-    public void RefiesCaseInsensitive_Missing() {
+    public void RefiesCaseInsensitiveWithMissing() {
         var doc = Configs.ParseString(@"---
             childintkey: 32
-        ", "ConfigReifier_ReifiesCaseInsensitive_TestFilename");
+        ", "TestFilename");
         var inst = Activator.CreateInstance<ChildStruct>();
         reifier.SetFieldsOnStruct(ref inst, doc, ReificationOptions.AllowMissingFields);
         Assert.AreEqual(inst.childIntKey, 32);
     }
+}
 
+[TestFixture]
+class ReifierAttributes : TestTypes {
     [Test]
-    public void ReifierAttributes_Mandatory_AllowsSetting() {
+    public void MandatoryAllowsSetting() {
         var doc = Configs.ParseString(@"---
             Mandatory: 10
             AllowedMissing: derp
-        ", "ConfigReifier_ReifierAttributes_TestFilename");
+        ", "TestFilename");
         var inst = Activator.CreateInstance<AttributesClass>();
         reifier.SetFieldsOnObject(ref inst, doc);
         Assert.AreEqual(inst.Mandatory, 10);
@@ -946,10 +988,10 @@ class ConfigReifierTests {
     }
 
     [Test]
-    public void ReifierAttributes_Mandatory_ExceptsIfNotSet() {
+    public void MandatoryExceptsIfNotSet() {
         var doc = Configs.ParseString(@"---
             AllowedMissing: derp
-        ", "ConfigReifier_ReifierAttributes_TestFilename");
+        ", "TestFilename");
         Assert.Throws<MissingFieldsException>(() => {
             var inst = Activator.CreateInstance<AttributesClass>();
             reifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.AllowMissingFields);
@@ -957,11 +999,11 @@ class ConfigReifierTests {
     }
 
     [Test]
-    public void ReifierAttributes_AllowedMissing_NoExceptionIfMissing() {
+    public void AllowedMissingDoesNotThrowExceptionIfMissing() {
         var doc = Configs.ParseString(@"---
             Mandatory: 15
             MissingOrNotDependingOnDefault: true
-        ", "ConfigReifier_ReifierAttributes_TestFilename");
+        ", "TestFilename");
         var inst = Activator.CreateInstance<AttributesClass>();
         reifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.None);
         Assert.AreEqual(inst.Mandatory, 15);
@@ -971,10 +1013,10 @@ class ConfigReifierTests {
     }
 
     [Test]
-    public void ReifierAttributes_AllowedMissing_ByDefaultInClassWithMandatory() {
+    public void AllowedMissingByDefaultInClassWithMandatory() {
         var doc = Configs.ParseString(@"---
             Mandatory: 15
-        ", "ConfigReifier_ReifierAttributes_TestFilename");
+        ", "TestFilename");
         var inst = Activator.CreateInstance<AttributesClass>();
         reifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.AllowMissingFields);
         Assert.AreEqual(inst.Mandatory, 15);
@@ -983,13 +1025,13 @@ class ConfigReifierTests {
     }
 
     [Test]
-    public void ReifierAttributes_Ignore_SpecifyingFailsOnExtras() {
+    public void IgnoreAndSpecifyingFailsOnExtras() {
         var doc = Configs.ParseString(@"---
             Mandatory: 101
             AllowedMissing: herp
             Ignored: true
             MissingOrNotDependingOnDefault: whut
-        ", "ConfigReifier_ReifierAttributes_TestFilename");
+        ", "TestFilename");
         Assert.Throws<ExtraFieldsException>(() => {
             var inst = Activator.CreateInstance<AttributesClass>();
             reifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.None);
@@ -997,12 +1039,12 @@ class ConfigReifierTests {
     }
 
     [Test]
-    public void ReifierAttributes_Ignore_MissingIgnored() {
+    public void IgnoreAndMissingIgnored() {
         var doc = Configs.ParseString(@"---
             Mandatory: 102
             AllowedMissing: herpe
             MissingOrNotDependingOnDefault: whip
-        ", "ConfigReifier_ReifierAttributes_TestFilename");
+        ", "TestFilename");
         var inst = Activator.CreateInstance<AttributesClass>();
         reifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.None);
         Assert.AreEqual(inst.Mandatory, 102);
@@ -1012,11 +1054,11 @@ class ConfigReifierTests {
     }
 
     [Test]
-    public void ReifierAttributes_MandatoryClass_AcceptsSetting() {
+    public void MandatoryClassAcceptsSetting() {
         var doc = Configs.ParseString(@"---
             intField: 10
             stringField: uh
-        ", "ConfigReifier_ReifierAttributes_TestFilename");
+        ", "TestFilename");
         var inst = Activator.CreateInstance<MandatoryClass>();
         reifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.None);
         Assert.AreEqual(inst.intField, 10);
@@ -1025,10 +1067,10 @@ class ConfigReifierTests {
     }
 
     [Test]
-    public void ReifierAttributes_MandatoryClass_FailsOnMissing() {
+    public void MandatoryClassFailsOnMissing() {
         var doc = Configs.ParseString(@"---
             stringField: uh
-        ", "ConfigReifier_ReifierAttributes_TestFilename");
+        ", "TestFilename");
         Assert.Throws<MissingFieldsException>(() => {
             var inst = Activator.CreateInstance<MandatoryClass>();
             reifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.None);
@@ -1036,10 +1078,10 @@ class ConfigReifierTests {
     }
 
     [Test]
-    public void ReifierAttributes_MandatoryClass_OverridesOptions() {
+    public void MandatoryClassOverridesOptionsReifyParameter() {
         var doc = Configs.ParseString(@"---
             stringField: uh
-        ", "ConfigReifier_ReifierAttributes_TestFilename");
+        ", "TestFilename");
         Assert.Throws<MissingFieldsException>(() => {
             var inst = Activator.CreateInstance<MandatoryClass>();
             reifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.AllowMissingFields);
@@ -1047,10 +1089,10 @@ class ConfigReifierTests {
     }
 
     [Test]
-    public void ReifierAttributes_MandatoryClass_AllowsMissingField() {
+    public void MandatoryClassAllowsMissingField() {
         var doc = Configs.ParseString(@"---
             intField: 99
-        ", "ConfigReifier_ReifierAttributes_TestFilename");
+        ", "TestFilename");
         var inst = Activator.CreateInstance<MandatoryClass>();
         reifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.None);
         Assert.AreEqual(inst.intField, 99);
@@ -1059,11 +1101,11 @@ class ConfigReifierTests {
     }
 
     [Test]
-    public void ReifierAttributes_AllowMissingClass_AcceptsSetting() {
+    public void AllowMissingClassAcceptsSetting() {
         var doc = Configs.ParseString(@"---
             stringField: hmm
             listField: [1]
-        ", "ConfigReifier_ReifierAttributes_TestFilename");
+        ", "TestFilename");
         var inst = Activator.CreateInstance<AllowMissingClass>();
         reifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.None);
         Assert.AreEqual(inst.stringField, "hmm");
@@ -1071,10 +1113,10 @@ class ConfigReifierTests {
     }
 
     [Test]
-    public void ReifierAttributes_AllowMissingClass_AllowsMissing() {
+    public void AllowMissingClassAllowsMissing() {
         var doc = Configs.ParseString(@"---
             stringField: wot
-        ", "ConfigReifier_ReifierAttributes_TestFilename");
+        ", "TestFilename");
         var inst = Activator.CreateInstance<AllowMissingClass>();
         reifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.AllowMissingFields);
         Assert.AreEqual(inst.stringField, "wot");
@@ -1082,10 +1124,10 @@ class ConfigReifierTests {
     }
 
     [Test]
-    public void ReifierAttributes_AllowMissingClass_OverridesOptions() {
+    public void AllowMissingClassOverridesOptions() {
         var doc = Configs.ParseString(@"---
             stringField: wot
-        ", "ConfigReifier_ReifierAttributes_TestFilename");
+        ", "TestFilename");
         var inst = Activator.CreateInstance<AllowMissingClass>();
         reifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.None);
         Assert.AreEqual(inst.stringField, "wot");
@@ -1093,10 +1135,10 @@ class ConfigReifierTests {
     }
 
     [Test]
-    public void ReifierAttributes_AllowMissingClass_ChecksMandatoryField() {
+    public void AllowMissingClassChecksMandatoryField() {
         var doc = Configs.ParseString(@"---
             listField: [a,b]
-        ", "ConfigReifier_ReifierAttributes_TestFilename");
+        ", "TestFilename");
         Assert.Throws<MissingFieldsException>(() => {
             var inst = Activator.CreateInstance<AllowMissingClass>();
             reifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.AllowMissingFields);
@@ -1104,11 +1146,11 @@ class ConfigReifierTests {
     }
 
     [Test]
-    public void ReifierAttributes_AllowMissingClass_DoesCheckExtraFieldsToo() {
+    public void AllowMissingClassDoesCheckExtraFieldsToo() {
         var doc = Configs.ParseString(@"---
             stringField: hi
             extra_field: 33333
-        ", "ConfigReifier_ReifierAttributes_TestFilename");
+        ", "TestFilename");
         Assert.Throws<ExtraFieldsException>(() => {
             var inst = Activator.CreateInstance<AllowMissingClass>();
             reifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.AllowMissingFields);
@@ -1116,41 +1158,12 @@ class ConfigReifierTests {
     }
 
     [Test]
-    public void ParseException_EmptyEnum() {
-        Assert.Throws<ParseException>(() => { ReifyString<TestClass>("enumKey: \"\""); });
-    }
-
-    [Test]
-    public void ParseException_BadInt() {
-        Assert.Throws<ParseException>(() => { ReifyString<TestClass>("intKey: incorrect"); });
-    }
-
-    [Test]
-    public void ParseException_BadBool() {
-        Assert.Throws<ParseException>(() => { ReifyString<TestClass>("boolKeyDefaultFalse: incorrect"); });
-    }
-
-    [Test]
-    public void EmptyDoc_ReturnsDocNode() {
-        var doc = Configs.ParseString("", "EmptyDoc");
-        Assert.IsNotNull(doc);
-        Assert.IsInstanceOf<DocNode>(doc);
-    }
-
-    [Test]
-    public void EmptyDoc_Stream_ReturnsDocNode() {
-        var doc = Configs.LoadDocFromStream(new System.IO.MemoryStream(), "EmptyDoc");
-        Assert.IsNotNull(doc);
-        Assert.IsInstanceOf<DocNode>(doc);
-    }
-    
-    [Test]
-    public void ReifierAttributes_PropertiesClass() {
+    public void PropertiesClassAcceptsSetting() {
         var doc = Configs.ParseString(@"---
             int1Value: 10
             staticStringValue: newValue
             mandatoryValue: mandatory
-        ", "ReifierAttributes_PropertiesClass_AcceptsSetting");
+        ", "TestFilename");
         var inst = Activator.CreateInstance<PropertiesClass>();
         reifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.None);
         Assert.AreEqual(inst.int1Value, 10);
