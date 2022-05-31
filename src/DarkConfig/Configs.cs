@@ -461,6 +461,32 @@ namespace DarkConfig {
         public static void SetFieldsOnStruct<T>(ref T obj, DocNode doc, ReificationOptions? options = null) where T : struct {
             typeReifier.SetFieldsOnStruct(ref obj, doc, options);
         }
+
+        /// <summary>
+        /// Set a specific field on the given object from a parsed config.
+        /// </summary>
+        /// <param name="obj">The object to update.  Must not be null</param>
+        /// <param name="fieldName">The name of the field to update.  Must not be null</param>
+        /// <param name="doc">The config doc to read.</param>
+        /// <param name="options">(optional) Override default and type-defined reification behavior.</param>
+        /// <typeparam name="T">The type of <paramref name="obj"/></typeparam>
+        public static void SetFieldOnObject<T>(ref T obj, string fieldName, DocNode doc, ReificationOptions? options = null) where T : class
+        {
+            typeReifier.SetFieldOnObject(ref obj, fieldName, doc, options);
+        }
+        
+        /// <summary>
+        /// Set a specific field on the given struct from a parsed config.
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <param name="fieldName">The name of the field to update.  Must not be null</param>
+        /// <param name="doc">The config doc to read.</param>
+        /// <param name="options">(optional) Override default and type-defined reification behavior.</param>
+        /// <typeparam name="T"></typeparam>
+        public static void SetFieldOnStruct<T>(ref T obj, string fieldName, DocNode doc, ReificationOptions? options = null) where T : struct
+        {
+            typeReifier.SetFieldOnStruct(ref obj, fieldName, doc, options);
+        }
         #endregion
         
         #region Logging
