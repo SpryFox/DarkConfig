@@ -1175,3 +1175,63 @@ class ReifierAttributes : TestTypes {
         Assert.AreEqual(inst.mandatoryValue, "mandatory");
     }
 }
+
+[TestFixture]
+class SetField : TestTypes {
+    [Test]
+    public void SetTrivialFieldOnObject() {
+        var doc = Configs.ParseString("boolKeyDefaultFalse: true", "SetField.SetTrivialFieldOnObject");
+        var tc = new TestClass();
+        Configs.SetFieldOnObject(ref tc, "boolKeyDefaultFalse", doc, ReificationOptions.None);
+        Assert.AreEqual(tc.boolKeyDefaultFalse, true);
+    }
+    
+    [Test]
+    public void SetOptionalFieldOnObject() {
+        var doc = Configs.ParseString("{}", "SetField.SetOptionalFieldOnObject");
+        var tc = new TestClass();
+        Configs.SetFieldOnObject(ref tc, "boolKeyDefaultFalse", doc, ReificationOptions.AllowMissingFields);
+        Assert.AreEqual(tc.boolKeyDefaultFalse, false);
+    }
+    
+    [Test]
+    public void SetRequiredFieldOnObject() {
+        var doc = Configs.ParseString("Mandatory: 1", "SetField.SetRequiredFieldOnObject");
+        var ac = new AttributesClass();
+        Configs.SetFieldOnObject(ref ac, "Mandatory", doc, ReificationOptions.None);
+        Assert.That(ac.Mandatory, Is.EqualTo(1));
+    }
+    
+    [Test]
+    public void SetRequiredFieldOnObjectButItsMissing() {
+        var doc = Configs.ParseString("{}", "SetField.SetRequiredFieldOnObjectButItsMissing");
+        var ac = new AttributesClass();
+        Assert.Throws<MissingFieldsException>(() => {
+            Configs.SetFieldOnObject(ref ac, "Mandatory", doc, ReificationOptions.None);
+        });
+    }
+    
+    [Test]
+    public void SetDisallowedExtraFieldThrows() {
+        var doc = Configs.ParseString(@"extraField: 1", "SetField.SetDisallowedExtraFieldThrows");
+        var ac = new AttributesClass();
+        Assert.Throws<ExtraFieldsException>(() => {
+            Configs.SetFieldOnObject(ref ac, "extraField", doc, ReificationOptions.None);
+        });
+    }
+    
+    [Test]
+    public void SetAllowedExtraFieldDoesNothing() {
+        var doc = Configs.ParseString(@"extraField: 1", "SetField.SetAllowedExtraFieldDoesNothing");
+        var ac = new AttributesClass();
+        Configs.SetFieldOnObject(ref ac, "extraField", doc, ReificationOptions.AllowExtraFields);
+    }
+    
+    [Test]
+    public void SetIgnoredFieldDoesNothing() {
+        var doc = Configs.ParseString(@"ignored: true", "SetField.SetIgnoredFieldDoesNothing");
+        var ac = new AttributesClass();
+        Configs.SetFieldOnObject(ref ac, "ignored", doc, ReificationOptions.None);
+        Assert.That(ac.Ignored, Is.False);
+    }
+}

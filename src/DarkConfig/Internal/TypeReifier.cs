@@ -87,7 +87,7 @@ namespace DarkConfig.Internal {
                 checkForMissingFields = false;
             }
 
-            var setCopy = obj;
+            object setCopy = obj;
             if (doc.Type != DocNodeType.Dictionary) {
                 // ==== Special Case ====
                 // Allow specifying object types with a single property or field as a scalar value in configs.
@@ -181,6 +181,109 @@ namespace DarkConfig.Internal {
             }
 
             obj = setCopy;
+        }
+
+        /// <summary>
+        /// Sets a single field value on an object from the given docnode dict.
+        /// 
+        /// This is mostly only useful as a helper when writing FromDoc's
+        /// </summary>
+        /// <param name="obj">The object to set the field on</param>
+        /// <param name="fieldName">The name of the field to set</param>
+        /// <param name="doc">A yaml dictionary to grab the value from</param>
+        /// <param name="options">Reification options override</param>
+        /// <typeparam name="T">The type of <paramref name="obj"/></typeparam>
+        /// <exception cref="ExtraFieldsException">If the field does not exist as a member of <typeparamref name="T"/> and extra fields are disallowed</exception>
+        /// <exception cref="MissingFieldsException">If the field is marked as mandatory and is missing in the yaml doc</exception>
+        public void SetFieldOnObject<T>(ref T obj, string fieldName, DocNode doc, ReificationOptions? options = null) where T : class {
+            object setCopy = obj;
+            SetFieldOnObject(typeof(T), ref setCopy, fieldName, doc, options);
+            obj = (T)setCopy;
+        }
+
+        /// <summary>
+        /// Sets a single field value on an object from the given docnode dict.
+        ///
+        /// This is mostly only useful as a helper when writing FromDoc's
+        /// </summary>
+        /// <param name="type">The type of obj</param>
+        /// <param name="obj">The object to set the field on</param>
+        /// <param name="fieldName">The name of the field to set</param>
+        /// <param name="doc">A yaml dictionary to grab the value from</param>
+        /// <param name="options">Reification options override</param>
+        /// <exception cref="ExtraFieldsException">If the field does not exist as a member of <paramref name="type"/> and extra fields are disallowed</exception>
+        /// <exception cref="MissingFieldsException">If the field is marked as mandatory and is missing in the yaml doc</exception>
+        public void SetFieldOnObject(Type type, ref object obj, string fieldName, DocNode doc, ReificationOptions? options = null) {
+            if (doc == null) {
+                return;
+            }
+
+            var typeInfo = reflectionCache.GetTypeInfo(type);
+
+            options ??= Configs.Settings.DefaultReifierOptions;
+
+            // Grab global settings
+            bool caseSensitive = (options & ReificationOptions.CaseSensitive) == ReificationOptions.CaseSensitive;
+            bool allowMissing = (options & ReificationOptions.AllowMissingFields) == ReificationOptions.AllowMissingFields;
+            bool allowExtra = (options & ReificationOptions.AllowExtraFields) == ReificationOptions.AllowExtraFields;
+
+            // Override global settings with type-specific settings
+            if ((typeInfo.AttributeFlags & ReflectionCache.ClassAttributesFlags.HasConfigMandatoryAttribute) != 0) {
+                allowMissing = true;
+            }
+            if ((typeInfo.AttributeFlags & ReflectionCache.ClassAttributesFlags.HasConfigAllowMissingAttribute) != 0) {
+                allowMissing = false;
+            }
+
+            if (GetFirstNonObjectBaseClass(type).ToString() == "UnityEngine.Object") {
+                // Unity Objects have a lot of fields, it never makes sense to set most of them from configs
+                allowMissing = false;
+            }
+
+            foreach (var memberMetadata in typeInfo.Members) {
+                if (!string.Equals(memberMetadata.ShortName, fieldName, StringComparison.OrdinalIgnoreCase)) {
+                    continue;
+                }
+                
+                // Override global and class settings per-field.
+                bool missingIsOk = memberMetadata.HasConfigAllowMissingAttribute || (allowMissing && !memberMetadata.HasConfigMandatoryAttribute);
+
+                // never report delegates or events as present or missing
+                if (memberMetadata.HasConfigIgnoreAttribute || IsDelegateType(memberMetadata.Type)) {
+                    return;
+                }
+                    
+                if (doc.TryGetValue(fieldName, !caseSensitive, out var node)) {
+                    SetMember(memberMetadata.Info, memberMetadata.IsField, ref obj, node, options);
+                } else if (!missingIsOk) {
+                    throw new MissingFieldsException($"Missing doc field: {fieldName} {doc.SourceInformation}");
+                }
+
+                return;
+            }
+
+            if (!allowExtra) {
+                throw new ExtraFieldsException($"Extra doc fields: {fieldName} {doc.SourceInformation}");
+            }
+        }
+
+        /// <summary>
+        /// Sets a single field value on a struct from the given docnode dict.
+        ///
+        /// This is mostly only useful as a helper when writing FromDoc's
+        /// </summary>
+        /// <param name="obj">The struct to set the field on</param>
+        /// <param name="fieldName">The name of the field to set</param>
+        /// <param name="doc">A yaml dictionary to grab the value from</param>
+        /// <param name="options">Reification options override</param>
+        /// <typeparam name="T">The type of <paramref name="obj"/></typeparam>
+        /// <exception cref="ExtraFieldsException">If the field does not exist as a member of <typeparamref name="T"/> and extra fields are disallowed</exception>
+        /// <exception cref="MissingFieldsException">If the field is marked as mandatory and is missing in the yaml doc</exception>
+        public void SetFieldOnStruct<T>(ref T obj, string fieldName, DocNode doc, ReificationOptions? options = null) where T : struct {
+            var type = typeof(T);
+            object setRef = obj;
+            SetFieldOnObject(type, ref setRef, fieldName, doc, options);
+            obj = (T)setRef;
         }
 
         /// <summary>
