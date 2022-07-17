@@ -7,7 +7,7 @@ using System.IO;
 
 public class UnityTestFixture {
     protected T ReifyString<T>(string str) where T : new() {
-        var doc = Configs.LoadDocFromString(str, "UnityTypesConfigReifierTests_ReifyString_TestFilename");
+        var doc = Configs.ParseString(str, "UnityTypesConfigReifierTests_ReifyString_TestFilename");
         var result = default(T);
         Configs.Reify(ref result, doc);
         return result;
@@ -125,7 +125,7 @@ public class UnityMonoBehaviourReifyTests : UnityTestFixture {
 
     [Test]
     public void ReifierAttributes_MonoBehaviour_ForcesAllowMissing() {
-        var doc = Configs.LoadDocFromString(@"---
+        var doc = Configs.ParseString(@"---
             field1: 1
         ", "ConfigReifier_ReifierAttributes_TestFilename");
 
@@ -276,7 +276,7 @@ public class UnityEditorUtilsTests : UnityTestFixture {
 ", contents);
 
         // verify that we can actually read the index file
-        var doc = Configs.LoadDocFromString(contents, indexFilename);
+        var doc = Configs.ParseString(contents, indexFilename);
         Assert.AreEqual(DocNodeType.List, doc.Type);
         Assert.AreEqual(1, doc.Count);
         Assert.AreEqual("Derp/Derp.bytes", doc[0].StringValue);
@@ -287,7 +287,7 @@ public class UnityEditorUtilsTests : UnityTestFixture {
 [TestFixture]
 public class UnityDocNodeExtensionsTests : UnityTestFixture {
     DocNode GetDocNode(string str) {
-        var doc = Configs.LoadDocFromString(str, "ConfigReifierTests_ReifyString_TestFilename");
+        var doc = Configs.ParseString(str, "ConfigReifierTests_ReifyString_TestFilename");
         return doc;
     }
 

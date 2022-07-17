@@ -27,8 +27,8 @@ public class EnemySpawner : MonoBehaviour {
         // "immediate preload" inside ApplyThis that will load/parse all the 
         // config files within the function call (so it'll be slow and drop a 
         // frame).
-        if (Configs.FileManager.CountSources() == 0) {
-            Configs.FileManager.AddSource(new FileSource(Application.dataPath + "/Demo/Resources/Configs", ".bytes"));
+        if (Configs.CountConfigSources() == 0) {
+            Configs.AddConfigSource(new FileSource(Application.dataPath + "/Demo/Resources/Configs", ".bytes"));
         }
 
         Configs.ApplyThis("enemy_spawning", this);

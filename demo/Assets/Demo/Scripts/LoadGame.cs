@@ -24,13 +24,13 @@ public class LoadGame : MonoBehaviour {
 #endif
 
         UnityPlatform.Setup();
-        Configs.FileManager.AddSource(new FileSource(Application.dataPath + "/Demo/Resources/Configs", ".bytes", hotload: true));
+        Configs.AddConfigSource(new FileSource(Application.dataPath + "/Demo/Resources/Configs", ".bytes", hotload: true));
         stopwatch = Stopwatch.StartNew();
 
-        // uncomment to disable periodic hotloading of files, it'll have to be manual
-        //Configs.FileManager.IsHotloadingFiles = false;
+        // comment to disable periodic hotloading of files, it'll have to be manual
+        Configs.Settings.EnableHotloading = true;
 
-        // preload will call StartGame when it's finished
+        // Preload will call StartGame when it's finished
         Configs.Preload(StartGame);
     }
 
