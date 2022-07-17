@@ -96,7 +96,7 @@ namespace DarkConfig {
                 // default DateTime value. We'll instead rely on checksums to detect differences that need hotloading.
                 Modified = new DateTime(),
                 Size = asset.text.Length,
-                Parsed = Configs.LoadDocFromString(asset.text, filename)
+                Parsed = Configs.ParseString(asset.text, filename)
             };
         }
     }

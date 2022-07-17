@@ -79,13 +79,13 @@ public class MetaGame : MonoBehaviour {
         // Shift+H to hotload
         if (Input.GetKeyDown(KeyCode.H) && (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))) {
             Debug.Log("Hotloading configs");
-            Configs.FileManager.DoHotload();
+            Configs.DoImmediateHotload();
         }
 
         // Q toggles hotloading
         if (Input.GetKeyDown(KeyCode.Q)) {
-            Configs.FileManager.IsHotloadingFiles = !Configs.FileManager.IsHotloadingFiles;
-            Debug.Log("Setting auto hotloading to: " + Configs.FileManager.IsHotloadingFiles);
+            Configs.Settings.EnableHotloading = !Configs.Settings.EnableHotloading;
+            Debug.Log("Setting auto hotloading to: " + Configs.Settings.EnableHotloading);
         }
     }
 
