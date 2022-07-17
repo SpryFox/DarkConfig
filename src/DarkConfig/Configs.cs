@@ -84,6 +84,9 @@ namespace DarkConfig {
             FileManager.sources.Remove(source);
         }
 
+        /// Number of currently registered config sources
+        public static int NumConfigSources => FileManager.sources.Count;
+
         /// Removes all config file sources.
         public static void ClearConfigSources() {
             FileManager.sources.Clear();
