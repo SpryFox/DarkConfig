@@ -104,8 +104,8 @@ namespace DarkConfig {
         }
 
         /// If hotloading is enabled, triggers an immediate hotload.
-        public static void DoHotload() {
-            FileManager.DoHotload();
+        public static void DoImmediateHotload() {
+            FileManager.DoImmediateHotload();
         }
 
         /// <summary>

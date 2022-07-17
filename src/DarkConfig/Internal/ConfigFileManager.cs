@@ -208,7 +208,7 @@ namespace DarkConfig.Internal {
         }
 
         /// If hotloading is enabled, triggers an immediate hotload.
-        public void DoHotload() {
+        public void DoImmediateHotload() {
             if (!IsHotloadingFiles) {
                 return;
             }
@@ -268,7 +268,7 @@ namespace DarkConfig.Internal {
             if (IsHotloadingFiles) {
                 nextHotloadTime -= dt;
                 if (nextHotloadTime <= 0) {
-                    DoHotload();
+                    DoImmediateHotload();
                 }
             }
         }
