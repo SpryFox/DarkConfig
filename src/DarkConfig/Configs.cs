@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -470,9 +470,10 @@ namespace DarkConfig {
         /// <param name="doc">The config doc to read.</param>
         /// <param name="options">(optional) Override default and type-defined reification behavior.</param>
         /// <typeparam name="T">The type of <paramref name="obj"/></typeparam>
-        public static void SetFieldOnObject<T>(ref T obj, string fieldName, DocNode doc, ReificationOptions? options = null) where T : class
+		/// <returns>true if we successfully set the field, false otherwise</returns>
+        public static bool SetFieldOnObject<T>(ref T obj, string fieldName, DocNode doc, ReificationOptions? options = null) where T : class
         {
-            typeReifier.SetFieldOnObject(ref obj, fieldName, doc, options);
+            return typeReifier.SetFieldOnObject(ref obj, fieldName, doc, options);
         }
         
         /// <summary>
