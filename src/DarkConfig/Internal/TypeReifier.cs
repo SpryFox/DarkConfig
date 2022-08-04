@@ -193,12 +193,14 @@ namespace DarkConfig.Internal {
         /// <param name="doc">A yaml dictionary to grab the value from</param>
         /// <param name="options">Reification options override</param>
         /// <typeparam name="T">The type of <paramref name="obj"/></typeparam>
+        /// <returns>true if we successfully set the field, false otherwise</returns>
         /// <exception cref="ExtraFieldsException">If the field does not exist as a member of <typeparamref name="T"/> and extra fields are disallowed</exception>
         /// <exception cref="MissingFieldsException">If the field is marked as mandatory and is missing in the yaml doc</exception>
-        public void SetFieldOnObject<T>(ref T obj, string fieldName, DocNode doc, ReificationOptions? options = null) where T : class {
+        public bool SetFieldOnObject<T>(ref T obj, string fieldName, DocNode doc, ReificationOptions? options = null) where T : class {
             object setCopy = obj;
-            SetFieldOnObject(typeof(T), ref setCopy, fieldName, doc, options);
+            bool containedField = SetFieldOnObject(typeof(T), ref setCopy, fieldName, doc, options);
             obj = (T)setCopy;
+            return containedField;
         }
 
         /// <summary>
@@ -211,11 +213,12 @@ namespace DarkConfig.Internal {
         /// <param name="fieldName">The name of the field to set</param>
         /// <param name="doc">A yaml dictionary to grab the value from</param>
         /// <param name="options">Reification options override</param>
+        /// <returns>true if we successfully set the field, false otherwise</returns>
         /// <exception cref="ExtraFieldsException">If the field does not exist as a member of <paramref name="type"/> and extra fields are disallowed</exception>
         /// <exception cref="MissingFieldsException">If the field is marked as mandatory and is missing in the yaml doc</exception>
-        public void SetFieldOnObject(Type type, ref object obj, string fieldName, DocNode doc, ReificationOptions? options = null) {
+        public bool SetFieldOnObject(Type type, ref object obj, string fieldName, DocNode doc, ReificationOptions? options = null) {
             if (doc == null) {
-                return;
+                return false;
             }
 
             var typeInfo = reflectionCache.GetTypeInfo(type);
@@ -250,21 +253,24 @@ namespace DarkConfig.Internal {
 
                 // never report delegates or events as present or missing
                 if (memberMetadata.HasConfigIgnoreAttribute || IsDelegateType(memberMetadata.Type)) {
-                    return;
+                    return false;
                 }
-                    
+
                 if (doc.TryGetValue(fieldName, !caseSensitive, out var node)) {
                     SetMember(memberMetadata.Info, memberMetadata.IsField, ref obj, node, options);
+                    return true;
                 } else if (!missingIsOk) {
                     throw new MissingFieldsException($"Missing doc field: {fieldName} {doc.SourceInformation}");
                 }
 
-                return;
+                return false;
             }
 
             if (!allowExtra) {
                 throw new ExtraFieldsException($"Extra doc fields: {fieldName} {doc.SourceInformation}");
             }
+
+            return false;
         }
 
         /// <summary>
