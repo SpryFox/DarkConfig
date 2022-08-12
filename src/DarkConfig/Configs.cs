@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.IO;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -50,19 +51,6 @@ namespace DarkConfig {
         /// True if config file preloading is complete, false otherwise.
         public static bool IsPreloaded => FileManager.IsPreloaded;
 
-        /// Event that's called once preloading is complete.
-        /// Adding a delegate to this event after preloading has completed
-        /// will call the new delegate immediately.
-        public static event Action OnPreload {
-            add {
-                _OnPreload += value;
-                if (IsPreloaded) {
-                    value();
-                }
-            }
-            remove => _OnPreload -= value;
-        }
-
         /////////////////////////////////////////////////
         
         #region ConfigSources
@@ -95,15 +83,23 @@ namespace DarkConfig {
         
         /// <summary>
         /// Preloads all config files into memory.
-        /// Must be completed before using any other DarkConfig functionality.
+        /// Preloading must be completed before using any other DarkConfig functionality.
         /// </summary>
-        /// <param name="callback">(optional) Called once preloading is complete</param>
-        public static void Preload(Action callback = null) {
-            if (callback != null) {
-                OnPreload += callback;
+        public static void Preload() {
+            foreach (object _ in FileManager.StepPreload()) { }
+        }
+
+        /// <summary>
+        /// Perform a single preloading step.
+        /// Preloading must be completed before using any other DarkConfig functionality.
+        /// Useful when you want to time-slice loading across multiple frames.
+        /// Will yield break when preloading is complete.
+        /// </summary>
+        /// <returns>null while there's work left to do</returns>
+        public static IEnumerable StepPreload() {
+            foreach (object _ in FileManager.StepPreload()) {
+                yield return null;
             }
-            FileManager.Preload();
-            _OnPreload?.Invoke();
         }
 
         /// If hotloading is enabled, triggers an immediate hotload.
@@ -175,7 +171,6 @@ namespace DarkConfig {
         /// Does not reset Settings values.
         /// </summary>
         public static void Clear() {
-            _OnPreload = null;
             typeReifier = new Internal.TypeReifier();
             FileManager = new Internal.ConfigFileManager();
             LogCallback = null;
@@ -528,7 +523,6 @@ namespace DarkConfig {
         
         /////////////////////////////////////////////////
 
-        static Action _OnPreload;
         static Internal.TypeReifier typeReifier = new Internal.TypeReifier();
 
         /////////////////////////////////////////////////

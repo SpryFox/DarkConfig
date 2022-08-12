@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.IO;
 using System.Collections.Generic;
 
@@ -43,10 +44,11 @@ namespace DarkConfig {
             configFileExtensions = fileExtensions;
         }
 
-        public override void Preload() {
+        public override IEnumerable StepPreload() {
             foreach (string file in FindConfigsInBaseDir()) {
                 var fileInfo = ReadFile(file);
                 AllFiles.Add(fileInfo.Name, fileInfo);
+                yield return null;
             }
         }
 

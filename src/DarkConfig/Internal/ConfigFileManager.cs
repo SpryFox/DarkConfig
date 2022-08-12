@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
@@ -30,22 +31,27 @@ namespace DarkConfig.Internal {
         /// Start parsing all config files.  Must call
         /// this via Configs.Preload before using anything else
         /// in DarkConfig.
+        /// yield break's when all files are preloaded. 
         /// </summary>
-        public void Preload() {
-            if (IsPreloaded) {
-                return;
+        /// <returns></returns>
+        public IEnumerable StepPreload() {
+            if (IsPreloaded) { 
+                yield break;
             }
 
-            // Preload all sources.            
+            // Preload all sources.
             Configs.LogInfo($"Preloading {sources.Count} sources");
             foreach (var source in sources) {
                 Configs.LogInfo($"Preloading source {source}");
-                source.Preload();
+                foreach (object _ in source.StepPreload()) {
+                    yield return null;
+                }
             }
 
             // Build combined files
             foreach (var combinerData in combiners.Values) {
                 BuildCombinedConfig(combinerData);
+                yield return null;
             }
 
             IsPreloaded = true;
@@ -61,7 +67,7 @@ namespace DarkConfig.Internal {
         /// <returns>The parsed yaml data</returns>
         /// <exception cref="ConfigFileNotFoundException">Thrown if a config can't be found with the given name.</exception>
         public DocNode ParseFile(string filename) {
-            CheckPreload();
+            ThrowIfNotPreloaded();
 
             foreach (var source in sources) {
                 if (source.AllFiles.TryGetValue(filename, out var configInfo)) {
@@ -84,7 +90,7 @@ namespace DarkConfig.Internal {
         /// <param name="callback">Called whenever the file is loaded or changed.</param>
         /// <exception cref="ConfigFileNotFoundException">Thrown if a config can't be found with the given name.</exception>
         public void ParseFile(string filename, ReloadFunc callback) {
-            CheckPreload();
+            ThrowIfNotPreloaded();
             
             foreach (var source in sources) {
                 if (source.AllFiles.TryGetValue(filename, out var configInfo)) {
@@ -118,7 +124,7 @@ namespace DarkConfig.Internal {
         /// <param name="combiner">Combines multiple parsed fies into a single file.
         /// Called when any of the source files change with the DocNodes of all source files.</param>
         public void RegisterCombinedFile(List<string> sourceFilenames, string newFilename, Func<List<DocNode>, DocNode> combiner) {
-            CheckPreload();
+            ThrowIfNotPreloaded();
 
             // clobber any existing setup for this filename
             if (combiners.ContainsKey(newFilename)) {
@@ -154,7 +160,7 @@ namespace DarkConfig.Internal {
         /// </summary>
         /// <param name="combinedFilename">Generated name of the combined file.</param>
         public void UnregisterCombinedFile(string combinedFilename) {
-            CheckPreload();
+            ThrowIfNotPreloaded();
 
             if (!combiners.ContainsKey(combinedFilename)) {
                 return;
@@ -196,7 +202,7 @@ namespace DarkConfig.Internal {
         /// <param name="pattern">Regex to match file names with.</param>
         /// <returns>List of file names matching the given regex.</returns>
         public List<string> GetFilenamesMatchingRegex(Regex pattern) {
-            CheckPreload();
+            ThrowIfNotPreloaded();
             
             var results = new List<string>();
             
@@ -289,13 +295,10 @@ namespace DarkConfig.Internal {
         
         /////////////////////////////////////////////////
 
-        void CheckPreload() {
-            if (IsPreloaded) {
-                return;
+        void ThrowIfNotPreloaded() {
+            if (!IsPreloaded) {
+                throw new NotPreloadedException("You must call Configs.Preload before using anything else in Dark Config");
             }
-
-            Preload();
-            Configs.LogInfo($"Done on-demand preloading, IsHotloadingFiles: {IsHotloadingFiles}");
         }
 
         void BuildCombinedConfig(CombinerData combinerData) {
