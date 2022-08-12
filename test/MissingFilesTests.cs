@@ -33,6 +33,8 @@ class MissingFilesTests {
     [Test]
     public void MissingFiles() {
         CreateFile("spinner.yaml", "key: ok");
+        
+        Configs.Preload();
 
         // check the index after preload
         var filenames = Configs.GetFilenamesMatchingRegex(new Regex(".*"));
