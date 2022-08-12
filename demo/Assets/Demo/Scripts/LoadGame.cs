@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using DarkConfig;
 using System.Diagnostics;
@@ -25,16 +26,20 @@ public class LoadGame : MonoBehaviour {
 
         UnityPlatform.Setup();
         Configs.AddConfigSource(new FileSource(Application.dataPath + "/Demo/Resources/Configs", ".bytes", hotload: true));
+        StartCoroutine(StartGame());
+    }
+
+    IEnumerator StartGame() {
         stopwatch = Stopwatch.StartNew();
 
         // comment to disable periodic hotloading of files, it'll have to be manual
         Configs.Settings.EnableHotloading = true;
 
         // Preload will call StartGame when it's finished
-        Configs.Preload(StartGame);
-    }
-
-    void StartGame() {
+        foreach (object _ in Configs.StepPreload()) {
+            yield return null;
+        }
+        
         stopwatch.Stop();
         UnityEngine.Debug.Log("Config parsing ms: " + stopwatch.ElapsedMilliseconds);
 

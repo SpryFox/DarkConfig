@@ -1,5 +1,6 @@
 using UnityEngine;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 
 namespace DarkConfig {
@@ -17,7 +18,7 @@ namespace DarkConfig {
             CanHotload = hotload && Application.isEditor;
         }
 
-        public override void Preload() {
+        public override IEnumerable StepPreload() {
             AllFiles.Clear();
             filesList.Clear();
             
@@ -25,7 +26,7 @@ namespace DarkConfig {
             indexFile = ReadFile(INDEX_FILENAME);
             if (indexFile == null) {
                 Configs.LogError($"Index file is missing at Resources path {INDEX_FILENAME}.");
-                return;
+                yield break;
             }
             
             // Load all the files.
@@ -33,11 +34,12 @@ namespace DarkConfig {
                 string filename = nameNode.StringValue;
                 filesList.Add(filename);
                 if (filename != "index") {
-                    AllFiles[filename] = ReadFile(filename);    
+                    AllFiles[filename] = ReadFile(filename);
+                    yield return null;
                 }
             }
         }
-        
+
         public override void Hotload(List<string> changedFiles) {
             // First try to load the index in case any files were added or removed.
             var newIndex = ReadFile(INDEX_FILENAME);
@@ -49,7 +51,7 @@ namespace DarkConfig {
             if (newIndex.Checksum != indexFile.Checksum) {
                 // Index has changed, possibly have added or removed files from the index.
                 // TODO Smart update, don't just toss the whole list and start from scratch.
-                Preload();
+                foreach (object _ in StepPreload()) { }
                 changedFiles.AddRange(filesList);
             } else {
                 // Index hasn't changed.  Check each file.

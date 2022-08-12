@@ -38,4 +38,8 @@ namespace DarkConfig {
     public class ConfigFileNotFoundException : FileNotFoundException {
         public ConfigFileNotFoundException(string filename) : base("Couldn't find file " + filename + ". Perhaps it isn't in the index, or wasn't preloaded.", filename) { }
     }
+
+    public class NotPreloadedException : InvalidOperationException {
+        public NotPreloadedException(string message) : base(message) { }
+    }
 }

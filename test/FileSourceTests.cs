@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using DarkConfig;
 using NUnit.Framework;
 using System.IO;
@@ -35,7 +34,7 @@ class FileSourceTests {
         CreateFile("derp.yaml", "key: value");
 
         var fileSource = new FileSource(tempDirPath, hotload:true);
-        fileSource.Preload();
+        foreach (object _ in fileSource.StepPreload()) { }
         
         Assert.AreEqual(1, fileSource.AllFiles.Count);
         Assert.IsTrue(fileSource.AllFiles.ContainsKey("derp"));
@@ -51,7 +50,7 @@ class FileSourceTests {
         // Preload a single file.
         CreateFile("derp.yaml", "key: value");
         var fileSource = new FileSource(tempDirPath, hotload:true);
-        fileSource.Preload();
+        foreach (object _ in fileSource.StepPreload()) { }
         Assert.AreEqual(1, fileSource.AllFiles.Count);
         Assert.IsTrue(fileSource.AllFiles.ContainsKey("derp"));
 
@@ -78,7 +77,7 @@ class FileSourceTests {
         CreateFile("durr.yaml", "a: b");
 
         var fileSource = new FileSource(tempDirPath, hotload:true);
-        fileSource.Preload();
+        foreach (object _ in fileSource.StepPreload()) { }
         Assert.AreEqual(2, fileSource.AllFiles.Count);
 
         DeleteFile("durr.yaml");
@@ -95,7 +94,7 @@ class FileSourceTests {
         CreateFile("derp.yaml", "key: value");
 
         var fileSource = new FileSource(tempDirPath, hotload:true);
-        fileSource.Preload();
+        foreach (object _ in fileSource.StepPreload()) { }
         Assert.AreEqual(1, fileSource.AllFiles.Count);
 
         CreateFile("durr.yaml", "a: b");
@@ -116,7 +115,7 @@ class FileSourceTests {
         CreateFile("derp.yaml", "key: value");
 
         var fileSource = new FileSource(tempDirPath, hotload:true);
-        fileSource.Preload();
+        foreach (object _ in fileSource.StepPreload()) { }
 
         CreateFile("durr.yaml", "a: b");
         CreateFile("hurr.yaml", "x: y");
@@ -139,7 +138,7 @@ class FileSourceTests {
         CreateFile("derp.yaml", "key: value");
 
         var fileSource = new FileSource(tempDirPath, hotload:true);
-        fileSource.Preload();
+        foreach (object _ in fileSource.StepPreload()) { }
 
         CreateFile("durr.yaml", "a: b");
         CreateFile("hurr.yaml", "x: y");

@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 
 namespace DarkConfig {
@@ -9,7 +10,7 @@ namespace DarkConfig {
         public abstract bool CanHotload { get; }
 
         /// Find and load all configs that this source knows about
-        public abstract void Preload();
+        public abstract IEnumerable StepPreload();
 
         /// Try to hotload config files.  Adds names of changed files to the <paramref name="changedFiles"/> list.
         public virtual void Hotload(List<string> changedFiles) {}
