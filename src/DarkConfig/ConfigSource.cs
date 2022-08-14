@@ -9,7 +9,9 @@ namespace DarkConfig {
         /// Does this config source support hotloading config files?
         public abstract bool CanHotload { get; }
 
-        /// Find and load all configs that this source knows about
+        /// Generator function that finds and load all configs that this source knows about.
+        /// Loads one file at a time, separated by a yield return null.
+        /// Used for both blocking and time-sliced config loading.
         public abstract IEnumerable StepPreload();
 
         /// Try to hotload config files.  Adds names of changed files to the <paramref name="changedFiles"/> list.
