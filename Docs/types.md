@@ -1,13 +1,11 @@
-Builtin Types
-=============
+# Builtin Types
 
 DarkConfig uses the types and structures defined in your code to interpret the meaning of the YAML configuration files.  When using it, you tend to build up structs, classes, lists and dictionaries, which are all completely unset and empty, then you apply a YAML file to fill them out.
 
 DarkConfig has a pluggable parsing system that makes it easy to write your own parser for any type, see the Custom Parsing document.
 
 
-Primitive types
-----------------
+## Primitive types
 
 Here's a class with a bunch of simple types.
 
