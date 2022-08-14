@@ -1,21 +1,22 @@
-Validation
-===========
+# Validation
 
 So the designer you work with added a ton of new enemies, but sometimes accidentally forgot to set their color.  So now you're wondering why sometimes the map has all these black dots on it.  Whoops, might have been nice to have a big old error pointing this subtle bug out!  That's what validation is for.
 
 DarkConfig does two very simple validations:  checking for *missing* fields, and *extra* fields.  A missing field is one that is in your class, but it's missing from the config file (as in our mainColor example).  An extra field is present in the config file but not on the object -- maybe it's a misspelling like "mainColour", or maybe it's left over from a previous generation.
 
-    // SampleObject.cs ----
-    public class SampleObject {
-        string field1;
-        string field2;
-    }
-
-    # sample_config.bytes ----
-    field1: value1
-    field3: value3        # this field is *extra*
-                          # field2 is *missing*
-
+```C#
+// SampleObject.cs ----
+public class SampleObject {
+    string field1;
+    string field2;
+}
+```
+```yaml
+# sample_config.bytes ----
+field1: value1
+# field2 is missing
+field3: value3  # this field is extra
+```
 
 When you call Config.Apply, DarkConfig will run these validations and throw ParseExceptions for violations, showing the file and line number.  Then you can fix them!
 
@@ -23,8 +24,7 @@ You can turn on and off validation at many different levels in DarkConfig.
 
 The precedence of validation is:  Field Attribute > Class Attribute > Reify > Global
 
-Global Validation
-------------------
+## Global Validation
 
 Control the default/global validation mode by setting the Config.ConfigOptions enum.  This enum has several flags:
 
@@ -41,8 +41,7 @@ Example:
     // we can skip some fields but say something if there's an extra field
     Config.ConfigOptions = ConfigOptions.AllowMissingFields;
 
-Field Validation
------------------
+## Field Validation
 
 Set per-field validation with attributes.
 
@@ -51,19 +50,20 @@ Set per-field validation with attributes.
 * ConfigIgnore is special: it causes DarkConfig to ignore any validation on the field and _also_ never set it.  It will be as though the field doesn't exist on the class.  This is useful when you want to have strict validation on all other fields but have a few fields that are not set from config files.
 
 
-    class AttributesClass {
-        [ConfigMandatory]
-        public int field1 = -1;    // will complain if this field is not in config
+```C#
+class AttributesClass {
+    [ConfigMandatory]
+    public int field1 = -1;    // will complain if this field is not in config
 
-        [ConfigAllowMissing]
-        public string field2 = "initial";   // will happily tolerate this field being missing
+    [ConfigAllowMissing]
+    public string field2 = "initial";   // will happily tolerate this field being missing
 
-        [ConfigIgnore]
-        public bool field3 = false;    // will not set this field
-    }
+    [ConfigIgnore]
+    public bool field3 = false;    // will not set this field
+}
+```
 
-Class Validation
------------------
+## Class Validation
 
 Change DarkConfig's validation on a per-class basis with attributes.
 
@@ -72,8 +72,7 @@ You can apply ConfigMandatory or ConfigAllowMissing to any class, where they app
 As a special case, classes derived from MonoBehaviour have an implicit ConfigAllowMissing.  This is because the MonoBehaviour class has a ton of fields that you don't control and don't want to set.
 
 
-Reify Validation
-------------------
+## Reify Validation
 
 You can set ConfigOptions per call to Reify.  This overrides the global setting for the duration of the call.
 
