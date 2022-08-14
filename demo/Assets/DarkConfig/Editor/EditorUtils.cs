@@ -4,9 +4,19 @@ using System.Collections.Generic;
 using System.IO;
 
 namespace DarkConfig {
+    public static class EditorMenus {
+        [MenuItem ("Assets/DarkConfig/Autogenerate Index")]
+        static void MenuGenerateIndex() {
+            EditorUtils.GenerateIndex("Resources/Configs");
+            AssetDatabase.Refresh();
+        }
+    }
+
     public class EditorUtils {
         static readonly string[] INDEX_FILE_HEADER = {
             "# automatically generated DarkConfig index file",
+            "# DO NOT EDIT THIS MANUALLY",
+            "# Instead, run Assets > DarkConfig > Autogenerate Index",
             "#",
             "---"
         };
