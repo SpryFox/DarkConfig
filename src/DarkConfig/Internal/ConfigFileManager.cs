@@ -213,6 +213,17 @@ namespace DarkConfig.Internal {
             return results;
         }
 
+        public ConfigFileInfo GetFileInfo(string filename) {
+            ThrowIfNotPreloaded();
+            
+            foreach (var source in sources) {
+                if (source.AllFiles.TryGetValue(filename, out var info)) {
+                    return info;
+                }
+            }
+            return null;
+        }
+
         /// If hotloading is enabled, triggers an immediate hotload.
         public void DoImmediateHotload() {
             if (!IsHotloadingFiles) {

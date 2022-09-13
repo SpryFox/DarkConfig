@@ -184,6 +184,10 @@ namespace DarkConfig {
         public static List<string> GetFilenamesMatchingRegex(Regex pattern) {
             return FileManager.GetFilenamesMatchingRegex(pattern);
         }
+
+        public static ConfigFileInfo GetFileInfo(string filename) {
+            return FileManager.GetFileInfo(filename);
+        }
         
         #region Parsing YAML
         /// <summary>
