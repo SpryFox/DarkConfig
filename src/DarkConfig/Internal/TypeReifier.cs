@@ -582,6 +582,26 @@ namespace DarkConfig.Internal {
 
                         return existing;
                     }
+
+                    if (fieldType.GetGenericTypeDefinition() == typeof(HashSet<>)) {
+                        var typeParameters = fieldType.GetGenericArguments();
+
+                        if (existing == null) {
+                            existing = Activator.CreateInstance(fieldType);
+                        } else {
+                            // ideally we would try and keep any exising values and update them, but that is hard to do meaningfully for sets, so just rebuild it entirely
+                            fieldType.GetMethod("Clear").Invoke(existing, null);
+                        }
+
+                        // HashSet<> has no generic-less object interface we can use, so use reflection to add elements
+                        var addMethod = fieldType.GetMethod("Add");
+                        foreach (var value in doc.Values) {
+                            var elem = ReadValueOfType(typeParameters[0], null, value, options);
+                            addMethod.Invoke(existing, new object[] { elem });
+                        }
+
+                        return existing;
+                    }
                 }
 
                 var typeInfo = reflectionCache.GetTypeInfo(fieldType);
