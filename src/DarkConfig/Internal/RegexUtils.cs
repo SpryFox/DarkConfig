@@ -12,7 +12,19 @@ namespace DarkConfig.Internal {
             }
         }
 
+        public static void FilterMatching(Regex pattern, IEnumerable<string> strings, HashSet<string> results) {
+            foreach (string str in strings) {
+                if (pattern.IsMatch(str)) {
+                    results.Add(str);
+                }
+            }
+        }
+
         public static void FilterMatchingGlob(string glob, IEnumerable<string> strings, List<string> results) {
+            FilterMatching(GlobToRegex(glob), strings, results);
+        }
+
+        public static void FilterMatchingGlob(string glob, IEnumerable<string> strings, HashSet<string> results) {
             FilterMatching(GlobToRegex(glob), strings, results);
         }
 

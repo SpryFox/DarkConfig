@@ -204,13 +204,13 @@ namespace DarkConfig.Internal {
         public List<string> GetFilenamesMatchingRegex(Regex pattern) {
             ThrowIfNotPreloaded();
             
-            var results = new List<string>();
+            var results = new HashSet<string>();
             
             foreach (var source in sources) {
                 RegexUtils.FilterMatching(pattern, source.AllFiles.Keys, results);
             }
             
-            return results;
+            return new List<string>(results);
         }
 
         public ConfigFileInfo GetFileInfo(string filename) {
