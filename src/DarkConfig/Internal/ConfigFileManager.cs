@@ -241,8 +241,9 @@ namespace DarkConfig.Internal {
                 }
             }
             
-            // Call callbacks for modified files.
+            // Log and call callbacks for modified files.
             foreach (string filename in modifiedFiles) {
+                Configs.LogInfo($"Hotloading: {filename}");
                 if (reloadCallbacks.TryGetValue(filename, out var callbacks)) {
                     for (int j = 0; j < callbacks.Count; j++) {
                         if (!callbacks[j](ParseFile(filename))) {
