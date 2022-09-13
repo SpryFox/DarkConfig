@@ -385,6 +385,11 @@ namespace DarkConfig.Internal {
                     return existing;
                 }
 
+                // DocNode
+                if (fieldType == typeof(DocNode)) {
+                    return doc;
+                }
+
                 // Arrays
                 if (fieldType.IsArray) { 
                     int rank = fieldType.GetArrayRank();
