@@ -111,6 +111,15 @@ namespace DarkConfig.Internal {
             // Set the fields on the object.
             for (var memberIndex = 0; memberIndex < typeInfo.Members.Length; memberIndex++) {
                 ref var memberMetadata = ref typeInfo.Members[memberIndex];
+
+                if (memberMetadata.HasConfigSourceInformationAttribute) {
+                    // Special field to auto-populate with SourceInformation
+                    if (memberMetadata.Type != typeof(string)) {
+                        throw new Exception("Field with ConfigSourceInformation should be a string");
+                    }
+                    SetMember(memberMetadata.Info, memberMetadata.IsField, ref setCopy, doc.SourceInformation, options);
+                    continue;
+                }
                 
                 // Override global and class settings per-field.
                 bool memberIsMandatory = memberMetadata.HasConfigMandatoryAttribute;
@@ -632,6 +641,26 @@ namespace DarkConfig.Internal {
                 }
                 object existing = fieldInfo.GetValue(obj);
                 object updated = ReadValueOfType(fieldInfo.FieldType, existing, doc, options);
+                SetMember(memberInfo, isField, ref obj, updated, options);
+            } else {
+                var propertyInfo = (PropertyInfo)memberInfo;
+                if (obj == null && !propertyInfo.CanWrite) {
+                    // silently don't set non-static fields
+                    return;
+                }
+                object existing = propertyInfo.GetValue(obj);
+                object updated = ReadValueOfType(propertyInfo.PropertyType, existing, doc, options);
+                SetMember(memberInfo, isField, ref obj, updated, options);
+            }
+        }
+
+        void SetMember(MemberInfo memberInfo, bool isField, ref object obj, object updated, ReificationOptions? options) {
+            if (isField) {
+                var fieldInfo = (FieldInfo)memberInfo;
+                if (obj == null && !fieldInfo.IsStatic) {
+                    // silently don't set non-static fields
+                    return;
+                }
                 object setCopy = obj; // needed for structs
                 fieldInfo.SetValue(setCopy, updated);
                 obj = setCopy;                
@@ -641,8 +670,6 @@ namespace DarkConfig.Internal {
                     // silently don't set non-static fields
                     return;
                 }
-                object existing = propertyInfo.GetValue(obj);
-                object updated = ReadValueOfType(propertyInfo.PropertyType, existing, doc, options);
                 object setCopy = obj; // needed for structs
                 propertyInfo.SetValue(setCopy, updated);
                 obj = setCopy;
