@@ -204,13 +204,24 @@ namespace DarkConfig.Internal {
         public List<string> GetFilenamesMatchingRegex(Regex pattern) {
             ThrowIfNotPreloaded();
             
-            var results = new List<string>();
+            var results = new HashSet<string>();
             
             foreach (var source in sources) {
                 RegexUtils.FilterMatching(pattern, source.AllFiles.Keys, results);
             }
             
-            return results;
+            return new List<string>(results);
+        }
+
+        public ConfigFileInfo GetFileInfo(string filename) {
+            ThrowIfNotPreloaded();
+            
+            foreach (var source in sources) {
+                if (source.AllFiles.TryGetValue(filename, out var info)) {
+                    return info;
+                }
+            }
+            return null;
         }
 
         /// If hotloading is enabled, triggers an immediate hotload.
@@ -241,8 +252,9 @@ namespace DarkConfig.Internal {
                 }
             }
             
-            // Call callbacks for modified files.
+            // Log and call callbacks for modified files.
             foreach (string filename in modifiedFiles) {
+                Configs.LogInfo($"Hotloading: {filename}");
                 if (reloadCallbacks.TryGetValue(filename, out var callbacks)) {
                     for (int j = 0; j < callbacks.Count; j++) {
                         if (!callbacks[j](ParseFile(filename))) {

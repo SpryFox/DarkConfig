@@ -17,3 +17,10 @@ public class ConfigAllowMissingAttribute : Attribute { }
 /// first place.
 [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
 public class ConfigIgnoreAttribute : Attribute { }
+
+/// If a field has the SourceInformation attribute then the field is
+/// automaticaly populated with DocNode.SourceInformation by SetFieldsOnObject()
+/// Useful if you do validation or want better error reporting after reification
+/// Use #if flags to remove this in production code where it's not needed
+[AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
+public class ConfigSourceInformationAttribute : Attribute { }

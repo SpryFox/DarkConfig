@@ -7,6 +7,7 @@ namespace DarkConfig {
     public static class UnityTypeReifiers {
         public static void RegisterAll() {
             Configs.RegisterFromDoc<Vector2>(FromVector2);
+            Configs.RegisterFromDoc<Vector2Int>(FromVector2Int);
             Configs.RegisterFromDoc<Vector3>(FromVector3);
             Configs.RegisterFromDoc<Color>(FromColor);
         }
@@ -37,6 +38,33 @@ namespace DarkConfig {
 
             return new Vector2(x, y);
         }
+        static object FromVector2Int(object obj, DocNode value) {
+            // TODO (Graham): Make a non-boxing version of this?
+            // TODO (Graham): The scalar and n-dimensional support here is non-obvious. Those cases seem like they'd be nearly always mistakes. Better to throw an exception here.
+
+            var parsedType = value.Type;
+
+            // Parse a scalar int and use that for both components of the vector.
+            // 3 => new Vector2(3,3)
+            if (parsedType == DocNodeType.Scalar) {
+                var single = value.As<int>();
+                return new Vector2Int(single, single);
+            }
+
+            // Parse a list of ints and use those as the vector components.
+            // Supports the following conversions:
+            // [1] => Vector2Int(1,1)
+            // [1,2] => new Vector2Int(1,2);
+            // [1,2,3,4,5,6] => new Vector2Int(1,2);
+            int x = value[0].As<int>();
+            int y = x;
+            if (value.Count > 1) {
+                y = value[1].As<int>();
+            }
+
+            return new Vector2Int(x, y);
+        }
+
 
         static object FromVector3(object obj, DocNode value) {
             // TODO (Graham): Make a non-boxing version of this?

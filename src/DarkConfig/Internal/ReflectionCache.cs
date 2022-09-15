@@ -24,6 +24,7 @@ namespace DarkConfig.Internal {
             public bool HasConfigMandatoryAttribute;
             public bool HasConfigAllowMissingAttribute;
             public bool HasConfigIgnoreAttribute;
+            public bool HasConfigSourceInformationAttribute;
         }
 
         [Flags]
@@ -137,6 +138,9 @@ namespace DarkConfig.Internal {
                     metadata.HasConfigAllowMissingAttribute = true;
                 } else if (attribute is ConfigIgnoreAttribute) {
                     metadata.HasConfigIgnoreAttribute = true;
+                }
+                if (attribute is ConfigSourceInformationAttribute) {
+                    metadata.HasConfigSourceInformationAttribute = true;
                 }
             }
         }

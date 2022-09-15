@@ -92,15 +92,29 @@ namespace DarkConfig.Internal {
                 // ==== Special Case ====
                 // Allow specifying object types with a single property or field as a scalar value in configs.
                 // This is syntactic sugar that lets us wrap values in classes.
-                Configs.Assert(typeInfo.Members.Length == 1, 
-                    $"Trying to set a field of type: {type} {typeInfo.Members.Length} from value of wrong type: " +
-                    (doc.Type == DocNodeType.Scalar ? doc.StringValue : doc.Type.ToString()) +
-                    $" at {doc.SourceInformation}");
-                
-                ref var memberMetadata = ref typeInfo.Members[0];
-                SetMember(memberMetadata.Info, memberMetadata.IsField, ref setCopy, doc, options);
-                obj = setCopy;
-                return;
+                var targetMemberIndex = -1;
+                var foundMultipleEligible = false;
+                for (var memberIndex = 0; memberIndex < typeInfo.Members.Length; memberIndex++) {
+                    ref var memberMetadata = ref typeInfo.Members[memberIndex];
+                    // Only consider non-static members, unless we are using static reification
+                    if (obj == null || !memberMetadata.IsField || !((FieldInfo)memberMetadata.Info).IsStatic) {
+                        if (targetMemberIndex == -1) {
+                            targetMemberIndex = memberIndex;
+                        } else {
+                            foundMultipleEligible = true;
+                            break;
+                        }
+                    }
+                }
+                if (targetMemberIndex != -1 && !foundMultipleEligible) {
+                    ref var memberMetadata = ref typeInfo.Members[targetMemberIndex];
+                    SetMember(memberMetadata.Info, memberMetadata.IsField, ref setCopy, doc, options);
+                    obj = setCopy;
+                    return;
+                } else {
+                    throw new Exception($"Trying to set a field of type: {type} {typeInfo.Members.Length} from value of wrong type: " +
+                        (doc.Type == DocNodeType.Scalar ? doc.StringValue : doc.Type.ToString()) + $" at {doc.SourceInformation}");
+                }
             }
 
             var requiredMembers = new List<string>();
@@ -111,6 +125,15 @@ namespace DarkConfig.Internal {
             // Set the fields on the object.
             for (var memberIndex = 0; memberIndex < typeInfo.Members.Length; memberIndex++) {
                 ref var memberMetadata = ref typeInfo.Members[memberIndex];
+
+                if (memberMetadata.HasConfigSourceInformationAttribute) {
+                    // Special field to auto-populate with SourceInformation
+                    if (memberMetadata.Type != typeof(string)) {
+                        throw new Exception("Field with ConfigSourceInformation should be a string");
+                    }
+                    SetMember(memberMetadata.Info, memberMetadata.IsField, ref setCopy, doc.SourceInformation, options);
+                    continue;
+                }
                 
                 // Override global and class settings per-field.
                 bool memberIsMandatory = memberMetadata.HasConfigMandatoryAttribute;
@@ -385,6 +408,11 @@ namespace DarkConfig.Internal {
                     return existing;
                 }
 
+                // DocNode
+                if (fieldType == typeof(DocNode)) {
+                    return doc;
+                }
+
                 // Arrays
                 if (fieldType.IsArray) { 
                     int rank = fieldType.GetArrayRank();
@@ -554,6 +582,26 @@ namespace DarkConfig.Internal {
 
                         return existing;
                     }
+
+                    if (fieldType.GetGenericTypeDefinition() == typeof(HashSet<>)) {
+                        var typeParameters = fieldType.GetGenericArguments();
+
+                        if (existing == null) {
+                            existing = Activator.CreateInstance(fieldType);
+                        } else {
+                            // ideally we would try and keep any exising values and update them, but that is hard to do meaningfully for sets, so just rebuild it entirely
+                            fieldType.GetMethod("Clear").Invoke(existing, null);
+                        }
+
+                        // HashSet<> has no generic-less object interface we can use, so use reflection to add elements
+                        var addMethod = fieldType.GetMethod("Add");
+                        foreach (var value in doc.Values) {
+                            var elem = ReadValueOfType(typeParameters[0], null, value, options);
+                            addMethod.Invoke(existing, new object[] { elem });
+                        }
+
+                        return existing;
+                    }
                 }
 
                 var typeInfo = reflectionCache.GetTypeInfo(fieldType);
@@ -627,6 +675,26 @@ namespace DarkConfig.Internal {
                 }
                 object existing = fieldInfo.GetValue(obj);
                 object updated = ReadValueOfType(fieldInfo.FieldType, existing, doc, options);
+                SetMember(memberInfo, isField, ref obj, updated, options);
+            } else {
+                var propertyInfo = (PropertyInfo)memberInfo;
+                if (obj == null && !propertyInfo.CanWrite) {
+                    // silently don't set non-static fields
+                    return;
+                }
+                object existing = propertyInfo.GetValue(obj);
+                object updated = ReadValueOfType(propertyInfo.PropertyType, existing, doc, options);
+                SetMember(memberInfo, isField, ref obj, updated, options);
+            }
+        }
+
+        void SetMember(MemberInfo memberInfo, bool isField, ref object obj, object updated, ReificationOptions? options) {
+            if (isField) {
+                var fieldInfo = (FieldInfo)memberInfo;
+                if (obj == null && !fieldInfo.IsStatic) {
+                    // silently don't set non-static fields
+                    return;
+                }
                 object setCopy = obj; // needed for structs
                 fieldInfo.SetValue(setCopy, updated);
                 obj = setCopy;                
@@ -636,8 +704,6 @@ namespace DarkConfig.Internal {
                     // silently don't set non-static fields
                     return;
                 }
-                object existing = propertyInfo.GetValue(obj);
-                object updated = ReadValueOfType(propertyInfo.PropertyType, existing, doc, options);
                 object setCopy = obj; // needed for structs
                 propertyInfo.SetValue(setCopy, updated);
                 obj = setCopy;

@@ -19,7 +19,7 @@ namespace DarkConfig {
                     scalar = "";
                     break;
                 default:
-                    throw new Exception($"Can't make a ComposedDocNode instance with Type {type}");
+                    throw new Exception($"Can't make a ComposedDocNode instance with Type {type} at {sourceInformation}");
             }
         }
 
