@@ -126,6 +126,21 @@ namespace DarkConfig {
             dictionary.Add(key, value);
         }
 
+        public void Remove(DocNode d) {
+            CheckTypeIs(DocNodeType.List);
+            list.Remove(d);
+        }
+
+        public void RemoveAt(int index) {
+            CheckTypeIs(DocNodeType.List);
+            list.RemoveAt(index);
+        }
+
+        public void RemoveKey(string key) {
+            CheckTypeIs(DocNodeType.Dictionary);
+            dictionary.Remove(key);
+        }
+
         /////////////////////////////////////////////////
 
         readonly string sourceInfo;
@@ -133,6 +148,57 @@ namespace DarkConfig {
         readonly Dictionary<string, DocNode> dictionary;
         readonly List<DocNode> list;
         string scalar;
+
+        /////////////////////////////////////////////////
+
+        public static ComposedDocNode MakeMutable(DocNode doc, bool recursive = true, bool force = false) {
+            if (!force && doc is ComposedDocNode cdn) {
+                return cdn;
+            }
+
+            switch (doc.Type) {
+                case DocNodeType.Scalar: {
+                    var newDoc = new ComposedDocNode(doc.Type, -1, doc.SourceInformation);
+                    newDoc.StringValue = doc.StringValue;
+                    return newDoc;
+                }
+
+                case DocNodeType.List: {
+                    var newDoc = new ComposedDocNode(doc.Type, doc.Count, doc.SourceInformation);
+                    foreach (var elem in doc.Values) {
+                        var newElem = recursive ? MakeMutable(elem, recursive: recursive, force: force) : elem;
+                        newDoc.Add(newElem);
+                    }
+                    return newDoc;
+                }
+
+                case DocNodeType.Dictionary: {
+                    var newDoc = new ComposedDocNode(doc.Type, doc.Count, doc.SourceInformation);
+                    foreach (var kv in doc.Pairs) {
+                        var newValue = recursive ? MakeMutable(kv.Value, recursive: recursive, force: force) : kv.Value;
+                        newDoc.Add(kv.Key, newValue);
+                    }
+                    return newDoc;
+                }
+
+                default:
+                    throw new System.NotImplementedException($"Unknown DocNode type {doc.Type} to make ComposedDocNode from at: {doc.SourceInformation}");
+            }
+        }
+
+        public static ComposedDocNode MakeMutableRef(ref DocNode doc, bool recursive = true) {
+            if (doc is ComposedDocNode cdn) {
+                return cdn;
+            }
+
+            var mutableDoc = MakeMutable(doc, recursive);
+            doc = mutableDoc;
+            return mutableDoc;
+        }
+
+        public static ComposedDocNode DeepClone(DocNode doc) {
+            return MakeMutable(doc, recursive: true, force: true);
+        }
 
         /////////////////////////////////////////////////
 
