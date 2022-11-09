@@ -52,6 +52,7 @@
         <Compile Include="Attributes.cs" />
         <Compile Include="Configs.cs" />
         <Compile Include="ConfigFileInfo.cs" />
+        <Compile Include="ConfigProcessor.cs" />
         <Compile Include="ConfigSource.cs" />
         <Compile Include="DocNode\ComposedDocNode.cs" />
         <Compile Include="DocNode\DocNode.cs" />
