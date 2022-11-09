@@ -79,6 +79,13 @@ namespace DarkConfig {
         public static void ClearConfigSources() {
             FileManager.sources.Clear();
         }
+
+        /// Enumerate all config file sources
+        public static IEnumerable<ConfigSource> GetConfigSources() {
+            foreach (var source in FileManager.sources) {
+                yield return source;
+            }
+        }
         #endregion
         
         /// <summary>
@@ -173,6 +180,7 @@ namespace DarkConfig {
         public static void Clear() {
             typeReifier = new Internal.TypeReifier();
             FileManager = new Internal.ConfigFileManager();
+            processors = new List<ConfigProcessor>();
             LogCallback = null;
             AssertCallback = null;
         }
@@ -229,9 +237,10 @@ namespace DarkConfig {
         /// </summary>
         /// <param name="stream">a stream of the YAML to read</param>
         /// <param name="filename">A filename used for error reporting</param>
+        /// <param name="ignoreProcessors">Don't use config processors</param>
         /// <returns>The parsed DocNode</returns>
-        public static DocNode LoadDocFromStream(Stream stream, string filename) {
-            return LoadDocFromTextReader(new StreamReader(stream), filename);
+        public static DocNode LoadDocFromStream(Stream stream, string filename, bool ignoreProcessors = false) {
+            return LoadDocFromTextReader(new StreamReader(stream), filename, ignoreProcessors);
         }
         
         /// <summary>
@@ -491,6 +500,53 @@ namespace DarkConfig {
             typeReifier.SetFieldOnStruct(ref obj, fieldName, doc, options);
         }
         #endregion
+
+        #region Processors
+        /// Add a config processor
+        public static void AddConfigProcessor(ConfigProcessor processor) {
+            processors.Add(processor);
+        }
+
+        /// Remove a config processor
+        public static void RemoveConfigProcessor(ConfigProcessor processor) {
+            processors.Remove(processor);
+        }
+
+        /// Number of currently registered config processors
+        public static int NumConfigProcessors => processors.Count;
+
+        /// Removes all config processors
+        public static void ClearConfigProcessors() {
+            processors.Clear();
+        }
+
+        /// Enumerate all config processors
+        public static IEnumerable<ConfigProcessor> GetConfigProcessors() {
+            foreach (var processor in processors) {
+                yield return processor;
+            }
+        }
+
+        /// Run all the config processors on this doc
+        /// Useful for manual atypical flows
+        public static void ProcessWithConfigProcessors(string filename, ref DocNode doc) {
+            if (doc.Type == DocNodeType.Invalid) {
+                return;
+            }
+
+            // Run MakeMutable once if necessary
+            foreach (var processor in processors) {
+                if (processor.CanMutate) {
+                    doc = ComposedDocNode.MakeMutable(doc);
+                    break;
+                }
+            }
+
+            foreach (var processor in processors) {
+                processor.Process(filename, ref doc);
+            }
+        }
+        #endregion
         
         #region Logging
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -529,13 +585,19 @@ namespace DarkConfig {
 
         static Internal.TypeReifier typeReifier = new Internal.TypeReifier();
 
+        static List<ConfigProcessor> processors = new List<ConfigProcessor>();
+
         /////////////////////////////////////////////////
 
-        static DocNode LoadDocFromTextReader(TextReader reader, string filename) {
+        static DocNode LoadDocFromTextReader(TextReader reader, string filename, bool ignoreProcessors = false) {
             var yaml = new YamlStream();
             yaml.Load(reader);
-            return yaml.Documents.Count <= 0 ? new YamlDocNode(null, filename)
+            DocNode docNode = yaml.Documents.Count <= 0 ? new YamlDocNode(null, filename)
                 : new YamlDocNode(yaml.Documents[0].RootNode, filename);
+            if (!ignoreProcessors) {
+                ProcessWithConfigProcessors(filename, ref docNode);
+            }
+            return docNode;
         }
 
         static void DefaultAssertCallback(bool test, string message) {

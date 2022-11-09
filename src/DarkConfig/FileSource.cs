@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.IO;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace DarkConfig {
     /// Loads configs from loose files in a directory.
@@ -23,10 +24,12 @@ namespace DarkConfig {
         /// Also, some files use ".yml" instead of ".yaml"
         /// </param>
         /// <param name="hotload">Allow file hotloading</param>
+        /// <param name="ignorePattern">Ignore any paths that match this regex</param>
         /// <exception cref="ArgumentException">If <paramref name="dir"/> is null</exception>
-        public FileSource(string dir, string fileExtension = ".yaml", bool hotload = false) {
+        public FileSource(string dir, string fileExtension = ".yaml", bool hotload = false, Regex ignorePattern = null) {
             baseDir = Path.GetFullPath(dir).Replace('\\', '/'); // Always use forward slashes in paths, even on windows.
             CanHotload = hotload;
+            this.ignorePattern = ignorePattern;
             configFileExtensions = new[]{fileExtension};
         }
 
@@ -39,10 +42,12 @@ namespace DarkConfig {
         /// Allows you to easily load a directory containing a mix of extensions like ".yml" and ".yaml".
         /// </param>
         /// <param name="hotload">Allow file hotloading</param>
+        /// <param name="ignorePattern">Ignore any paths that match this regex</param>
         /// <exception cref="ArgumentException">If <paramref name="dir"/> is null</exception>
-        public FileSource(string dir, string[] fileExtensions, bool hotload = false) {
+        public FileSource(string dir, string[] fileExtensions, bool hotload = false, Regex ignorePattern = null) {
             baseDir = Path.GetFullPath(dir).Replace('\\', '/'); // Always use forward slashes in paths, even on windows.
             CanHotload = hotload;
+            this.ignorePattern = ignorePattern;
             configFileExtensions = fileExtensions;
         }
 
@@ -126,6 +131,7 @@ namespace DarkConfig {
 
         readonly string baseDir;
         readonly string[] configFileExtensions;
+        readonly Regex ignorePattern;
         
         ////////////////////////////////////////////
         
@@ -133,6 +139,9 @@ namespace DarkConfig {
         IEnumerable<string> FindConfigsInBaseDir() {
             foreach (var ext in configFileExtensions) {
                 foreach (var file in Directory.GetFiles(baseDir, "*" + ext, SearchOption.AllDirectories)) {
+                    if (ignorePattern != null && ignorePattern.IsMatch(GetFileNameFromPath(file))) {
+                        continue;
+                    }
                     yield return file;
                 }
             }

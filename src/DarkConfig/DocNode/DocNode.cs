@@ -132,6 +132,32 @@ namespace DarkConfig {
             return false;
         }
 
+        /// Get a hash code for this DocNode that depends on its content, recursively
+        /// Note: can be expensive for large structures
+        public int GetDeepHashCode() {
+            switch (Type) {
+                case DocNodeType.Scalar:
+                    return StringValue.GetHashCode();
+
+                case DocNodeType.List:
+                    int seqHash = 0;
+                    foreach (var elem in Values) {
+                        seqHash ^= elem.GetDeepHashCode();
+                    }
+                    return seqHash;
+
+                case DocNodeType.Dictionary:
+                    int mapHash = 0;
+                    foreach (var kv in Pairs) {
+                        mapHash ^= kv.Key.GetHashCode() ^ kv.Value.GetDeepHashCode();
+                    }
+                    return mapHash;
+
+                default:
+                    throw new Exception($"Cannot calculate hash code for DocNode type {Type} at: {SourceInformation}");
+            }
+        }
+
         /// combines hierarchies.
         /// lists are concatenated, but dicts are recursively DeepMerged. 
         /// favours rhs on any conflict.
