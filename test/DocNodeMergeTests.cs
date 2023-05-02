@@ -14,8 +14,10 @@ class DocNodeMergeTests {
         var merged = DocNode.DeepMerge(emptyDoc, otherEmptyDoc);
 
         var idealEmpty = new ComposedDocNode(DocNodeType.List);
-        Assert.AreEqual(idealEmpty, merged);
-        Assert.AreEqual("Combination of: [e1, e2]", merged.SourceInformation);
+        Assert.Multiple(() => {
+            Assert.That(merged, Is.EqualTo(idealEmpty));
+            Assert.That(merged.SourceInformation, Is.EqualTo("Combination of: [e1, e2]"));
+        });
     }
 
     [Test]
@@ -26,9 +28,10 @@ class DocNodeMergeTests {
         var merged = DocNode.DeepMerge(emptyDoc, otherEmptyDoc);
 
         var idealEmpty = new ComposedDocNode(DocNodeType.Dictionary);
-        Assert.AreEqual(idealEmpty, merged);
-        Assert.AreEqual(merged.SourceInformation,
-            "Merging of: [ComposedDocNode Dictionary, ComposedDocNode Dictionary]");
+        Assert.Multiple(() => {
+            Assert.That(merged, Is.EqualTo(idealEmpty));
+            Assert.That(merged.SourceInformation, Is.EqualTo("Merging of: [ComposedDocNode Dictionary, ComposedDocNode Dictionary]"));
+        });
     }
 
     [Test]
@@ -39,7 +42,7 @@ class DocNodeMergeTests {
         var merged = DocNode.DeepMerge(emptyDoc, otherEmptyDoc);
 
         var ideal = CreateScalarNode("bar");
-        Assert.AreEqual(ideal, merged);
+        Assert.That(merged, Is.EqualTo(ideal));
     }
 
     [Test]
@@ -59,7 +62,7 @@ class DocNodeMergeTests {
         var merged = DocNode.DeepMerge(doc, otherDoc);
 
         var ideal = CreateListNode("foo", "bar", "wiggle", "waggle");
-        Assert.AreEqual(ideal, merged);
+        Assert.That(merged, Is.EqualTo(ideal));
     }
 
     [Test]
@@ -70,7 +73,7 @@ class DocNodeMergeTests {
         var merged = DocNode.DeepMerge(doc, otherDoc);
 
         var ideal = CreateDictNode(Pair("A", "1"), Pair("B", "2"), Pair("X", "9"), Pair("Y", "10"));
-        Assert.AreEqual(ideal, merged);
+        Assert.That(merged, Is.EqualTo(ideal));
     }
 
     [Test]
@@ -81,7 +84,7 @@ class DocNodeMergeTests {
         var merged = DocNode.DeepMerge(doc, otherDoc);
 
         var ideal = CreateDictNode(Pair("A", "9"), Pair("B", "2"), Pair("Y", "10"));
-        Assert.AreEqual(ideal, merged);
+        Assert.That(merged, Is.EqualTo(ideal));
     }
 
     [Test]
@@ -92,7 +95,7 @@ class DocNodeMergeTests {
         var merged = DocNode.DeepMerge(doc, otherDoc);
 
         var ideal = CreateDictNode(Pair("A", CreateListNode("foo", "bar", "wiggle", "waggle")));
-        Assert.AreEqual(ideal, merged);
+        Assert.That(merged, Is.EqualTo(ideal));
     }
 
     [Test]
@@ -106,7 +109,7 @@ class DocNodeMergeTests {
         var ideal = CreateDictNode(Pair("favourite",
             CreateDictNode(Pair("films", CreateListNode("die hard",
                 "fury road")))));
-        Assert.AreEqual(ideal, merged);
+        Assert.That(merged, Is.EqualTo(ideal));
     }
 
     //////////////////////////////////////////////////

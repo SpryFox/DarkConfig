@@ -4,7 +4,7 @@ using NUnit.Framework;
 [TestFixture]
 class PostDocTests {
     const string FILENAME = "PostDocTests_TestFilename";
-    
+
     class PostDocClass {
         public static PostDocClass PostDoc(PostDocClass existing) {
             existing.baseKey += 1;
@@ -38,7 +38,7 @@ class PostDocTests {
     [Test]
     public void PostDoc_IsCalled() {
         var instance = ReifyString<PostDocClass>("baseKey: 10");
-        Assert.AreEqual(instance.baseKey, 11);
+        Assert.That(instance.baseKey, Is.EqualTo(11));
     }
 
     [Test]
@@ -46,8 +46,10 @@ class PostDocTests {
         var doc = Configs.ParseString("baseKey: 10", FILENAME);
         PostDocClass2 instance = null;
         Configs.Reify(ref instance, doc);
-        Assert.NotNull(instance);
-        Assert.AreEqual(instance.baseKey, 10);
+        Assert.Multiple(() => {
+            Assert.That(instance, Is.Not.Null);
+            Assert.That(instance.baseKey, Is.EqualTo(10));
+        });
     }
 
     [Test]
@@ -55,7 +57,9 @@ class PostDocTests {
         var doc = Configs.ParseString("baseKey: 10", FILENAME);
         PostDocClass3 instance = null;
         Configs.Reify(ref instance, doc);
-        Assert.NotNull(instance);
-        Assert.AreEqual(instance.baseKey, 99);
+        Assert.Multiple(() => {
+            Assert.That(instance, Is.Not.Null);
+            Assert.That(instance.baseKey, Is.EqualTo(99));
+        });
     }
 }

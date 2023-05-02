@@ -13,10 +13,9 @@ class ListComposingTests {
     string tempDirPath;
 
     void CreateFile(string filename, string contents) {
-        var fullPath = Path.Combine(tempDirPath, filename);
-        using (var sw = new StreamWriter(fullPath, false, new System.Text.UTF8Encoding())) {
-            sw.Write(contents);
-        }
+        string fullPath = Path.Combine(tempDirPath, filename);
+        using var sw = new StreamWriter(fullPath, false, new System.Text.UTF8Encoding());
+        sw.Write(contents);
     }
 
     [SetUp]
@@ -26,7 +25,7 @@ class ListComposingTests {
 
         Configs.Settings.EnableHotloading = true;
         Configs.Settings.HotloadCheckFrequencySeconds = 0.1f;
-        Configs.AddConfigSource(new FileSource(tempDirPath, hotload:true));
+        Configs.AddConfigSource(new FileSource(tempDirPath, hotload: true));
     }
 
     [TearDown]
@@ -44,27 +43,31 @@ class ListComposingTests {
 
         Configs.Preload();
 
-        var CharactersEndingInOrn = new List<Character>();;
+        var CharactersEndingInOrn = new List<Character>();
 
         // load all files from the ListDir into one list
         Configs.LoadFilesAsList("*", d => {
-            Assert.AreEqual(4, d.Count);
+            Assert.That(d.Count, Is.EqualTo(4));
             Configs.Reify(ref CharactersEndingInOrn, d);
             return true;
         });
-    
-        Assert.AreEqual(4, CharactersEndingInOrn.Count);
-        Assert.AreEqual(12, CharactersEndingInOrn[0].Height);
-        Assert.AreEqual("Anduril", CharactersEndingInOrn[0].Item);
+
+        Assert.Multiple(() => {
+            Assert.That(CharactersEndingInOrn, Has.Count.EqualTo(4));
+            Assert.That(CharactersEndingInOrn[0].Height, Is.EqualTo(12));
+            Assert.That(CharactersEndingInOrn[0].Item, Is.EqualTo("Anduril"));
+        });
 
         // change file contents
         CreateFile("aragorn.yaml", "Height: 12\nItem: Throne");
 
         // Force hotload
         Configs.Update(1.0f);
-        
-        Assert.AreEqual(4, CharactersEndingInOrn.Count);
-        Assert.AreEqual(12, CharactersEndingInOrn[0].Height);
-        Assert.AreEqual("Throne", CharactersEndingInOrn[0].Item);
+
+        Assert.Multiple(() => {
+            Assert.That(CharactersEndingInOrn, Has.Count.EqualTo(4));
+            Assert.That(CharactersEndingInOrn[0].Height, Is.EqualTo(12));
+            Assert.That(CharactersEndingInOrn[0].Item, Is.EqualTo("Throne"));
+        });
     }
 }

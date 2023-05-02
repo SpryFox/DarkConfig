@@ -15,10 +15,10 @@ class DictComposingTests {
     public void SetUp() {
         tempDirPath = Path.Combine(Path.GetTempPath(), "DictComposingTests");
         Directory.CreateDirectory(tempDirPath);
-        
+
         Configs.Settings.EnableHotloading = true;
         Configs.Settings.HotloadCheckFrequencySeconds = 0.1f;
-        fileSource = new FileSource(tempDirPath, hotload:true);
+        fileSource = new FileSource(tempDirPath, hotload: true);
         Configs.AddConfigSource(fileSource);
     }
 
@@ -44,21 +44,24 @@ class DictComposingTests {
             return true;
         });
 
-        Assert.IsNotNull(MixedDict);
-
-        Assert.AreEqual(5, MixedDict.Count);
-        Assert.AreEqual(12, MixedDict["Beetles"].As<int>());
-        Assert.AreEqual(1.3f, MixedDict["Version"].As<float>());
-        Assert.True(MixedDict["Treehouse"].As<bool>());
-
+        Assert.Multiple(() => {
+            Assert.That(MixedDict, Is.Not.Null);
+            Assert.That(MixedDict, Has.Count.EqualTo(5));
+            Assert.That(MixedDict["Beetles"].As<int>(), Is.EqualTo(12));
+            Assert.That(MixedDict["Version"].As<float>(), Is.EqualTo(1.3f));
+            Assert.That(MixedDict["Treehouse"].As<bool>(), Is.True);
+        });
+        
         // Overwrite file contents
         CreateFile("items.yaml", "Chitin: 1000");
-        
+
         // force a reload
         Configs.Update(1.0f);
 
-        Assert.AreEqual(5, MixedDict.Count);
-        Assert.False(MixedDict.ContainsKey("Treehouse"));
-        Assert.AreEqual(1000, MixedDict["Chitin"].As<int>());
+        Assert.Multiple(() => {
+            Assert.That(MixedDict, Has.Count.EqualTo(5));
+            Assert.That(MixedDict.ContainsKey("Treehouse"), Is.False);
+            Assert.That(MixedDict["Chitin"].As<int>(), Is.EqualTo(1000));
+        });
     }
 }

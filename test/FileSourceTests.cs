@@ -35,14 +35,18 @@ class FileSourceTests {
 
         var fileSource = new FileSource(tempDirPath, hotload:true);
         foreach (object _ in fileSource.StepPreload()) { }
-        
-        Assert.AreEqual(1, fileSource.AllFiles.Count);
-        Assert.IsTrue(fileSource.AllFiles.ContainsKey("derp"));
-        
+
+        Assert.Multiple(() => {
+            Assert.That(fileSource.AllFiles, Has.Count.EqualTo(1));
+            Assert.That(fileSource.AllFiles.ContainsKey("derp"), Is.True);
+        });
+
         var fileInfo = fileSource.AllFiles["derp"];
-        Assert.IsNotNull(fileInfo);
-        Assert.AreEqual("derp", fileInfo.Name);
-        Assert.AreEqual("value", fileInfo.Parsed["key"].StringValue);
+        Assert.Multiple(() => {
+            Assert.That(fileInfo, Is.Not.Null);
+            Assert.That(fileInfo.Name, Is.EqualTo("derp"));
+            Assert.That(fileInfo.Parsed["key"].StringValue, Is.EqualTo("value"));
+        });
     }
 
     [Test]
@@ -51,8 +55,10 @@ class FileSourceTests {
         CreateFile("derp.yaml", "key: value");
         var fileSource = new FileSource(tempDirPath, hotload:true);
         foreach (object _ in fileSource.StepPreload()) { }
-        Assert.AreEqual(1, fileSource.AllFiles.Count);
-        Assert.IsTrue(fileSource.AllFiles.ContainsKey("derp"));
+        Assert.Multiple(() => {
+            Assert.That(fileSource.AllFiles.Count, Is.EqualTo(1));
+            Assert.That(fileSource.AllFiles.ContainsKey("derp"), Is.True);
+        });
 
         // Modify the file.
         CreateFile("derp.yaml", "key: value2");
@@ -62,13 +68,17 @@ class FileSourceTests {
         fileSource.Hotload(changedFiles);
 
         // Make sure the contents were updated.
-        Assert.AreEqual(1, changedFiles.Count);
-        Assert.AreEqual("derp", changedFiles[0]);
-        Assert.IsTrue(fileSource.AllFiles.ContainsKey("derp"));
+        Assert.Multiple(() => {
+            Assert.That(changedFiles, Has.Count.EqualTo(1));
+            Assert.That(changedFiles[0], Is.EqualTo("derp"));
+            Assert.That(fileSource.AllFiles.ContainsKey("derp"), Is.True);
+        });
         var fileInfo = fileSource.AllFiles["derp"];
-        Assert.IsNotNull(fileInfo);
-        Assert.AreEqual("derp", fileInfo.Name);
-        Assert.AreEqual("value2", fileInfo.Parsed["key"].StringValue);
+        Assert.Multiple(() => {
+            Assert.That(fileInfo, Is.Not.Null);
+            Assert.That(fileInfo.Name, Is.EqualTo("derp"));
+            Assert.That(fileInfo.Parsed["key"].StringValue, Is.EqualTo("value2"));
+        });
     }
 
     [Test]
@@ -78,15 +88,17 @@ class FileSourceTests {
 
         var fileSource = new FileSource(tempDirPath, hotload:true);
         foreach (object _ in fileSource.StepPreload()) { }
-        Assert.AreEqual(2, fileSource.AllFiles.Count);
+        Assert.That(fileSource.AllFiles, Has.Count.EqualTo(2));
 
         DeleteFile("durr.yaml");
 
         var changedFiles = new List<string>();
         fileSource.Hotload(changedFiles);
-        
-        Assert.AreEqual(1, fileSource.AllFiles.Count);
-        Assert.IsFalse(fileSource.AllFiles.ContainsKey("durr"));
+
+        Assert.Multiple(() => {
+            Assert.That(fileSource.AllFiles, Has.Count.EqualTo(1));
+            Assert.That(fileSource.AllFiles.ContainsKey("durr"), Is.False);
+        });
     }
 
     [Test]
@@ -95,19 +107,21 @@ class FileSourceTests {
 
         var fileSource = new FileSource(tempDirPath, hotload:true);
         foreach (object _ in fileSource.StepPreload()) { }
-        Assert.AreEqual(1, fileSource.AllFiles.Count);
+        Assert.That(fileSource.AllFiles, Has.Count.EqualTo(1));
 
         CreateFile("durr.yaml", "a: b");
         
         var changedFiles = new List<string>();
         fileSource.Hotload(changedFiles);
 
-        Assert.AreEqual(2, fileSource.AllFiles.Count);
-        
-        Assert.IsTrue(fileSource.AllFiles.ContainsKey("derp"));
-        Assert.IsTrue(fileSource.AllFiles.ContainsKey("durr"));
-        
-        Assert.AreEqual("b", fileSource.AllFiles["durr"].Parsed["a"].StringValue);
+        Assert.Multiple(() => {
+            Assert.That(fileSource.AllFiles, Has.Count.EqualTo(2));
+            
+            Assert.That(fileSource.AllFiles.ContainsKey("derp"), Is.True);
+            Assert.That(fileSource.AllFiles.ContainsKey("durr"), Is.True);
+            
+            Assert.That(fileSource.AllFiles["durr"].Parsed["a"].StringValue, Is.EqualTo("b"));
+        });
     }
 
     [Test]
@@ -124,13 +138,15 @@ class FileSourceTests {
         var changedFiles = new List<string>();
         fileSource.Hotload(changedFiles);
 
-        Assert.AreEqual(4, fileSource.AllFiles.Count);
-        Assert.IsTrue(fileSource.AllFiles.ContainsKey("derp"));
-        Assert.IsTrue(fileSource.AllFiles.ContainsKey("hurr"));
-        Assert.IsTrue(fileSource.AllFiles.ContainsKey("err"));
-        Assert.AreEqual("b", fileSource.AllFiles["durr"].Parsed["a"].StringValue);
-        Assert.AreEqual("y", fileSource.AllFiles["hurr"].Parsed["x"].StringValue);
-        Assert.AreEqual("v", fileSource.AllFiles["err"].Parsed["u"].StringValue);
+        Assert.Multiple(() => {
+            Assert.That(fileSource.AllFiles, Has.Count.EqualTo(4));
+            Assert.That(fileSource.AllFiles.ContainsKey("derp"), Is.True);
+            Assert.That(fileSource.AllFiles.ContainsKey("hurr"), Is.True);
+            Assert.That(fileSource.AllFiles.ContainsKey("err"), Is.True);
+            Assert.That(fileSource.AllFiles["durr"].Parsed["a"].StringValue, Is.EqualTo("b"));
+            Assert.That(fileSource.AllFiles["hurr"].Parsed["x"].StringValue, Is.EqualTo("y"));
+            Assert.That(fileSource.AllFiles["err"].Parsed["u"].StringValue, Is.EqualTo("v"));
+        });
     }
 
     [Test]
@@ -146,12 +162,14 @@ class FileSourceTests {
         var changedFiles = new List<string>();
         fileSource.Hotload(changedFiles);
 
-        Assert.AreEqual(3, fileSource.AllFiles.Count);
-        Assert.IsTrue(fileSource.AllFiles.ContainsKey("derp"));
-        Assert.IsTrue(fileSource.AllFiles.ContainsKey("durr"));
-        Assert.IsTrue(fileSource.AllFiles.ContainsKey("hurr"));
-        Assert.AreEqual("value", fileSource.AllFiles["derp"].Parsed["key"].StringValue);
-        Assert.AreEqual("b", fileSource.AllFiles["durr"].Parsed["a"].StringValue);
-        Assert.AreEqual("y", fileSource.AllFiles["hurr"].Parsed["x"].StringValue);
+        Assert.Multiple(() => {
+            Assert.That(fileSource.AllFiles, Has.Count.EqualTo(3));
+            Assert.That(fileSource.AllFiles.ContainsKey("derp"), Is.True);
+            Assert.That(fileSource.AllFiles.ContainsKey("durr"), Is.True);
+            Assert.That(fileSource.AllFiles.ContainsKey("hurr"), Is.True);
+            Assert.That(fileSource.AllFiles["derp"].Parsed["key"].StringValue, Is.EqualTo("value"));
+            Assert.That(fileSource.AllFiles["durr"].Parsed["a"].StringValue, Is.EqualTo("b"));
+            Assert.That(fileSource.AllFiles["hurr"].Parsed["x"].StringValue, Is.EqualTo("y"));
+        });
     }
 }

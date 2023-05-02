@@ -92,22 +92,22 @@ class TestTypes {
     protected class PropertiesClass {
         [ConfigIgnore]
         public int backing3Int = 3;
-        
+
         // Normal auto-property
         public int int1Value { get; set; } = 1;
-        
+
         // Get-only auto-property
         public int int2Value { get; } = 2;
-        
+
         // Set-only property
         public int int3Value { set => backing3Int = value; }
-        
+
         // Computed property
         public int int4Value => 4;
 
         // Static property
         public static string staticStringValue { get; set; } = "static str";
-        
+
         [ConfigIgnore]
         public string ignoredValue { get; set; }
 
@@ -117,7 +117,7 @@ class TestTypes {
         [ConfigMandatory]
         public string mandatoryValue { get; set; } = null;
     }
-    
+
     protected ReificationOptions defaults;
     protected TypeReifier reifier;
 
@@ -156,7 +156,7 @@ class TypeReifierTests : TestTypes {
         var tc = ReifyString<TestClass>(@"---
             stringKey: right
             ");
-        Assert.AreEqual(tc.stringKey, "right");
+        Assert.That(tc.stringKey, Is.EqualTo("right"));
     }
 
     [Test]
@@ -164,7 +164,7 @@ class TypeReifierTests : TestTypes {
         var tc = ReifyString<TestClass>(@"---
             boolKeyDefaultFalse: true
             ");
-        Assert.AreEqual(tc.boolKeyDefaultFalse, true);
+        Assert.That(tc.boolKeyDefaultFalse, Is.True);
     }
 
     [Test]
@@ -172,7 +172,7 @@ class TypeReifierTests : TestTypes {
         var tc = ReifyString<TestClass>(@"---
             boolKeyDefaultFalse: True
             ");
-        Assert.AreEqual(tc.boolKeyDefaultFalse, true);
+        Assert.That(tc.boolKeyDefaultFalse, Is.True);
     }
 
     [Test]
@@ -180,7 +180,7 @@ class TypeReifierTests : TestTypes {
         var tc = ReifyString<TestClass>(@"---
             boolKeyDefaultTrue: false
             ");
-        Assert.AreEqual(tc.boolKeyDefaultTrue, false);
+        Assert.That(tc.boolKeyDefaultTrue, Is.False);
     }
 
     [Test]
@@ -188,7 +188,7 @@ class TypeReifierTests : TestTypes {
         var tc = ReifyString<TestClass>(@"---
             boolKeyDefaultTrue: False
             ");
-        Assert.AreEqual(tc.boolKeyDefaultTrue, false);
+        Assert.That(tc.boolKeyDefaultTrue, Is.False);
     }
 
     [Test]
@@ -196,7 +196,7 @@ class TypeReifierTests : TestTypes {
         var tc = ReifyString<TestClass>(@"---
             intKey: 100
             ");
-        Assert.AreEqual(tc.intKey, 100);
+        Assert.That(tc.intKey, Is.EqualTo(100));
     }
 
     [Test]
@@ -204,7 +204,7 @@ class TypeReifierTests : TestTypes {
         var tc = ReifyString<TestClass>(@"---
             floatKey: 1.56
             ");
-        Assert.AreEqual(tc.floatKey, 1.56f);
+        Assert.That(tc.floatKey, Is.EqualTo(1.56f));
     }
 
     [Test]
@@ -214,7 +214,7 @@ class TypeReifierTests : TestTypes {
         var tc = ReifyString<TestClass>(@"---
             floatKey: 1.56
             ");
-        Assert.AreEqual(1.56f, tc.floatKey);
+        Assert.That(tc.floatKey, Is.EqualTo(1.56f));
     }
 
     [Test]
@@ -222,7 +222,7 @@ class TypeReifierTests : TestTypes {
         var tc = ReifyString<TestClass>(@"---
             doubleKey: 1.10101
             ");
-        Assert.AreEqual(tc.doubleKey, 1.10101);
+        Assert.That(tc.doubleKey, Is.EqualTo(1.10101));
     }
 
     [Test]
@@ -230,7 +230,7 @@ class TypeReifierTests : TestTypes {
         var tc = ReifyString<TestClass>(@"---
             byteKey: 55
             ");
-        Assert.AreEqual(tc.byteKey, (byte) 55);
+        Assert.That(tc.byteKey, Is.EqualTo((byte) 55));
     }
 
     [Test]
@@ -238,7 +238,7 @@ class TypeReifierTests : TestTypes {
         var tc = ReifyString<TestClass>(@"---
             enumKey: Secondi
             ");
-        Assert.AreEqual(tc.enumKey, TestEnum.Secondi);
+        Assert.That(tc.enumKey, Is.EqualTo(TestEnum.Secondi));
     }
 
     [Test]
@@ -246,8 +246,10 @@ class TypeReifierTests : TestTypes {
         var tc = ReifyString<TestClass>(@"---
             nullableIntKey: 194
             ");
-        Assert.IsTrue(tc.nullableIntKey.HasValue);
-        Assert.AreEqual(tc.nullableIntKey.Value, 194);
+        Assert.Multiple(() => {
+            Assert.That(tc.nullableIntKey.HasValue, Is.True);
+            Assert.That(tc.nullableIntKey.Value, Is.EqualTo(194));
+        });
     }
 
     [Test]
@@ -255,8 +257,10 @@ class TypeReifierTests : TestTypes {
         var tc = ReifyString<TestClass>(@"---
             nullableIntKey: null
             ");
-        Assert.AreEqual(tc.nullableIntKey, null);
-        Assert.False(tc.nullableIntKey.HasValue);
+        Assert.Multiple(() => {
+            Assert.That(tc.nullableIntKey, Is.Null);
+            Assert.That(tc.nullableIntKey.HasValue, Is.False);
+        });
     }
 
     [Test]
@@ -264,8 +268,10 @@ class TypeReifierTests : TestTypes {
         var tc = ReifyString<TestClass>(@"---
             nullableChildStructKey: { childIntKey: 4202 }
             ");
-        Assert.True(tc.nullableChildStructKey.HasValue);
-        Assert.AreEqual(tc.nullableChildStructKey.Value.childIntKey, 4202);
+        Assert.Multiple(() => {
+            Assert.That(tc.nullableChildStructKey.HasValue, Is.True);
+            Assert.That(tc.nullableChildStructKey.Value.childIntKey, Is.EqualTo(4202));
+        });
     }
 
     [Test]
@@ -273,8 +279,10 @@ class TypeReifierTests : TestTypes {
         var tc = ReifyString<TestClass>(@"---
             nullableChildStructKey: null
             ");
-        Assert.AreEqual(tc.nullableChildStructKey, null);
-        Assert.False(tc.nullableChildStructKey.HasValue);
+        Assert.Multiple(() => {
+            Assert.That(tc.nullableChildStructKey, Is.Null);
+            Assert.That(tc.nullableChildStructKey.HasValue, Is.False);
+        });
     }
 
     [Test]
@@ -282,7 +290,7 @@ class TypeReifierTests : TestTypes {
         var instance = ReifyString<TestClass>(@"---
             listIntKey: [0, 1, 2, 3, 4]
             ");
-        Assert.AreEqual(instance.listIntKey, new[] {0, 1, 2, 3, 4});
+        Assert.That(instance.listIntKey, Is.EqualTo(new[] {0, 1, 2, 3, 4}));
     }
 
     [Test]
@@ -290,7 +298,7 @@ class TypeReifierTests : TestTypes {
         var instance = ReifyString<TestClass>(@"---
             arrayIntKey: [0, 1, 2, 3, 4]
             ");
-        Assert.AreEqual(instance.arrayIntKey, new[] {0, 1, 2, 3, 4});
+        Assert.That(instance.arrayIntKey, Is.EqualTo(new[] {0, 1, 2, 3, 4}));
     }
 
     [Test]
@@ -304,12 +312,14 @@ class TypeReifierTests : TestTypes {
             - intKey: 4404
             - floatKey: 5505
             ");
-        Assert.AreEqual(array.Length, 2);
-        Assert.IsTrue(ReferenceEquals(array[0], saved));
-        Assert.AreEqual(array[0].intKey, 4404);
-        Assert.AreEqual(array[0].floatKey, 4.56f);
-        Assert.AreEqual(array[1].intKey, 1234);
-        Assert.AreEqual(array[1].floatKey, 5505f);
+        Assert.Multiple(() => {
+            Assert.That(array, Has.Length.EqualTo(2));
+            Assert.That(ReferenceEquals(array[0], saved), Is.True);
+            Assert.That(array[0].intKey, Is.EqualTo(4404));
+            Assert.That(array[0].floatKey, Is.EqualTo(4.56f));
+            Assert.That(array[1].intKey, Is.EqualTo(1234));
+            Assert.That(array[1].floatKey, Is.EqualTo(5505f));
+        });
     }
 
     [Test]
@@ -324,14 +334,16 @@ class TypeReifierTests : TestTypes {
             - floatKey: 5505
             - intKey: 1011
             ");
-        Assert.AreEqual(array.Length, 3);
-        Assert.IsTrue(ReferenceEquals(array[0], saved));
-        Assert.AreEqual(array[0].intKey, 4404);
-        Assert.AreEqual(array[0].floatKey, 4.56f);
-        Assert.AreEqual(array[1].intKey, 1234);
-        Assert.AreEqual(array[1].floatKey, 5505f);
-        Assert.AreEqual(array[2].intKey, 1011);
-        Assert.AreEqual(array[2].floatKey, -1f);
+        Assert.Multiple(() => {
+            Assert.That(array, Has.Length.EqualTo(3));
+            Assert.That(ReferenceEquals(array[0], saved), Is.True);
+            Assert.That(array[0].intKey, Is.EqualTo(4404));
+            Assert.That(array[0].floatKey, Is.EqualTo(4.56f));
+            Assert.That(array[1].intKey, Is.EqualTo(1234));
+            Assert.That(array[1].floatKey, Is.EqualTo(5505f));
+            Assert.That(array[2].intKey, Is.EqualTo(1011));
+            Assert.That(array[2].floatKey, Is.EqualTo(-1f));
+        });
     }
 
     [Test]
@@ -345,10 +357,12 @@ class TypeReifierTests : TestTypes {
         UpdateFromString(ref array, @"---
             - intKey: 4404
             ");
-        Assert.AreEqual(array.Length, 1);
-        Assert.IsTrue(ReferenceEquals(array[0], saved));
-        Assert.AreEqual(array[0].intKey, 4404);
-        Assert.AreEqual(array[0].floatKey, 4.56f);
+        Assert.Multiple(() => {
+            Assert.That(array, Has.Length.EqualTo(1));
+            Assert.That(ReferenceEquals(array[0], saved), Is.True);
+            Assert.That(array[0].intKey, Is.EqualTo(4404));
+            Assert.That(array[0].floatKey, Is.EqualTo(4.56f));
+        });
     }
 
     [Test]
@@ -358,12 +372,14 @@ class TypeReifierTests : TestTypes {
                 - [9, 8, 7]
                 - [1, 2, 3]
             ");
-        Assert.AreEqual(instance.array2dFloatKey[0, 0], 9f);
-        Assert.AreEqual(instance.array2dFloatKey[0, 1], 8f);
-        Assert.AreEqual(instance.array2dFloatKey[0, 2], 7f);
-        Assert.AreEqual(instance.array2dFloatKey[1, 0], 1f);
-        Assert.AreEqual(instance.array2dFloatKey[1, 1], 2f);
-        Assert.AreEqual(instance.array2dFloatKey[1, 2], 3f);
+        Assert.Multiple(() => {
+            Assert.That(instance.array2dFloatKey[0, 0], Is.EqualTo(9f));
+            Assert.That(instance.array2dFloatKey[0, 1], Is.EqualTo(8f));
+            Assert.That(instance.array2dFloatKey[0, 2], Is.EqualTo(7f));
+            Assert.That(instance.array2dFloatKey[1, 0], Is.EqualTo(1f));
+            Assert.That(instance.array2dFloatKey[1, 1], Is.EqualTo(2f));
+            Assert.That(instance.array2dFloatKey[1, 2], Is.EqualTo(3f));
+        });
     }
 
     [Test]
@@ -379,83 +395,89 @@ class TypeReifierTests : TestTypes {
                     [10, 11, 12]
                 ]
             ]");
-        Assert.AreEqual(instance.array3dFloatKey[0,0,0], 1f);
-        Assert.AreEqual(instance.array3dFloatKey[0,0,1], 2f);
-        Assert.AreEqual(instance.array3dFloatKey[0,0,2], 3f);
-        Assert.AreEqual(instance.array3dFloatKey[0,1,0], 4f);
-        Assert.AreEqual(instance.array3dFloatKey[0,1,1], 5f);
-        Assert.AreEqual(instance.array3dFloatKey[0,1,2], 6f);
-        Assert.AreEqual(instance.array3dFloatKey[1,0,0], 7f);
-        Assert.AreEqual(instance.array3dFloatKey[1,0,1], 8f);
-        Assert.AreEqual(instance.array3dFloatKey[1,0,2], 9f);
-        Assert.AreEqual(instance.array3dFloatKey[1,1,0], 10f);
-        Assert.AreEqual(instance.array3dFloatKey[1,1,1], 11f);
-        Assert.AreEqual(instance.array3dFloatKey[1,1,2], 12f);
+        Assert.Multiple(() => {
+            Assert.That(instance.array3dFloatKey[0, 0, 0], Is.EqualTo(1f));
+            Assert.That(instance.array3dFloatKey[0, 0, 1], Is.EqualTo(2f));
+            Assert.That(instance.array3dFloatKey[0, 0, 2], Is.EqualTo(3f));
+            Assert.That(instance.array3dFloatKey[0, 1, 0], Is.EqualTo(4f));
+            Assert.That(instance.array3dFloatKey[0, 1, 1], Is.EqualTo(5f));
+            Assert.That(instance.array3dFloatKey[0, 1, 2], Is.EqualTo(6f));
+            Assert.That(instance.array3dFloatKey[1, 0, 0], Is.EqualTo(7f));
+            Assert.That(instance.array3dFloatKey[1, 0, 1], Is.EqualTo(8f));
+            Assert.That(instance.array3dFloatKey[1, 0, 2], Is.EqualTo(9f));
+            Assert.That(instance.array3dFloatKey[1, 1, 0], Is.EqualTo(10f));
+            Assert.That(instance.array3dFloatKey[1, 1, 1], Is.EqualTo(11f));
+            Assert.That(instance.array3dFloatKey[1, 1, 2], Is.EqualTo(12f));
+        });
     }
-    
+
     [Test]
     public void Array2DUpdatesInPlace() {
         var array = new TestClass[1, 2];
-        array[0, 0] = new TestClass { intKey = 62, floatKey = 4.56f };
+        array[0, 0] = new TestClass {intKey = 62, floatKey = 4.56f};
         array[0, 1] = new TestClass {intKey = 1234, floatKey = 8.98f};
-        
+
         var saved = array[0, 0];
-        
+
         UpdateFromString(ref array, @"---
             - - intKey: 4404
               - floatKey: 5505
             ");
-        
-        Assert.AreEqual(array.GetLength(0), 1);
-        Assert.AreEqual(array.GetLength(1), 2);
-        
-        Assert.IsTrue(ReferenceEquals(array[0, 0], saved));
-        Assert.AreEqual(array[0, 0].intKey, 4404);
-        Assert.AreEqual(array[0, 0].floatKey, 4.56f);
-        Assert.AreEqual(array[0, 1].intKey, 1234);
-        Assert.AreEqual(array[0, 1].floatKey, 5505f);
+        Assert.Multiple(() => {
+            Assert.That(array.GetLength(0), Is.EqualTo(1));
+            Assert.That(array.GetLength(1), Is.EqualTo(2));
+
+            Assert.That(ReferenceEquals(array[0, 0], saved), Is.True);
+            Assert.That(array[0, 0].intKey, Is.EqualTo(4404));
+            Assert.That(array[0, 0].floatKey, Is.EqualTo(4.56f));
+            Assert.That(array[0, 1].intKey, Is.EqualTo(1234));
+            Assert.That(array[0, 1].floatKey, Is.EqualTo(5505f));
+        });
     }
 
     [Test]
     public void Array2DUpdatesInPlaceWhenAddingItems() {
         var array = new TestClass[1, 2];
-        array[0, 0] = new TestClass { intKey = 62, floatKey = 4.56f };
-        array[0, 1] = new TestClass { intKey = 1234, floatKey = 8.98f };
-        
+        array[0, 0] = new TestClass {intKey = 62, floatKey = 4.56f};
+        array[0, 1] = new TestClass {intKey = 1234, floatKey = 8.98f};
+
         var saved = array[0, 0];
         UpdateFromString(ref array, @"---
             - - intKey: 4404
               - floatKey: 5505
               - intKey: 1011
             ");
-        
-        Assert.AreEqual(array.GetLength(0), 1);
-        Assert.AreEqual(array.GetLength(1), 3);
-        Assert.IsTrue(ReferenceEquals(array[0, 0], saved));
-        Assert.AreEqual(array[0, 0].intKey, 4404);
-        Assert.AreEqual(array[0, 0].floatKey, 4.56f);
-        Assert.AreEqual(array[0, 1].intKey, 1234);
-        Assert.AreEqual(array[0, 1].floatKey, 5505f);
-        Assert.AreEqual(array[0, 2].intKey, 1011);
-        Assert.AreEqual(array[0, 2].floatKey, -1f);
+        Assert.Multiple(() => {
+            Assert.That(array.GetLength(0), Is.EqualTo(1));
+            Assert.That(array.GetLength(1), Is.EqualTo(3));
+            Assert.That(ReferenceEquals(array[0, 0], saved), Is.True);
+            Assert.That(array[0, 0].intKey, Is.EqualTo(4404));
+            Assert.That(array[0, 0].floatKey, Is.EqualTo(4.56f));
+            Assert.That(array[0, 1].intKey, Is.EqualTo(1234));
+            Assert.That(array[0, 1].floatKey, Is.EqualTo(5505f));
+            Assert.That(array[0, 2].intKey, Is.EqualTo(1011));
+            Assert.That(array[0, 2].floatKey, Is.EqualTo(-1f));
+        });
     }
 
     [Test]
     public void Array2DUpdatesInPlaceWhenRemovingItems() {
         var array = new TestClass[1, 3];
-        array[0, 0] = new TestClass { intKey = 62, floatKey = 4.56f };
-        array[0, 1] = new TestClass { intKey = 1234, floatKey = 8.98f };
-        array[0, 2] = new TestClass { intKey = 392, floatKey = 44.55f };
-        
+        array[0, 0] = new TestClass {intKey = 62, floatKey = 4.56f};
+        array[0, 1] = new TestClass {intKey = 1234, floatKey = 8.98f};
+        array[0, 2] = new TestClass {intKey = 392, floatKey = 44.55f};
+
         var saved = array[0, 0];
         UpdateFromString(ref array, @"---
             - - intKey: 4404
             ");
-        Assert.AreEqual(array.GetLength(0), 1);
-        Assert.AreEqual(array.GetLength(1), 1);
-        Assert.IsTrue(ReferenceEquals(array[0, 0], saved));
-        Assert.AreEqual(array[0, 0].intKey, 4404);
-        Assert.AreEqual(array[0, 0].floatKey, 4.56f);
+        Assert.Multiple(() => {
+            Assert.That(array.GetLength(0), Is.EqualTo(1));
+            Assert.That(array.GetLength(1), Is.EqualTo(1));
+            Assert.That(ReferenceEquals(array[0, 0], saved), Is.True);
+            Assert.That(array[0, 0].intKey, Is.EqualTo(4404));
+            Assert.That(array[0, 0].floatKey, Is.EqualTo(4.56f));
+        });
     }
 
     [Test]
@@ -464,7 +486,7 @@ class TypeReifierTests : TestTypes {
             nestedStruct:
                 childIntKey: 1201                
             ");
-        Assert.AreEqual(pc.nestedStruct.childIntKey, 1201);
+        Assert.That(pc.nestedStruct.childIntKey, Is.EqualTo(1201));
     }
 
     [Test]
@@ -473,7 +495,7 @@ class TypeReifierTests : TestTypes {
             nestedObject:
                 intKey: 41
             ");
-        Assert.AreEqual(pc.nestedObject.intKey, 41);
+        Assert.That(pc.nestedObject.intKey, Is.EqualTo(41));
     }
 
     [Test]
@@ -484,23 +506,28 @@ class TypeReifierTests : TestTypes {
                 - intKey: 23
                 - intKey: 65
             ");
-        Assert.AreEqual(pc.nestedList.Count, 3);
-        Assert.AreEqual(pc.nestedList[0].intKey, 35);
-        Assert.AreEqual(pc.nestedList[1].intKey, 23);
-        Assert.AreEqual(pc.nestedList[2].intKey, 65);
+        Assert.Multiple(() => {
+            Assert.That(pc.nestedList.Count, Is.EqualTo(3));
+            Assert.That(pc.nestedList[0].intKey, Is.EqualTo(35));
+            Assert.That(pc.nestedList[1].intKey, Is.EqualTo(23));
+            Assert.That(pc.nestedList[2].intKey, Is.EqualTo(65));
+        });
     }
 
     [Test]
     public void NestedObjectUpdateDoesntCreateNewObject() {
-        var o = new ParentClass();
-        o.nestedObject = new TestClass();
+        var o = new ParentClass {
+            nestedObject = new TestClass()
+        };
         var saved = o.nestedObject;
         UpdateFromString(ref o, @"---
             nestedObject:
                 intKey: 100
             ");
-        Assert.IsTrue(ReferenceEquals(o.nestedObject, saved));
-        Assert.AreEqual(o.nestedObject.intKey, 100);
+        Assert.Multiple(() => {
+            Assert.That(ReferenceEquals(o.nestedObject, saved), Is.True);
+            Assert.That(o.nestedObject.intKey, Is.EqualTo(100));
+        });
     }
 
     [Test]
@@ -512,32 +539,40 @@ class TypeReifierTests : TestTypes {
             nestedStruct:
                 childIntKey: 99
             ");
-        Assert.AreEqual(o.nestedStruct.childIntKey, 99);
-        Assert.AreEqual(o.nestedStruct.childFloatKey, 10f);
+        Assert.Multiple(() => {
+            Assert.That(o.nestedStruct.childIntKey, Is.EqualTo(99));
+            Assert.That(o.nestedStruct.childFloatKey, Is.EqualTo(10f));
+        });
     }
 
     [Test]
     public void NestedListUpdatesInPlace() {
-        var o = new ParentClass();
-        o.nestedList = new List<TestClass>();
-        o.nestedList.Add(new TestClass {intKey = 78, floatKey = 1.2f});
+        var o = new ParentClass {
+            nestedList = new List<TestClass> {
+                new TestClass {intKey = 78, floatKey = 1.2f}
+            }
+        };
         var saved = o.nestedList[0];
         UpdateFromString(ref o, @"---
             nestedList:
                 - intKey: 4404
             ");
-        Assert.AreEqual(o.nestedList.Count, 1);
-        Assert.IsTrue(ReferenceEquals(o.nestedList[0], saved));
-        Assert.AreEqual(o.nestedList[0].intKey, 4404);
-        Assert.AreEqual(o.nestedList[0].floatKey, 1.2f);
+        Assert.Multiple(() => {
+            Assert.That(o.nestedList, Has.Count.EqualTo(1));
+            Assert.That(ReferenceEquals(o.nestedList[0], saved), Is.True);
+            Assert.That(o.nestedList[0].intKey, Is.EqualTo(4404));
+            Assert.That(o.nestedList[0].floatKey, Is.EqualTo(1.2f));
+        });
     }
 
     [Test]
     public void NestedListUpdatesInPlaceWhenAddingItems() {
-        var o = new ParentClass();
-        o.nestedList = new List<TestClass>();
-        o.nestedList.Add(new TestClass {intKey = 62, floatKey = 4.56f});
-        o.nestedList.Add(new TestClass {intKey = 1234, floatKey = 8.98f});
+        var o = new ParentClass {
+            nestedList = new List<TestClass> {
+                new TestClass {intKey = 62, floatKey = 4.56f},
+                new TestClass {intKey = 1234, floatKey = 8.98f}
+            }
+        };
         var saved = o.nestedList[0];
         UpdateFromString(ref o, @"---
             nestedList:
@@ -545,54 +580,64 @@ class TypeReifierTests : TestTypes {
                 - floatKey: 5505
                 - intKey: 1011
             ");
-        Assert.AreEqual(o.nestedList.Count, 3);
-        Assert.IsTrue(ReferenceEquals(o.nestedList[0], saved));
-        Assert.AreEqual(o.nestedList[0].intKey, 4404);
-        Assert.AreEqual(o.nestedList[0].floatKey, 4.56f);
-        Assert.AreEqual(o.nestedList[1].intKey, 1234);
-        Assert.AreEqual(o.nestedList[1].floatKey, 5505f);
-        Assert.AreEqual(o.nestedList[2].intKey, 1011);
-        Assert.AreEqual(o.nestedList[2].floatKey, -1f);
+        Assert.Multiple(() => {
+            Assert.That(o.nestedList, Has.Count.EqualTo(3));
+            Assert.That(ReferenceEquals(o.nestedList[0], saved), Is.True);
+            Assert.That(o.nestedList[0].intKey, Is.EqualTo(4404));
+            Assert.That(o.nestedList[0].floatKey, Is.EqualTo(4.56f));
+            Assert.That(o.nestedList[1].intKey, Is.EqualTo(1234));
+            Assert.That(o.nestedList[1].floatKey, Is.EqualTo(5505f));
+            Assert.That(o.nestedList[2].intKey, Is.EqualTo(1011));
+            Assert.That(o.nestedList[2].floatKey, Is.EqualTo(-1f));
+        });
     }
 
     [Test]
     public void NestedListUpdatesInPlaceWhenRemovingItems() {
-        var o = new ParentClass();
-        o.nestedList = new List<TestClass>();
-        o.nestedList.Add(new TestClass {intKey = 62, floatKey = 4.56f});
-        o.nestedList.Add(new TestClass {intKey = 1234, floatKey = 8.98f});
-        o.nestedList.Add(new TestClass {intKey = 392, floatKey = 44.55f});
+        var o = new ParentClass {
+            nestedList = new List<TestClass> {
+                new TestClass {intKey = 62, floatKey = 4.56f},
+                new TestClass {intKey = 1234, floatKey = 8.98f},
+                new TestClass {intKey = 392, floatKey = 44.55f}
+            }
+        };
         var saved = o.nestedList[0];
         UpdateFromString(ref o, @"---
             nestedList:
                 - intKey: 4404
             ");
-        Assert.AreEqual(o.nestedList.Count, 1);
-        Assert.IsTrue(ReferenceEquals(o.nestedList[0], saved));
-        Assert.AreEqual(o.nestedList[0].intKey, 4404);
-        Assert.AreEqual(o.nestedList[0].floatKey, 4.56f);
+        Assert.Multiple(() => {
+            Assert.That(o.nestedList, Has.Count.EqualTo(1));
+            Assert.That(ReferenceEquals(o.nestedList[0], saved), Is.True);
+            Assert.That(o.nestedList[0].intKey, Is.EqualTo(4404));
+            Assert.That(o.nestedList[0].floatKey, Is.EqualTo(4.56f));
+        });
     }
 
     [Test]
     public void NestedListUpdatesInPlaceWhenTheSameCount() {
-        var o = new ParentClass();
-        o.nestedList = new List<TestClass>();
-        o.nestedList.Add(new TestClass {intKey = 62, floatKey = 4.56f});
-        o.nestedList.Add(new TestClass {intKey = 1234, floatKey = 8.98f});
-        o.nestedList.Add(new TestClass {intKey = 11, floatKey = 55.24f});
+        var o = new ParentClass {
+            nestedList = new List<TestClass> {
+                new TestClass {intKey = 62, floatKey = 4.56f},
+                new TestClass {intKey = 1234, floatKey = 8.98f},
+                new TestClass {intKey = 11, floatKey = 55.24f}
+            }
+        };
         UpdateFromString(ref o, @"---
             nestedList:
                 - intKey: 503
                 - floatKey: 66
                 - intKey: 67
             ");
-        Assert.AreEqual(o.nestedList.Count, 3);
-        Assert.AreEqual(o.nestedList[0].intKey, 503);
-        Assert.AreEqual(o.nestedList[0].floatKey, 4.56f);
-        Assert.AreEqual(o.nestedList[1].intKey, 1234);
-        Assert.AreEqual(o.nestedList[1].floatKey, 66f);
-        Assert.AreEqual(o.nestedList[2].intKey, 67);
-        Assert.AreEqual(o.nestedList[2].floatKey, 55.24f);
+        Assert.Multiple(() => {
+            Assert.That(o.nestedList, Has.Count.EqualTo(3));
+            Assert.That(o.nestedList[0].intKey, Is.EqualTo(503));
+            Assert.That(o.nestedList[0].floatKey, Is.EqualTo(4.56f));
+            Assert.That(o.nestedList[1].intKey, Is.EqualTo(1234));
+            Assert.That(o.nestedList[1].floatKey, Is.EqualTo(66f));
+            Assert.That(o.nestedList[2].intKey, Is.EqualTo(67));
+            Assert.That(o.nestedList[2].floatKey, Is.EqualTo(55.24f));
+        });
     }
 
     [Test]
@@ -602,9 +647,11 @@ class TypeReifierTests : TestTypes {
             Primi: 1024
             Secondi: 999
         ");
-        Assert.AreEqual(2, o.Count);
-        Assert.AreEqual(1024, o[TestEnum.Primi]);
-        Assert.AreEqual(999, o[TestEnum.Secondi]);
+        Assert.Multiple(() => {
+            Assert.That(o, Has.Count.EqualTo(2));
+            Assert.That(o[TestEnum.Primi], Is.EqualTo(1024));
+            Assert.That(o[TestEnum.Secondi], Is.EqualTo(999));
+        });
     }
 
     [Test]
@@ -614,9 +661,11 @@ class TypeReifierTests : TestTypes {
             101: 1024
             504: 999
         ");
-        Assert.AreEqual(2, o.Count);
-        Assert.AreEqual(1024, o[101]);
-        Assert.AreEqual(999, o[504]);
+        Assert.Multiple(() => {
+            Assert.That(o, Has.Count.EqualTo(2));
+            Assert.That(o[101], Is.EqualTo(1024));
+            Assert.That(o[504], Is.EqualTo(999));
+        });
     }
 
     [Test]
@@ -628,10 +677,12 @@ class TypeReifierTests : TestTypes {
             Primi: { intKey: 99 }
             Secondi: { intKey: 12 }
         ");
-        Assert.AreEqual(2, o.Count);
-        Assert.IsTrue(ReferenceEquals(saved, o[TestEnum.Primi]));
-        Assert.AreEqual(99, o[TestEnum.Primi].intKey);
-        Assert.AreEqual(12, o[TestEnum.Secondi].intKey);
+        Assert.Multiple(() => {
+            Assert.That(o, Has.Count.EqualTo(2));
+            Assert.That(ReferenceEquals(saved, o[TestEnum.Primi]), Is.True);
+            Assert.That(o[TestEnum.Primi].intKey, Is.EqualTo(99));
+            Assert.That(o[TestEnum.Secondi].intKey, Is.EqualTo(12));
+        });
     }
 
     [Test]
@@ -644,48 +695,60 @@ class TypeReifierTests : TestTypes {
         UpdateFromString(ref o, @"---
             Primi: { intKey: 99 }
         ");
-        Assert.AreEqual(1, o.Count);
-        Assert.IsFalse(o.ContainsKey(TestEnum.Secondi));
-        Assert.IsTrue(ReferenceEquals(saved, o[TestEnum.Primi]));
-        Assert.AreEqual(99, o[TestEnum.Primi].intKey);
+        Assert.Multiple(() => {
+            Assert.That(o, Has.Count.EqualTo(1));
+            Assert.That(o.ContainsKey(TestEnum.Secondi), Is.False);
+            Assert.That(ReferenceEquals(saved, o[TestEnum.Primi]), Is.True);
+            Assert.That(o[TestEnum.Primi].intKey, Is.EqualTo(99));
+        });
     }
 
     [Test]
     public void NestedDictUpdatesInPlace() {
-        var o = new ParentClass();
-        o.nestedDict = new Dictionary<string, TestClass>();
-        o.nestedDict["dictKey"] = new TestClass {intKey = 22, floatKey = 4.56f};
+        var o = new ParentClass {
+            nestedDict = new Dictionary<string, TestClass> {
+                ["dictKey"] = new TestClass {intKey = 22, floatKey = 4.56f}
+            }
+        };
         var saved = o.nestedDict["dictKey"];
         UpdateFromString(ref o, @"---
             nestedDict:
                 dictKey:
                     intKey: 56
             ");
-        Assert.AreEqual(o.nestedDict.Count, 1);
-        Assert.IsTrue(ReferenceEquals(o.nestedDict["dictKey"], saved));
-        Assert.AreEqual(o.nestedDict["dictKey"].intKey, 56);
+        Assert.Multiple(() => {
+            Assert.That(o.nestedDict, Has.Count.EqualTo(1));
+            Assert.That(ReferenceEquals(o.nestedDict["dictKey"], saved), Is.True);
+            Assert.That(o.nestedDict["dictKey"].intKey, Is.EqualTo(56));
+        });
     }
 
     [Test]
     public void NestedDictUpdatesInPlaceStructs() {
-        var o = new ParentClass();
-        o.nestedStructDict = new Dictionary<string, ChildStruct>();
-        o.nestedStructDict["dictKey"] = new ChildStruct {childIntKey = 11, childFloatKey = 6.54f};
+        var o = new ParentClass {
+            nestedStructDict = new Dictionary<string, ChildStruct> {
+                ["dictKey"] = new ChildStruct {childIntKey = 11, childFloatKey = 6.54f}
+            }
+        };
         UpdateFromString(ref o, @"---
             nestedStructDict:
                 dictKey:
                     childIntKey: 110
             ");
-        Assert.AreEqual(o.nestedStructDict.Count, 1);
-        Assert.AreEqual(o.nestedStructDict["dictKey"].childIntKey, 110);
-        Assert.AreEqual(o.nestedStructDict["dictKey"].childFloatKey, 6.54f);
+        Assert.Multiple(() => {
+            Assert.That(o.nestedStructDict, Has.Count.EqualTo(1));
+            Assert.That(o.nestedStructDict["dictKey"].childIntKey, Is.EqualTo(110));
+            Assert.That(o.nestedStructDict["dictKey"].childFloatKey, Is.EqualTo(6.54f));
+        });
     }
 
     [Test]
     public void NestedDictAddsNewPairs() {
-        var o = new ParentClass();
-        o.nestedDict = new Dictionary<string, TestClass>();
-        o.nestedDict["dictKey"] = new TestClass {intKey = 67, floatKey = 1.06f};
+        var o = new ParentClass {
+            nestedDict = new Dictionary<string, TestClass> {
+                ["dictKey"] = new TestClass {intKey = 67, floatKey = 1.06f}
+            }
+        };
         UpdateFromString(ref o, @"---
             nestedDict:
                 dictKey:
@@ -694,26 +757,32 @@ class TypeReifierTests : TestTypes {
                     intKey: 43
                     floatKey: 12
             ");
-        Assert.AreEqual(o.nestedDict.Count, 2);
-        Assert.AreEqual(o.nestedDict["dictKey"].intKey, 42);
-        Assert.AreEqual(o.nestedDict["dictKey"].floatKey, 1.06f);
-        Assert.AreEqual(o.nestedDict["newKey"].intKey, 43);
-        Assert.AreEqual(o.nestedDict["newKey"].floatKey, 12f);
+        Assert.Multiple(() => {
+            Assert.That(o.nestedDict, Has.Count.EqualTo(2));
+            Assert.That(o.nestedDict["dictKey"].intKey, Is.EqualTo(42));
+            Assert.That(o.nestedDict["dictKey"].floatKey, Is.EqualTo(1.06f));
+            Assert.That(o.nestedDict["newKey"].intKey, Is.EqualTo(43));
+            Assert.That(o.nestedDict["newKey"].floatKey, Is.EqualTo(12f));
+        });
     }
 
     [Test]
     public void NestedDictRemovesMissingPairs() {
-        var o = new ParentClass();
-        o.nestedDict = new Dictionary<string, TestClass>();
-        o.nestedDict["dictKey"] = new TestClass {intKey = 200, floatKey = 10099.2f};
+        var o = new ParentClass {
+            nestedDict = new Dictionary<string, TestClass> {
+                ["dictKey"] = new TestClass {intKey = 200, floatKey = 10099.2f}
+            }
+        };
         UpdateFromString(ref o, @"---
             nestedDict:
                 newKey:
                     intKey: 999
             ");
-        Assert.AreEqual(o.nestedDict.Count, 1);
-        Assert.IsFalse(o.nestedDict.ContainsKey("dictKey"));
-        Assert.AreEqual(o.nestedDict["newKey"].intKey, 999);
+        Assert.Multiple(() => {
+            Assert.That(o.nestedDict, Has.Count.EqualTo(1));
+            Assert.That(o.nestedDict.ContainsKey("dictKey"), Is.False);
+            Assert.That(o.nestedDict["newKey"].intKey, Is.EqualTo(999));
+        });
     }
 
     [Test]
@@ -725,41 +794,45 @@ class TypeReifierTests : TestTypes {
             "
             , "TestFilename");
         reifier.SetFieldsOnObject(ref tc, doc);
-        Assert.AreEqual(tc.intKey, 99088);
+        Assert.That(tc.intKey, Is.EqualTo(99088));
     }
 
     [Test]
     public void SetFieldsOnObjectForACastedObject() {
-        var tc = (object) new TestClass();
+        object tc = (object) new TestClass();
         var doc = Configs.ParseString(
             @"---
             intKey: 99077
             "
             , "TestFilename");
         reifier.SetFieldsOnObject(ref tc, doc);
-        Assert.AreEqual(((TestClass) tc).intKey, 99077);
+        Assert.That(((TestClass) tc).intKey, Is.EqualTo(99077));
     }
 
     [Test]
     public void SetFieldsOnStructForATemplatedStructCall() {
-        var s = new ChildStruct();
-        s.childIntKey = 1;
-        s.childFloatKey = 1;
+        var s = new ChildStruct {
+            childIntKey = 1,
+            childFloatKey = 1
+        };
         var doc = Configs.ParseString(
             @"---
             childIntKey: 12345
             "
             , "TestFilename");
         reifier.SetFieldsOnStruct(ref s, doc);
-        Assert.AreEqual(s.childIntKey, 12345);
-        Assert.AreEqual(s.childFloatKey, 1);
+        Assert.Multiple(() => {
+            Assert.That(s.childIntKey, Is.EqualTo(12345));
+            Assert.That(s.childFloatKey, Is.EqualTo(1));
+        });
     }
 
     [Test]
     public void SetFieldsOnObjectForABoxedStructArgument() {
-        var s = new ChildStruct();
-        s.childIntKey = 1;
-        s.childFloatKey = 1;
+        var s = new ChildStruct {
+            childIntKey = 1,
+            childFloatKey = 1
+        };
         var doc = Configs.ParseString(
             @"---
             childIntKey: 34567
@@ -767,8 +840,10 @@ class TypeReifierTests : TestTypes {
             , "TestFilename");
         object os = s;
         reifier.SetFieldsOnObject(ref os, doc);
-        Assert.AreEqual(((ChildStruct) os).childIntKey, 34567);
-        Assert.AreEqual(((ChildStruct) os).childFloatKey, 1);
+        Assert.Multiple(() => {
+            Assert.That(((ChildStruct) os).childIntKey, Is.EqualTo(34567));
+            Assert.That(((ChildStruct) os).childFloatKey, Is.EqualTo(1));
+        });
     }
 
     [Test]
@@ -789,15 +864,19 @@ class TypeReifierTests : TestTypes {
     [Test]
     public void EmptyDocReturnsDocNode() {
         var doc = Configs.ParseString("", "TestFilename");
-        Assert.IsNotNull(doc);
-        Assert.IsInstanceOf<DocNode>(doc);
+        Assert.Multiple(() => {
+            Assert.That(doc, Is.Not.Null);
+            Assert.That(doc, Is.InstanceOf<DocNode>());
+        });
     }
 
     [Test]
     public void EmptyDocStreamReturnsDocNode() {
         var doc = Configs.LoadDocFromStream(new System.IO.MemoryStream(), "EmptyDoc");
-        Assert.IsNotNull(doc);
-        Assert.IsInstanceOf<DocNode>(doc);
+        Assert.Multiple(() => {
+            Assert.That(doc, Is.Not.Null);
+            Assert.That(doc, Is.InstanceOf<DocNode>());
+        });
     }
 }
 
@@ -813,8 +892,10 @@ class ReifiesStatic : TestTypes {
             "
             , "TestFilename");
         Configs.ReifyStatic<TestClass>(doc);
-        Assert.AreEqual(TestClass.staticStringKey, "arbitrage");
-        Assert.AreEqual(TestClass.staticIntArrKey, new[] {4, 4, 0, 0});
+        Assert.Multiple(() => {
+            Assert.That(TestClass.staticStringKey, Is.EqualTo("arbitrage"));
+            Assert.That(TestClass.staticIntArrKey, Is.EqualTo(new[] {4, 4, 0, 0}));
+        });
     }
 
     [Test]
@@ -837,7 +918,7 @@ class ReifiesStatic : TestTypes {
             "
             , "TestFilename");
         Configs.ReifyStatic<ChildStruct>(doc);
-        Assert.AreEqual(ChildStruct.staticIntKey, 3049);
+        Assert.That(ChildStruct.staticIntKey, Is.EqualTo(3049));
     }
 
     [Test]
@@ -848,8 +929,10 @@ class ReifiesStatic : TestTypes {
             "
             , "TestFilename");
         Configs.ReifyStatic(typeof(PureStatic), doc);
-        Assert.AreEqual(PureStatic.staticStringList[0], "herp");
-        Assert.AreEqual(PureStatic.staticStringList[1], "derp");
+        Assert.Multiple(() => {
+            Assert.That(PureStatic.staticStringList[0], Is.EqualTo("herp"));
+            Assert.That(PureStatic.staticStringList[1], Is.EqualTo("derp"));
+        });
     }
 }
 
@@ -864,7 +947,7 @@ class ReifiesSingle : TestTypes {
             , "TestFilename");
         var inst = Activator.CreateInstance<SingleFieldClass>();
         reifier.SetFieldsOnObject(ref inst, doc);
-        Assert.AreEqual(inst.SingleField, 8342);
+        Assert.That(inst.SingleField, Is.EqualTo(8342));
     }
 
     [Test]
@@ -876,10 +959,12 @@ class ReifiesSingle : TestTypes {
             , "TestFilename");
         var inst = Activator.CreateInstance<SingleListClass>();
         reifier.SetFieldsOnObject(ref inst, doc);
-        Assert.AreEqual(inst.SingleList[0], "a");
-        Assert.AreEqual(inst.SingleList[1], "b");
-        Assert.AreEqual(inst.SingleList[2], "c");
-        Assert.AreEqual(inst.SingleList[3], "d");
+        Assert.Multiple(() => {
+            Assert.That(inst.SingleList[0], Is.EqualTo("a"));
+            Assert.That(inst.SingleList[1], Is.EqualTo("b"));
+            Assert.That(inst.SingleList[2], Is.EqualTo("c"));
+            Assert.That(inst.SingleList[3], Is.EqualTo("d"));
+        });
     }
 }
 
@@ -892,7 +977,7 @@ class ReifiesExtraFields : TestTypes {
         ", "TestFilename");
         var inst = Activator.CreateInstance<TestClass>();
         reifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.AllowMissingFields);
-        Assert.AreEqual(inst.floatKey, 1.56f);
+        Assert.That(inst.floatKey, Is.EqualTo(1.56f));
     }
 
     [Test]
@@ -907,9 +992,11 @@ class ReifiesExtraFields : TestTypes {
             reifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.CaseSensitive);
         });
         // check that it found all the extra keys
-        Assert.IsNotNull(exception);
-        Assert.True(exception.Message.IndexOf("extraKey1", StringComparison.Ordinal) >= 0);
-        Assert.True(exception.Message.IndexOf("extraKey2", StringComparison.Ordinal) >= 0);
+        Assert.Multiple(() => {
+            Assert.That(exception, Is.Not.Null);
+            Assert.That(exception.Message.IndexOf("extraKey1", StringComparison.Ordinal), Is.GreaterThanOrEqualTo(0));
+            Assert.That(exception.Message.IndexOf("extraKey2", StringComparison.Ordinal), Is.GreaterThanOrEqualTo(0));
+        });
     }
 }
 
@@ -924,9 +1011,11 @@ class ReifiesMissingFields : TestTypes {
         ", "TestFilename");
         var inst = Activator.CreateInstance<ChildStruct>();
         reifier.SetFieldsOnStruct(ref inst, doc, ReificationOptions.None);
-        Assert.AreEqual(inst.childIntKey, 42);
-        Assert.AreEqual(inst.childFloatKey, 1.25);
-        Assert.AreEqual(ChildStruct.staticIntKey, 332);
+        Assert.Multiple(() => {
+            Assert.That(inst.childIntKey, Is.EqualTo(42));
+            Assert.That(inst.childFloatKey, Is.EqualTo(1.25));
+            Assert.That(ChildStruct.staticIntKey, Is.EqualTo(332));
+        });
     }
 
     [Test]
@@ -939,9 +1028,11 @@ class ReifiesMissingFields : TestTypes {
             reifier.SetFieldsOnStruct(ref inst, doc, ReificationOptions.CaseSensitive);
         });
         // check that it found all the missing keys
-        Assert.IsNotNull(exception);
-        Assert.True(exception.Message.IndexOf("childFloatKey", StringComparison.Ordinal) >= 0);
-        Assert.True(exception.Message.IndexOf("staticIntKey", StringComparison.Ordinal) >= 0);
+        Assert.Multiple(() => {
+            Assert.That(exception, Is.Not.Null);
+            Assert.That(exception.Message.IndexOf("childFloatKey", StringComparison.Ordinal), Is.GreaterThanOrEqualTo(0));
+            Assert.That(exception.Message.IndexOf("staticIntKey", StringComparison.Ordinal), Is.GreaterThanOrEqualTo(0));
+        });
     }
 }
 
@@ -956,9 +1047,11 @@ class ReifiesCaseInsensitive : TestTypes {
         ", "TestFilename");
         var inst = Activator.CreateInstance<ChildStruct>();
         reifier.SetFieldsOnStruct(ref inst, doc, ReificationOptions.None);
-        Assert.AreEqual(inst.childIntKey, 32);
-        Assert.AreEqual(inst.childFloatKey, 11);
-        Assert.AreEqual(ChildStruct.staticIntKey, 5);
+        Assert.Multiple(() => {
+            Assert.That(inst.childIntKey, Is.EqualTo(32));
+            Assert.That(inst.childFloatKey, Is.EqualTo(11));
+            Assert.That(ChildStruct.staticIntKey, Is.EqualTo(5));
+        });
     }
 
     [Test]
@@ -968,7 +1061,7 @@ class ReifiesCaseInsensitive : TestTypes {
         ", "TestFilename");
         var inst = Activator.CreateInstance<ChildStruct>();
         reifier.SetFieldsOnStruct(ref inst, doc, ReificationOptions.AllowMissingFields);
-        Assert.AreEqual(inst.childIntKey, 32);
+        Assert.That(inst.childIntKey, Is.EqualTo(32));
     }
 }
 
@@ -982,9 +1075,11 @@ class ReifierAttributes : TestTypes {
         ", "TestFilename");
         var inst = Activator.CreateInstance<AttributesClass>();
         reifier.SetFieldsOnObject(ref inst, doc);
-        Assert.AreEqual(inst.Mandatory, 10);
-        Assert.AreEqual(inst.AllowedMissing, "derp");
-        Assert.AreEqual(inst.Ignored, false);
+        Assert.Multiple(() => {
+            Assert.That(inst.Mandatory, Is.EqualTo(10));
+            Assert.That(inst.AllowedMissing, Is.EqualTo("derp"));
+            Assert.That(inst.Ignored, Is.False);
+        });
     }
 
     [Test]
@@ -1006,10 +1101,12 @@ class ReifierAttributes : TestTypes {
         ", "TestFilename");
         var inst = Activator.CreateInstance<AttributesClass>();
         reifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.None);
-        Assert.AreEqual(inst.Mandatory, 15);
-        Assert.AreEqual(inst.AllowedMissing, "initial");
-        Assert.AreEqual(inst.Ignored, false);
-        Assert.AreEqual(inst.MissingOrNotDependingOnDefault, "true");
+        Assert.Multiple(() => {
+            Assert.That(inst.Mandatory, Is.EqualTo(15));
+            Assert.That(inst.AllowedMissing, Is.EqualTo("initial"));
+            Assert.That(inst.Ignored, Is.False);
+            Assert.That(inst.MissingOrNotDependingOnDefault, Is.EqualTo("true"));
+        });
     }
 
     [Test]
@@ -1019,9 +1116,11 @@ class ReifierAttributes : TestTypes {
         ", "TestFilename");
         var inst = Activator.CreateInstance<AttributesClass>();
         reifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.AllowMissingFields);
-        Assert.AreEqual(inst.Mandatory, 15);
-        Assert.AreEqual(inst.AllowedMissing, "initial");
-        Assert.AreEqual(inst.MissingOrNotDependingOnDefault, "initial2");
+        Assert.Multiple(() => {
+            Assert.That(inst.Mandatory, Is.EqualTo(15));
+            Assert.That(inst.AllowedMissing, Is.EqualTo("initial"));
+            Assert.That(inst.MissingOrNotDependingOnDefault, Is.EqualTo("initial2"));
+        });
     }
 
     [Test]
@@ -1047,10 +1146,12 @@ class ReifierAttributes : TestTypes {
         ", "TestFilename");
         var inst = Activator.CreateInstance<AttributesClass>();
         reifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.None);
-        Assert.AreEqual(inst.Mandatory, 102);
-        Assert.AreEqual(inst.AllowedMissing, "herpe");
-        Assert.AreEqual(inst.Ignored, false);
-        Assert.AreEqual(inst.MissingOrNotDependingOnDefault, "whip");
+        Assert.Multiple(() => {
+            Assert.That(inst.Mandatory, Is.EqualTo(102));
+            Assert.That(inst.AllowedMissing, Is.EqualTo("herpe"));
+            Assert.That(inst.Ignored, Is.False);
+            Assert.That(inst.MissingOrNotDependingOnDefault, Is.EqualTo("whip"));
+        });
     }
 
     [Test]
@@ -1061,9 +1162,11 @@ class ReifierAttributes : TestTypes {
         ", "TestFilename");
         var inst = Activator.CreateInstance<MandatoryClass>();
         reifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.None);
-        Assert.AreEqual(inst.intField, 10);
-        Assert.AreEqual(inst.stringField, "uh");
-        Assert.AreEqual(inst.ignoreField, "initialignore");
+        Assert.Multiple(() => {
+            Assert.That(inst.intField, Is.EqualTo(10));
+            Assert.That(inst.stringField, Is.EqualTo("uh"));
+            Assert.That(inst.ignoreField, Is.EqualTo("initialignore"));
+        });
     }
 
     [Test]
@@ -1095,9 +1198,11 @@ class ReifierAttributes : TestTypes {
         ", "TestFilename");
         var inst = Activator.CreateInstance<MandatoryClass>();
         reifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.None);
-        Assert.AreEqual(inst.intField, 99);
-        Assert.AreEqual(inst.stringField, "initial");
-        Assert.AreEqual(inst.ignoreField, "initialignore");
+        Assert.Multiple(() => {
+            Assert.That(inst.intField, Is.EqualTo(99));
+            Assert.That(inst.stringField, Is.EqualTo("initial"));
+            Assert.That(inst.ignoreField, Is.EqualTo("initialignore"));
+        });
     }
 
     [Test]
@@ -1108,8 +1213,10 @@ class ReifierAttributes : TestTypes {
         ", "TestFilename");
         var inst = Activator.CreateInstance<AllowMissingClass>();
         reifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.None);
-        Assert.AreEqual(inst.stringField, "hmm");
-        Assert.AreEqual(inst.listField[0], "1");
+        Assert.Multiple(() => {
+            Assert.That(inst.stringField, Is.EqualTo("hmm"));
+            Assert.That(inst.listField[0], Is.EqualTo("1"));
+        });
     }
 
     [Test]
@@ -1119,8 +1226,10 @@ class ReifierAttributes : TestTypes {
         ", "TestFilename");
         var inst = Activator.CreateInstance<AllowMissingClass>();
         reifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.AllowMissingFields);
-        Assert.AreEqual(inst.stringField, "wot");
-        Assert.AreEqual(inst.listField, null);
+        Assert.Multiple(() => {
+            Assert.That(inst.stringField, Is.EqualTo("wot"));
+            Assert.That(inst.listField, Is.Null);
+        });
     }
 
     [Test]
@@ -1130,8 +1239,10 @@ class ReifierAttributes : TestTypes {
         ", "TestFilename");
         var inst = Activator.CreateInstance<AllowMissingClass>();
         reifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.None);
-        Assert.AreEqual(inst.stringField, "wot");
-        Assert.AreEqual(inst.listField, null);
+        Assert.Multiple(() => {
+            Assert.That(inst.stringField, Is.EqualTo("wot"));
+            Assert.That(inst.listField, Is.Null);
+        });
     }
 
     [Test]
@@ -1166,13 +1277,15 @@ class ReifierAttributes : TestTypes {
         ", "TestFilename");
         var inst = Activator.CreateInstance<PropertiesClass>();
         reifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.None);
-        Assert.AreEqual(inst.int1Value, 10);
-        Assert.AreEqual(inst.int2Value, 2);
-        Assert.AreEqual(inst.backing3Int, 3);
-        Assert.AreEqual(inst.int4Value, 4);
-        Assert.AreEqual(PropertiesClass.staticStringValue, "newValue");
-        Assert.AreEqual(inst.allowMissing, "missing");
-        Assert.AreEqual(inst.mandatoryValue, "mandatory");
+        Assert.Multiple(() => {
+            Assert.That(inst.int1Value, Is.EqualTo(10));
+            Assert.That(inst.int2Value, Is.EqualTo(2));
+            Assert.That(inst.backing3Int, Is.EqualTo(3));
+            Assert.That(inst.int4Value, Is.EqualTo(4));
+            Assert.That(PropertiesClass.staticStringValue, Is.EqualTo("newValue"));
+            Assert.That(inst.allowMissing, Is.EqualTo("missing"));
+            Assert.That(inst.mandatoryValue, Is.EqualTo("mandatory"));
+        });
     }
 }
 
@@ -1183,17 +1296,17 @@ class SetField : TestTypes {
         var doc = Configs.ParseString("boolKeyDefaultFalse: true", "SetField.SetTrivialFieldOnObject");
         var tc = new TestClass();
         Configs.SetFieldOnObject(ref tc, "boolKeyDefaultFalse", doc, ReificationOptions.None);
-        Assert.AreEqual(tc.boolKeyDefaultFalse, true);
+        Assert.That(tc.boolKeyDefaultFalse, Is.True);
     }
-    
+
     [Test]
     public void SetOptionalFieldOnObject() {
         var doc = Configs.ParseString("{}", "SetField.SetOptionalFieldOnObject");
         var tc = new TestClass();
         Configs.SetFieldOnObject(ref tc, "boolKeyDefaultFalse", doc, ReificationOptions.AllowMissingFields);
-        Assert.AreEqual(tc.boolKeyDefaultFalse, false);
+        Assert.That(tc.boolKeyDefaultFalse, Is.False);
     }
-    
+
     [Test]
     public void SetRequiredFieldOnObject() {
         var doc = Configs.ParseString("Mandatory: 1", "SetField.SetRequiredFieldOnObject");
@@ -1201,7 +1314,7 @@ class SetField : TestTypes {
         Configs.SetFieldOnObject(ref ac, "Mandatory", doc, ReificationOptions.None);
         Assert.That(ac.Mandatory, Is.EqualTo(1));
     }
-    
+
     [Test]
     public void SetRequiredFieldOnObjectButItsMissing() {
         var doc = Configs.ParseString("{}", "SetField.SetRequiredFieldOnObjectButItsMissing");
@@ -1210,7 +1323,7 @@ class SetField : TestTypes {
             Configs.SetFieldOnObject(ref ac, "Mandatory", doc, ReificationOptions.None);
         });
     }
-    
+
     [Test]
     public void SetDisallowedExtraFieldThrows() {
         var doc = Configs.ParseString(@"extraField: 1", "SetField.SetDisallowedExtraFieldThrows");
@@ -1219,14 +1332,14 @@ class SetField : TestTypes {
             Configs.SetFieldOnObject(ref ac, "extraField", doc, ReificationOptions.None);
         });
     }
-    
+
     [Test]
     public void SetAllowedExtraFieldDoesNothing() {
         var doc = Configs.ParseString(@"extraField: 1", "SetField.SetAllowedExtraFieldDoesNothing");
         var ac = new AttributesClass();
         Configs.SetFieldOnObject(ref ac, "extraField", doc, ReificationOptions.AllowExtraFields);
     }
-    
+
     [Test]
     public void SetIgnoredFieldDoesNothing() {
         var doc = Configs.ParseString(@"ignored: true", "SetField.SetIgnoredFieldDoesNothing");

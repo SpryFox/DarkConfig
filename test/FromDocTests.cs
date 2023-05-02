@@ -1,6 +1,5 @@
 using NUnit.Framework;
 using DarkConfig;
-using DarkConfig.Internal;
 using System.Collections.Generic;
 using System;
 
@@ -53,14 +52,16 @@ class FromDocTests {
     [Test]
     public void FromDoc_CalledToReify() {
         var tc = ReifyString<TestClass>("[\"Base\", 12]");
-        Assert.AreEqual(tc.baseKey, 12);
+        Assert.That(tc.baseKey, Is.EqualTo(12));
     }
 
     [Test]
     public void FromDoc_SpawnsDerivedClass() {
         var tc = ReifyString<TestClass>("[\"Derived\", 12]");
-        Assert.AreEqual(tc.baseKey, 0);
-        Assert.IsTrue(tc is TestClassDerived);
+        Assert.Multiple(() => {
+            Assert.That(tc.baseKey, Is.EqualTo(0));
+            Assert.That(tc, Is.InstanceOf<TestClassDerived>());
+        });
     }
 
     [Test]
@@ -69,8 +70,10 @@ class FromDocTests {
         var saved = tc;
         var doc = Configs.ParseString("[\"Base\", 99]", FILENAME);
         Configs.Reify(ref tc, doc);
-        Assert.AreSame(tc, saved);
-        Assert.AreEqual(tc.baseKey, 99);
+        Assert.Multiple(() => {
+            Assert.That(saved, Is.SameAs(tc));
+            Assert.That(tc.baseKey, Is.EqualTo(99));
+        });
     }
 
     [Test]
@@ -79,9 +82,11 @@ class FromDocTests {
         var saved = tc;
         var doc = Configs.ParseString("[\"Derived\", 66]", FILENAME);
         Configs.Reify(ref tc, doc);
-        Assert.AreSame(tc, saved);
-        Assert.AreEqual(tc.baseKey, 1);
-        Assert.AreEqual(((TestClassDerived) tc).derivedKey, 66);
+        Assert.Multiple(() => {
+            Assert.That(saved, Is.SameAs(tc));
+            Assert.That(tc.baseKey, Is.EqualTo(1));
+            Assert.That(((TestClassDerived) tc).derivedKey, Is.EqualTo(66));
+        });
     }
 
     [Test]
@@ -90,28 +95,31 @@ class FromDocTests {
         var saved = tc;
         var doc = Configs.ParseString("[\"Base\", 123]", FILENAME);
         Configs.Reify(ref tc, doc);
-        Assert.AreSame(tc, saved);
-        Assert.AreEqual(tc.baseKey, 123);
-        Assert.AreEqual(((TestClassDerived) tc).derivedKey, 5);
+        Assert.Multiple(() => {
+            Assert.That(saved, Is.SameAs(tc));
+            Assert.That(tc.baseKey, Is.EqualTo(123));
+            Assert.That(((TestClassDerived) tc).derivedKey, Is.EqualTo(5));
+        });
     }
 
     [Test]
     public void FromDoc_OverwritesBase_WithDerived() {
-        TestClass tc = new TestClass {baseKey = 19};
+        var tc = new TestClass {baseKey = 19};
         var saved = tc;
         var doc = Configs.ParseString("[\"Derived\", 321]", FILENAME);
         Configs.Reify(ref tc, doc);
-        Assert.IsFalse(object.ReferenceEquals(tc, saved));
-        Assert.IsTrue(tc is TestClassDerived);
-        Assert.AreEqual(((TestClassDerived) tc).derivedKey, 321);
+        Assert.Multiple(() => {
+            Assert.That(ReferenceEquals(tc, saved), Is.False);
+            Assert.That(tc, Is.InstanceOf<TestClassDerived>());
+            Assert.That(((TestClassDerived) tc).derivedKey, Is.EqualTo(321));
+        });
     }
 
     [Test]
     [Ignore("It's not completely clear how we should call parent class FromDocs when reifying a derived object")]
     public void FromDoc_SpawnsDerivedClass_WhenCastAsDerived() {
         var tc = ReifyString<TestClassDerived>("[\"Derived\", 12]");
-        Assert.AreEqual(tc.baseKey, 0);
-        Assert.IsTrue(tc is TestClassDerived);
+        Assert.That(tc.baseKey, Is.EqualTo(0));
     }
 
     [Test]
@@ -124,16 +132,20 @@ class FromDocTests {
         TestClass tc = null;
         var doc = Configs.ParseString("[\"Base\", 451]", FILENAME);
         Configs.Reify(ref tc, doc);
-        Assert.IsNotNull(tc);
-        Assert.AreEqual(tc.baseKey, 451);
+        Assert.Multiple(() => {
+            Assert.That(tc, Is.Not.Null);
+            Assert.That(tc.baseKey, Is.EqualTo(451));
+        });
     }
 
     [Test]
     public void FromDoc_CalledWhenReifyingEmptyList() {
-        List<TestClass> lst = new List<TestClass>();
+        var lst = new List<TestClass>();
         var doc = Configs.ParseString("[[\"Base\", 451]]", FILENAME);
         Configs.Reify(ref lst, doc);
-        Assert.AreEqual(1, lst.Count);
-        Assert.AreEqual(lst[0].baseKey, 451);
+        Assert.Multiple(() => {
+            Assert.That(lst, Has.Count.EqualTo(1));
+            Assert.That(lst[0].baseKey, Is.EqualTo(451));
+        });
     }
 }

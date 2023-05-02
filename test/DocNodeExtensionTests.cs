@@ -7,7 +7,7 @@ class DocNodeExtensionTests {
     [Test]
     public void AsInt_Parses() {
         var doc = Configs.ParseString("10", "TestFilename");
-        Assert.AreEqual(doc.As<int>(), 10);
+        Assert.That(doc.As<int>(), Is.EqualTo(10));
     }
 
     [Test]
@@ -19,19 +19,19 @@ class DocNodeExtensionTests {
     [Test]
     public void AsFloat_Parses() {
         var doc = Configs.ParseString("1.45", "TestFilename");
-        Assert.AreEqual(doc.As<float>(), 1.45f);
+        Assert.That(doc.As<float>(), Is.EqualTo(1.45f));
     }
 
     [Test]
     public void AsString_Parses() {
         var doc = Configs.ParseString("derpy horse", "TestFilename");
-        Assert.AreEqual(doc.As<string>(), "derpy horse");
+        Assert.That(doc.As<string>(), Is.EqualTo("derpy horse"));
     }
 
     [Test]
     public void AsBool_Parses() {
         var doc = Configs.ParseString("true", "TestFilename");
-        Assert.AreEqual(doc.As<bool>(), true);
+        Assert.That(doc.As<bool>(), Is.True);
     }
 
     [Test]
@@ -42,7 +42,7 @@ class DocNodeExtensionTests {
                     final: 123
             ";
         var doc = Configs.ParseString(yaml, "TestFilename");
-        Assert.AreEqual(doc["key"]["nested"]["final"].As<int>(), 123);
+        Assert.That(doc["key"]["nested"]["final"].As<int>(), Is.EqualTo(123));
     }
 
     [Test]
@@ -54,8 +54,10 @@ class DocNodeExtensionTests {
                 - 7.1
             ";
         var doc = Configs.ParseString(yaml, "TestFilename");
-        Assert.AreEqual(doc["key"][1].As<float>(), 8.8f);
-        Assert.AreEqual(doc["key"][2].As<float>(), 7.1f);
+        Assert.Multiple(() => {
+            Assert.That(doc["key"][1].As<float>(), Is.EqualTo(8.8f));
+            Assert.That(doc["key"][2].As<float>(), Is.EqualTo(7.1f));
+        });
     }
 
     [Test]
@@ -68,9 +70,11 @@ class DocNodeExtensionTests {
             ";
         var doc = Configs.ParseString(yaml, "TestFilename");
         var list = doc.As<List<string>>();
-        Assert.AreEqual(list[0], "the");
-        Assert.AreEqual(list[1], "quick");
-        Assert.AreEqual(list[2], "brown");
-        Assert.AreEqual(list[3], "fox");
+        Assert.Multiple(() => {
+            Assert.That(list[0], Is.EqualTo("the"));
+            Assert.That(list[1], Is.EqualTo("quick"));
+            Assert.That(list[2], Is.EqualTo("brown"));
+            Assert.That(list[3], Is.EqualTo("fox"));
+        });
     }
 }

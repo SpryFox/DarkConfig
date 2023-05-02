@@ -11,20 +11,23 @@ public class YamlParseTests {
         yaml.Load(new StringReader(str));
         return yaml.Documents[0].RootNode;
     }
-    
+
     [TestFixture]
     public class YamlDocParser {
         [Test]
         public void JsonSubset_TraversedByDocNode() {
             string testStr = "{\"test_key\":\"test_value\"}";
             var dn = (DocNode) new YamlDocNode(ParseYamlNode(testStr), "testfilename");
-
-            Assert.AreEqual(dn.Count, 1);
-            Assert.AreEqual(dn["test_key"].StringValue, "test_value");
-            Assert.IsTrue(dn.ContainsKey("test_key"));
+            Assert.Multiple(() => {
+                Assert.That(dn, Has.Count.EqualTo(1));
+                Assert.That(dn["test_key"].StringValue, Is.EqualTo("test_value"));
+                Assert.That(dn.ContainsKey("test_key"), Is.True);
+            });
             foreach (var entry in dn.Pairs) {
-                Assert.AreEqual(entry.Key, "test_key");
-                Assert.AreEqual(entry.Value.StringValue, "test_value");
+                Assert.Multiple(() => {
+                    Assert.That(entry.Key, Is.EqualTo("test_key"));
+                    Assert.That(entry.Value.StringValue, Is.EqualTo("test_value"));
+                });
             }
         }
 
@@ -40,14 +43,16 @@ key:
             var exception = Assert.Throws<DocNodeAccessException>(() => {
                 var x = dn["key"][3];
             });
-            
-            Assert.IsNotNull(exception);
-            
-            // verify that there's a line number in the exception
-            Assert.GreaterOrEqual(exception.Message.IndexOf("Line: 4", StringComparison.Ordinal), 0);
 
-            // verify that the dummy filename that we passed in shows up in the exception message
-            Assert.GreaterOrEqual(exception.Message.IndexOf("testfilename", StringComparison.Ordinal), 0);
+            Assert.Multiple(() => {
+                Assert.That(exception, Is.Not.Null);
+
+                // verify that there's a line number in the exception
+                Assert.That(exception.Message.IndexOf("Line: 4", StringComparison.Ordinal), Is.GreaterThanOrEqualTo(0));
+
+                // verify that the dummy filename that we passed in shows up in the exception message
+                Assert.That(exception.Message.IndexOf("testfilename", StringComparison.Ordinal), Is.GreaterThanOrEqualTo(0));
+            });
         }
     }
 }
