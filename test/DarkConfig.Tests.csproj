@@ -1,21 +1,26 @@
 <Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFramework>net6.0</TargetFramework>
+		<ImplicitUsings>disable</ImplicitUsings>
+		<Nullable>disable</Nullable>
 
-    <PropertyGroup>
-        <TargetFramework>net48</TargetFramework>
-        <Nullable>disable</Nullable>
-        <IsPackable>false</IsPackable>
-        <LangVersion>8</LangVersion>
-    </PropertyGroup>
+		<IsPackable>false</IsPackable>
 
-    <ItemGroup>
-        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.11.0" />
-        <PackageReference Include="NUnit" Version="3.13.2" />
-        <PackageReference Include="NUnit3TestAdapter" Version="4.0.0" />
-        <PackageReference Include="coverlet.collector" Version="3.1.0" />
-    </ItemGroup>
+		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+		<OutputPath>..\bin\$(Configuration)_Test</OutputPath>
+		<LangVersion>9</LangVersion>
+	</PropertyGroup>
 
-    <ItemGroup>
-      <ProjectReference Include="..\src\DarkConfig\DarkConfig.csproj" />
-    </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.1.0" />
+		<PackageReference Include="NUnit" Version="3.13.3" />
+		<PackageReference Include="NUnit3TestAdapter" Version="4.2.1" />
+		<PackageReference Include="NUnit.Analyzers" Version="3.3.0" />
+		<PackageReference Include="coverlet.collector" Version="3.1.2" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\src\DarkConfig\DarkConfig.csproj" />
+	</ItemGroup>
 
 </Project>
