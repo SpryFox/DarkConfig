@@ -8,6 +8,7 @@
     A <b>configuration library</b> for games that enables<br/><b>fast</b> and <b>expressive</b> iteration with <b>YAML</b> and <b>JSON</b>.
 </p>
 
+[![Build](https://github.com/SpryFox/DarkConfig/actions/workflows/build.yaml/badge.svg)](https://github.com/SpryFox/DarkConfig/actions/workflows/build.yaml)
 ## 🎯 Features
 * Reduce iteration time to seconds.  Hotload game data and see changes immediately in a running game.
 * Get up and running quickly, and add config support to any class with near zero boilerplate.
