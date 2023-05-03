@@ -1341,10 +1341,11 @@ class SetField : TestTypes {
     }
 
     [Test]
-    public void SetIgnoredFieldDoesNothing() {
-        var doc = Configs.ParseString(@"ignored: true", "SetField.SetIgnoredFieldDoesNothing");
+    public void SetIgnoredFieldThrowsExtraFieldException() {
+        var doc = Configs.ParseString(@"ignored: true", "SetField.SetIgnoredFieldThrowsExtraFieldException");
         var ac = new AttributesClass();
-        Configs.SetFieldOnObject(ref ac, "ignored", doc, ReificationOptions.None);
-        Assert.That(ac.Ignored, Is.False);
+        Assert.Throws<ExtraFieldsException>(() => {
+            Configs.SetFieldOnObject(ref ac, "ignored", doc, ReificationOptions.None);
+        });
     }
 }

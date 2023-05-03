@@ -275,14 +275,20 @@ namespace DarkConfig.Internal {
                 bool missingIsOk = memberMetadata.HasConfigAllowMissingAttribute || (allowMissing && !memberMetadata.HasConfigMandatoryAttribute);
 
                 // never report delegates or events as present or missing
-                if (memberMetadata.HasConfigIgnoreAttribute || IsDelegateType(memberMetadata.Type)) {
+                if (IsDelegateType(memberMetadata.Type)) {
                     return false;
+                }
+
+                if (memberMetadata.HasConfigIgnoreAttribute && doc.TryGetValue(fieldName, !caseSensitive, out var _)) {
+                    throw new ExtraFieldsException($"Extra doc fields: {fieldName} {doc.SourceInformation}");
                 }
 
                 if (doc.TryGetValue(fieldName, !caseSensitive, out var node)) {
                     SetMember(memberMetadata.Info, memberMetadata.IsField, ref obj, node, options);
                     return true;
-                } else if (!missingIsOk) {
+                }
+                
+                if (!missingIsOk) {
                     throw new MissingFieldsException($"Missing doc field: {fieldName} {doc.SourceInformation}");
                 }
 
