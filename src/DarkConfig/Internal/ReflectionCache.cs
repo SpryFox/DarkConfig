@@ -81,15 +81,11 @@ namespace DarkConfig.Internal {
             }
             info.Members = new List<MemberMetadata>(memberCount);
 
-            int currentMemberIndex = 0;
-            
             // Read all properties from the type.
             foreach (var propertyInfo in properties) {
                 if (propertyInfo.IsSpecialName || !propertyInfo.CanWrite || !propertyInfo.CanRead) {
                     continue;
                 }
-                
-                bool ignored = false;
                 
                 var metadata = new MemberMetadata {
                     Info = propertyInfo,
@@ -98,6 +94,7 @@ namespace DarkConfig.Internal {
                     Type = propertyInfo.PropertyType
                 };
                 
+                bool ignored = false;
                 foreach (object attribute in propertyInfo.GetCustomAttributes(true)) {
                     if (attribute is ConfigMandatoryAttribute) {
                         metadata.HasConfigMandatoryAttribute = true;
@@ -105,6 +102,7 @@ namespace DarkConfig.Internal {
                         metadata.HasConfigAllowMissingAttribute = true;
                     } else if (attribute is ConfigIgnoreAttribute) {
                         ignored = true;
+                        break;
                     }
                     
                     if (attribute is ConfigSourceInformationAttribute) {
@@ -126,8 +124,6 @@ namespace DarkConfig.Internal {
                     continue;
                 }
                 
-                bool ignored = false;
-
                 var metadata = new MemberMetadata {
                     Info = fieldInfo,
                     ShortName = RemoveHungarianPrefix(fieldInfo.Name),
@@ -135,6 +131,7 @@ namespace DarkConfig.Internal {
                     Type = fieldInfo.FieldType
                 };
                 
+                bool ignored = false;
                 foreach (object attribute in fieldInfo.GetCustomAttributes(true)) {
                     if (attribute is ConfigMandatoryAttribute) {
                         metadata.HasConfigMandatoryAttribute = true;
@@ -142,6 +139,7 @@ namespace DarkConfig.Internal {
                         metadata.HasConfigAllowMissingAttribute = true;
                     } else if (attribute is ConfigIgnoreAttribute) {
                         ignored = true;
+                        break;
                     }
                     
                     if (attribute is ConfigSourceInformationAttribute) {
