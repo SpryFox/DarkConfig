@@ -63,9 +63,7 @@ namespace DarkConfig.Internal {
                 return;
             }
 
-            if (options == null) {
-                options = Configs.Settings.DefaultReifierOptions;
-            }
+            options ??= Configs.Settings.DefaultReifierOptions;
 
             var typeInfo = reflectionCache.GetTypeInfo(type);
 
@@ -108,7 +106,11 @@ namespace DarkConfig.Internal {
                 }
                 if (targetMemberIndex != -1 && !foundMultipleEligible) {
                     var memberMetadata = typeInfo.Members[targetMemberIndex];
-                    SetMember(memberMetadata.Info, memberMetadata.IsField, ref setCopy, doc, options);
+                    if (memberMetadata.IsField) {
+                        SetField((FieldInfo)memberMetadata.Info, ref setCopy, doc, options);
+                    } else {
+                        SetProperty((PropertyInfo)memberMetadata.Info, ref setCopy, doc, options);
+                    }
                     obj = setCopy;
                     return;
                 } else {
@@ -134,7 +136,11 @@ namespace DarkConfig.Internal {
                     if (memberMetadata.Type != typeof(string)) {
                         throw new Exception("Field with ConfigSourceInformation should be a string");
                     }
-                    SetMember(memberMetadata.Info, memberMetadata.IsField, ref setCopy, doc.SourceInformation, options);
+                    if (memberMetadata.IsField) {
+                        SetField((FieldInfo)memberMetadata.Info, ref setCopy, doc.SourceInformation, options);
+                    } else {
+                        SetProperty((PropertyInfo)memberMetadata.Info, ref setCopy, doc.SourceInformation, options);
+                    }
                     continue;
                 }
                 
@@ -151,7 +157,11 @@ namespace DarkConfig.Internal {
                 }
 
                 if (doc.TryGetValue(fieldName, ignoreCase, out var node)) {
-                    SetMember(memberMetadata.Info, memberMetadata.IsField, ref setCopy, node, options);
+                    if (memberMetadata.IsField) {
+                        SetField((FieldInfo)memberMetadata.Info, ref setCopy, node, options);
+                    } else {
+                        SetProperty((PropertyInfo)memberMetadata.Info, ref setCopy, node, options);
+                    }
                     setMembers.Add(fieldName);
                 } else if (memberAllowMissing) {
                     // pretend like we set it
@@ -275,7 +285,11 @@ namespace DarkConfig.Internal {
                 }
 
                 if (doc.TryGetValue(fieldName, !caseSensitive, out var node)) {
-                    SetMember(memberMetadata.Info, memberMetadata.IsField, ref obj, node, options);
+                    if (memberMetadata.IsField) {
+                        SetField((FieldInfo)memberMetadata.Info, ref obj, node, options);
+                    } else {
+                        SetProperty((PropertyInfo)memberMetadata.Info, ref obj, node, options);
+                    }
                     return true;
                 }
                 
@@ -662,49 +676,45 @@ namespace DarkConfig.Internal {
 
             return curr;
         }
-        
-        void SetMember(MemberInfo memberInfo, bool isField, ref object obj, DocNode doc, ReificationOptions? options) {
-            if (isField) {
-                var fieldInfo = (FieldInfo)memberInfo;
-                if (obj == null && !fieldInfo.IsStatic) {
-                    // silently don't set non-static fields
-                    return;
-                }
-                object existing = fieldInfo.GetValue(obj);
-                object updated = ReadValueOfType(fieldInfo.FieldType, existing, doc, options);
-                SetMember(memberInfo, isField, ref obj, updated, options);
-            } else {
-                var propertyInfo = (PropertyInfo)memberInfo;
-                if (obj == null && !propertyInfo.CanWrite) {
-                    // silently don't set non-static fields
-                    return;
-                }
-                object existing = propertyInfo.GetValue(obj);
-                object updated = ReadValueOfType(propertyInfo.PropertyType, existing, doc, options);
-                SetMember(memberInfo, isField, ref obj, updated, options);
+
+        void SetField(FieldInfo fieldInfo, ref object obj, DocNode doc, ReificationOptions? options) {
+            if (obj == null && !fieldInfo.IsStatic) {
+                // silently don't set non-static fields
+                return;
             }
+            object existing = fieldInfo.GetValue(obj);
+            object updated = ReadValueOfType(fieldInfo.FieldType, existing, doc, options);
+            SetField(fieldInfo, ref obj, updated, options);
         }
 
-        void SetMember(MemberInfo memberInfo, bool isField, ref object obj, object updated, ReificationOptions? options) {
-            if (isField) {
-                var fieldInfo = (FieldInfo)memberInfo;
-                if (obj == null && !fieldInfo.IsStatic) {
-                    // silently don't set non-static fields
-                    return;
-                }
-                object setCopy = obj; // needed for structs
-                fieldInfo.SetValue(setCopy, updated);
-                obj = setCopy;                
-            } else {
-                var propertyInfo = (PropertyInfo)memberInfo;
-                if (obj == null && !propertyInfo.CanWrite) {
-                    // silently don't set non-static fields
-                    return;
-                }
-                object setCopy = obj; // needed for structs
-                propertyInfo.SetValue(setCopy, updated);
-                obj = setCopy;
+        void SetField(FieldInfo fieldInfo, ref object obj, object updated, ReificationOptions? options) {
+            if (obj == null && !fieldInfo.IsStatic) {
+                // silently don't set non-static fields
+                return;
             }
+            object setCopy = obj; // needed for structs
+            fieldInfo.SetValue(setCopy, updated);
+            obj = setCopy;
+        }
+
+        void SetProperty(PropertyInfo propertyInfo, ref object obj, DocNode doc, ReificationOptions? options) {
+            if (obj == null && !propertyInfo.CanWrite) {
+                // silently don't set non-static fields
+                return;
+            }
+            object existing = propertyInfo.GetValue(obj);
+            object updated = ReadValueOfType(propertyInfo.PropertyType, existing, doc, options);
+            SetProperty(propertyInfo, ref obj, updated, options);
+        }
+
+        void SetProperty(PropertyInfo propertyInfo, ref object obj, object updated, ReificationOptions? options) {
+            if (obj == null && !propertyInfo.CanWrite) {
+                // silently don't set non-static properties
+                return;
+            }
+            object setCopy = obj; // needed for structs
+            propertyInfo.SetValue(setCopy, updated);
+            obj = setCopy;
         }
 
         /// String.Join for Lists. Only used for logging.
