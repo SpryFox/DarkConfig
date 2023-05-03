@@ -9,10 +9,9 @@ namespace DarkConfig.Internal {
     class ReflectionCache {
         internal class TypeInfo {
             public ClassAttributesFlags AttributeFlags = ClassAttributesFlags.None;
-            public MemberMetadata[] Members;
-            
             public MethodInfo FromDoc;
             public MethodInfo PostDoc;
+            public List<MemberMetadata> Members;
         }
         
         /// Information about either a field or property on a particular type. 
@@ -20,10 +19,10 @@ namespace DarkConfig.Internal {
             public string ShortName;
             public MemberInfo Info;
             public Type Type;
+            
             public bool IsField;
             public bool HasConfigMandatoryAttribute;
             public bool HasConfigAllowMissingAttribute;
-            public bool HasConfigIgnoreAttribute;
             public bool HasConfigSourceInformationAttribute;
         }
 
@@ -55,7 +54,7 @@ namespace DarkConfig.Internal {
             };
 
             // Read class attributes
-            foreach (var attribute in type.GetCustomAttributes(true)) {
+            foreach (object attribute in type.GetCustomAttributes(true)) {
                 switch (attribute) {
                     case ConfigMandatoryAttribute _: info.AttributeFlags |= ClassAttributesFlags.HasConfigMandatoryAttribute; break;
                     case ConfigAllowMissingAttribute _: info.AttributeFlags |= ClassAttributesFlags.HasConfigAllowMissingAttribute; break;
@@ -64,9 +63,9 @@ namespace DarkConfig.Internal {
             
             Configs.Assert(info.AttributeFlags != ClassAttributesFlags.Invalid, $"Type {type.Name} has both ConfigAllowMissing and ConfigMandatory attributes.");
             
-            var memberBindingFlags = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static;
-            var properties = type.GetProperties(memberBindingFlags);
-            var fields = type.GetFields(memberBindingFlags);
+            const BindingFlags MEMBER_BINDING_FLAGS = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static;
+            var properties = type.GetProperties(MEMBER_BINDING_FLAGS);
+            var fields = type.GetFields(MEMBER_BINDING_FLAGS);
 
             // Count the members.
             int memberCount = 0;
@@ -80,7 +79,7 @@ namespace DarkConfig.Internal {
                     memberCount++;
                 }
             }
-            info.Members = new MemberMetadata[memberCount];
+            info.Members = new List<MemberMetadata>(memberCount);
 
             int currentMemberIndex = 0;
             
@@ -90,15 +89,32 @@ namespace DarkConfig.Internal {
                     continue;
                 }
                 
+                bool ignored = false;
+                
                 var metadata = new MemberMetadata {
                     Info = propertyInfo,
                     ShortName = RemoveHungarianPrefix(propertyInfo.Name),
                     IsField = false,
                     Type = propertyInfo.PropertyType
                 };
-                SetMemberAttributeFlags(ref metadata);
-                info.Members[currentMemberIndex] = metadata;
-                currentMemberIndex++;
+                
+                foreach (object attribute in propertyInfo.GetCustomAttributes(true)) {
+                    if (attribute is ConfigMandatoryAttribute) {
+                        metadata.HasConfigMandatoryAttribute = true;
+                    } else if (attribute is ConfigAllowMissingAttribute) {
+                        metadata.HasConfigAllowMissingAttribute = true;
+                    } else if (attribute is ConfigIgnoreAttribute) {
+                        ignored = true;
+                    }
+                    
+                    if (attribute is ConfigSourceInformationAttribute) {
+                        metadata.HasConfigSourceInformationAttribute = true;
+                    }
+                }
+
+                if (!ignored) {
+                    info.Members.Add(metadata);
+                }
             }
 
             // Read all fields from the type.
@@ -110,15 +126,32 @@ namespace DarkConfig.Internal {
                     continue;
                 }
                 
+                bool ignored = false;
+
                 var metadata = new MemberMetadata {
                     Info = fieldInfo,
                     ShortName = RemoveHungarianPrefix(fieldInfo.Name),
                     IsField = true,
                     Type = fieldInfo.FieldType
                 };
-                SetMemberAttributeFlags(ref metadata);
-                info.Members[currentMemberIndex] = metadata;
-                currentMemberIndex++;
+                
+                foreach (object attribute in fieldInfo.GetCustomAttributes(true)) {
+                    if (attribute is ConfigMandatoryAttribute) {
+                        metadata.HasConfigMandatoryAttribute = true;
+                    } else if (attribute is ConfigAllowMissingAttribute) {
+                        metadata.HasConfigAllowMissingAttribute = true;
+                    } else if (attribute is ConfigIgnoreAttribute) {
+                        ignored = true;
+                    }
+                    
+                    if (attribute is ConfigSourceInformationAttribute) {
+                        metadata.HasConfigSourceInformationAttribute = true;
+                    }
+                }
+
+                if (!ignored) {
+                    info.Members.Add(metadata);
+                }
             }
 
             cachedTypeInfo[type] = info;
@@ -128,21 +161,6 @@ namespace DarkConfig.Internal {
         /// Removes one letter hungarian notation prefixes from field names.
         string RemoveHungarianPrefix(string name) {
             return name.Length > 1 && name[1] == '_' ? name.Substring(2) : name;
-        }
-
-        void SetMemberAttributeFlags(ref MemberMetadata metadata) {
-            foreach (var attribute in metadata.Info.GetCustomAttributes(true)) {
-                if (attribute is ConfigMandatoryAttribute) {
-                    metadata.HasConfigMandatoryAttribute = true;
-                } else if (attribute is ConfigAllowMissingAttribute) {
-                    metadata.HasConfigAllowMissingAttribute = true;
-                } else if (attribute is ConfigIgnoreAttribute) {
-                    metadata.HasConfigIgnoreAttribute = true;
-                }
-                if (attribute is ConfigSourceInformationAttribute) {
-                    metadata.HasConfigSourceInformationAttribute = true;
-                }
-            }
         }
     }
 }

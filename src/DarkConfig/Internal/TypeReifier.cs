@@ -92,10 +92,10 @@ namespace DarkConfig.Internal {
                 // ==== Special Case ====
                 // Allow specifying object types with a single property or field as a scalar value in configs.
                 // This is syntactic sugar that lets us wrap values in classes.
-                var targetMemberIndex = -1;
-                var foundMultipleEligible = false;
-                for (var memberIndex = 0; memberIndex < typeInfo.Members.Length; memberIndex++) {
-                    ref var memberMetadata = ref typeInfo.Members[memberIndex];
+                int targetMemberIndex = -1;
+                bool foundMultipleEligible = false;
+                for (int memberIndex = 0; memberIndex < typeInfo.Members.Count; memberIndex++) {
+                    var memberMetadata = typeInfo.Members[memberIndex];
                     // Only consider non-static members, unless we are using static reification
                     if (obj == null || !memberMetadata.IsField || !((FieldInfo)memberMetadata.Info).IsStatic) {
                         if (targetMemberIndex == -1) {
@@ -107,12 +107,12 @@ namespace DarkConfig.Internal {
                     }
                 }
                 if (targetMemberIndex != -1 && !foundMultipleEligible) {
-                    ref var memberMetadata = ref typeInfo.Members[targetMemberIndex];
+                    var memberMetadata = typeInfo.Members[targetMemberIndex];
                     SetMember(memberMetadata.Info, memberMetadata.IsField, ref setCopy, doc, options);
                     obj = setCopy;
                     return;
                 } else {
-                    throw new Exception($"Trying to set a field of type: {type} {typeInfo.Members.Length} from value of wrong type: " +
+                    throw new Exception($"Trying to set a field of type: {type} {typeInfo.Members.Count} from value of wrong type: " +
                         (doc.Type == DocNodeType.Scalar ? doc.StringValue : doc.Type.ToString()) + $" at {doc.SourceInformation}");
                 }
             }
@@ -123,9 +123,12 @@ namespace DarkConfig.Internal {
             bool isAnyFieldMandatory = false;
 
             // Set the fields on the object.
-            for (var memberIndex = 0; memberIndex < typeInfo.Members.Length; memberIndex++) {
-                ref var memberMetadata = ref typeInfo.Members[memberIndex];
-
+            foreach (var memberMetadata in typeInfo.Members) {
+                // never report delegates or events as present or missing
+                if (IsDelegateType(memberMetadata.Type)) {
+                    continue;
+                }
+                
                 if (memberMetadata.HasConfigSourceInformationAttribute) {
                     // Special field to auto-populate with SourceInformation
                     if (memberMetadata.Type != typeof(string)) {
@@ -138,16 +141,8 @@ namespace DarkConfig.Internal {
                 // Override global and class settings per-field.
                 bool memberIsMandatory = memberMetadata.HasConfigMandatoryAttribute;
                 bool memberAllowMissing = memberMetadata.HasConfigAllowMissingAttribute;
-                bool memberIgnore = memberMetadata.HasConfigIgnoreAttribute;
                 isAnyFieldMandatory |= memberIsMandatory;
-
-                // never report delegates or events as present or missing
-                memberIgnore |= IsDelegateType(memberMetadata.Type); 
-
-                if (memberIgnore) {
-                    continue;
-                }
-
+                
                 // do meta stuff based on attributes/validation
                 string fieldName = memberMetadata.ShortName;
 
@@ -171,15 +166,15 @@ namespace DarkConfig.Internal {
                 foreach (var kv in doc.Pairs) {
                     string docKey = kv.Key;
 
-                    bool wasSet = false;
-                    foreach (var setMember in setMembers) {
+                    bool IsExtraField = true;
+                    foreach (string setMember in setMembers) {
                         if (string.Equals(setMember, docKey, ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal)) {
-                            wasSet = true;
+                            IsExtraField = false;
                             break;
                         }
                     }
-                    
-                    if (!wasSet) {
+
+                    if (IsExtraField) {
                         extraDocFields.Add(docKey);
                     }
                 }
@@ -277,10 +272,6 @@ namespace DarkConfig.Internal {
                 // never report delegates or events as present or missing
                 if (IsDelegateType(memberMetadata.Type)) {
                     return false;
-                }
-
-                if (memberMetadata.HasConfigIgnoreAttribute && doc.TryGetValue(fieldName, !caseSensitive, out var _)) {
-                    throw new ExtraFieldsException($"Extra doc fields: {fieldName} {doc.SourceInformation}");
                 }
 
                 if (doc.TryGetValue(fieldName, !caseSensitive, out var node)) {
