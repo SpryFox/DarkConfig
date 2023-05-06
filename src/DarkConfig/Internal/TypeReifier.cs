@@ -92,31 +92,43 @@ namespace DarkConfig.Internal {
                 // This is syntactic sugar that lets us wrap values in classes.
                 int targetMemberIndex = -1;
                 bool foundMultipleEligible = false;
-                for (int memberIndex = 0; memberIndex < typeInfo.Members.Count; memberIndex++) {
-                    var memberMetadata = typeInfo.Members[memberIndex];
-                    // Only consider non-static members, unless we are using static reification
-                    if (obj == null || !memberMetadata.IsField || !((FieldInfo)memberMetadata.Info).IsStatic) {
-                        if (targetMemberIndex == -1) {
-                            targetMemberIndex = memberIndex;
-                        } else {
-                            foundMultipleEligible = true;
-                            break;
+                for (int memberIndex = 0; memberIndex < typeInfo.MemberNames.Count; memberIndex++) {
+                    var memberFlags = typeInfo.MemberAttributes[memberIndex];
+                    var memberInfo = typeInfo.MemberInfo[memberIndex];
+                    
+                    // Skip static fields
+                    if ((memberFlags & ReflectionCache.MemberFlags.IsField) != 0 && ((FieldInfo) memberInfo).IsStatic) {
+                        continue;
+                    }
+
+                    // Skip static properties.
+                    if ((memberFlags & ReflectionCache.MemberFlags.IsField) == 0) {
+                        var setMethod = ((PropertyInfo) memberInfo).SetMethod;
+                        if (setMethod != null && setMethod.IsStatic) {
+                            continue;
                         }
                     }
-                }
-                if (targetMemberIndex != -1 && !foundMultipleEligible) {
-                    var memberMetadata = typeInfo.Members[targetMemberIndex];
-                    if (memberMetadata.IsField) {
-                        SetField((FieldInfo)memberMetadata.Info, ref setCopy, doc, options);
+
+                    if (targetMemberIndex == -1) {
+                        targetMemberIndex = memberIndex;
                     } else {
-                        SetProperty((PropertyInfo)memberMetadata.Info, ref setCopy, doc, options);
+                        foundMultipleEligible = true;
+                        break;
+                    }
+                }
+                
+                if (targetMemberIndex != -1 && !foundMultipleEligible) {
+                    var targetMemberInfo = typeInfo.MemberInfo[targetMemberIndex];
+                    if ((typeInfo.MemberAttributes[targetMemberIndex] & ReflectionCache.MemberFlags.IsField) != 0) {
+                        SetField((FieldInfo)targetMemberInfo, ref setCopy, doc, options);
+                    } else {
+                        SetProperty((PropertyInfo)targetMemberInfo, ref setCopy, doc, options);
                     }
                     obj = setCopy;
                     return;
-                } else {
-                    throw new Exception($"Trying to set a field of type: {type} {typeInfo.Members.Count} from value of wrong type: " +
-                        (doc.Type == DocNodeType.Scalar ? doc.StringValue : doc.Type.ToString()) + $" at {doc.SourceInformation}");
                 }
+                throw new Exception($"Trying to set a field of type: {type} {typeInfo.MemberNames.Count} from value of wrong type: " +
+                    (doc.Type == DocNodeType.Scalar ? doc.StringValue : doc.Type.ToString()) + $" at {doc.SourceInformation}");
             }
 
             var requiredMembers = new List<string>();
@@ -125,42 +137,36 @@ namespace DarkConfig.Internal {
             bool isAnyFieldMandatory = false;
 
             // Set the fields on the object.
-            foreach (var memberMetadata in typeInfo.Members) {
-                // never report delegates or events as present or missing
-                if (IsDelegateType(memberMetadata.Type)) {
-                    continue;
-                }
+            for (int memberIndex = 0; memberIndex < typeInfo.MemberNames.Count; ++memberIndex) {
+                var memberFlags = typeInfo.MemberAttributes[memberIndex];
                 
-                if (memberMetadata.HasConfigSourceInformationAttribute) {
+                if ((memberFlags & ReflectionCache.MemberFlags.HasConfigSourceInformationAttribute) != 0) {
                     // Special field to auto-populate with SourceInformation
-                    if (memberMetadata.Type != typeof(string)) {
-                        throw new Exception("Field with ConfigSourceInformation should be a string");
-                    }
-                    if (memberMetadata.IsField) {
-                        SetField((FieldInfo)memberMetadata.Info, ref setCopy, doc.SourceInformation, options);
+                    if ((memberFlags & ReflectionCache.MemberFlags.IsField) != 0) {
+                        SetField((FieldInfo)typeInfo.MemberInfo[memberIndex], ref setCopy, doc.SourceInformation, options);
                     } else {
-                        SetProperty((PropertyInfo)memberMetadata.Info, ref setCopy, doc.SourceInformation, options);
+                        SetProperty((PropertyInfo)typeInfo.MemberInfo[memberIndex], ref setCopy, doc.SourceInformation, options);
                     }
                     continue;
                 }
                 
                 // Override global and class settings per-field.
-                bool memberIsMandatory = memberMetadata.HasConfigMandatoryAttribute;
-                bool memberAllowMissing = memberMetadata.HasConfigAllowMissingAttribute;
+                bool memberIsMandatory = (memberFlags & ReflectionCache.MemberFlags.HasConfigMandatoryAttribute) != 0;
+                bool memberAllowMissing = (memberFlags & ReflectionCache.MemberFlags.HasConfigAllowMissingAttribute) != 0;
                 isAnyFieldMandatory |= memberIsMandatory;
                 
                 // do meta stuff based on attributes/validation
-                string fieldName = memberMetadata.ShortName;
+                string fieldName = typeInfo.MemberNames[memberIndex];
 
                 if (checkForMissingFields || memberIsMandatory) {
                     requiredMembers.Add(fieldName);
                 }
 
                 if (doc.TryGetValue(fieldName, ignoreCase, out var node)) {
-                    if (memberMetadata.IsField) {
-                        SetField((FieldInfo)memberMetadata.Info, ref setCopy, node, options);
+                    if ((memberFlags & ReflectionCache.MemberFlags.IsField) != 0) {
+                        SetField((FieldInfo)typeInfo.MemberInfo[memberIndex], ref setCopy, node, options);
                     } else {
-                        SetProperty((PropertyInfo)memberMetadata.Info, ref setCopy, node, options);
+                        SetProperty((PropertyInfo)typeInfo.MemberInfo[memberIndex], ref setCopy, node, options);
                     }
                     setMembers.Add(fieldName);
                 } else if (memberAllowMissing) {
@@ -271,24 +277,23 @@ namespace DarkConfig.Internal {
                 allowMissing = false;
             }
 
-            foreach (var memberMetadata in typeInfo.Members) {
-                if (!string.Equals(memberMetadata.ShortName, fieldName, StringComparison.OrdinalIgnoreCase)) {
+            for (int memberIndex = 0; memberIndex < typeInfo.MemberNames.Count; ++memberIndex) {
+                if (!string.Equals(typeInfo.MemberNames[memberIndex], fieldName, StringComparison.OrdinalIgnoreCase)) {
                     continue;
                 }
+
+                var flags = typeInfo.MemberAttributes[memberIndex];
                 
                 // Override global and class settings per-field.
-                bool missingIsOk = memberMetadata.HasConfigAllowMissingAttribute || (allowMissing && !memberMetadata.HasConfigMandatoryAttribute);
-
-                // never report delegates or events as present or missing
-                if (IsDelegateType(memberMetadata.Type)) {
-                    return false;
-                }
+                bool missingIsOk =
+                    (flags & ReflectionCache.MemberFlags.HasConfigAllowMissingAttribute) != 0 ||
+                    (flags & ReflectionCache.MemberFlags.HasConfigMandatoryAttribute) == 0;
 
                 if (doc.TryGetValue(fieldName, !caseSensitive, out var node)) {
-                    if (memberMetadata.IsField) {
-                        SetField((FieldInfo)memberMetadata.Info, ref obj, node, options);
+                    if ((flags & ReflectionCache.MemberFlags.IsField) != 0) {
+                        SetField((FieldInfo)typeInfo.MemberInfo[memberIndex], ref obj, node, options);
                     } else {
-                        SetProperty((PropertyInfo)memberMetadata.Info, ref obj, node, options);
+                        SetProperty((PropertyInfo)typeInfo.MemberInfo[memberIndex], ref obj, node, options);
                     }
                     return true;
                 }
@@ -663,11 +668,6 @@ namespace DarkConfig.Internal {
 
         /////////////////////////////////////////////////
 
-        bool IsDelegateType(Type type) {
-            // http://mikehadlow.blogspot.com/2010/03/how-to-tell-if-type-is-delegate.html
-            return typeof(MulticastDelegate).IsAssignableFrom(type.BaseType);
-        }
-        
         Type GetFirstNonObjectBaseClass(Type t) {
             var curr = t;
             while (curr.BaseType != null && curr.BaseType != typeof(object)) {

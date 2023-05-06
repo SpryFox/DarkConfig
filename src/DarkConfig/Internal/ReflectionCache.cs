@@ -11,28 +11,28 @@ namespace DarkConfig.Internal {
             public ClassAttributesFlags AttributeFlags = ClassAttributesFlags.None;
             public MethodInfo FromDoc;
             public MethodInfo PostDoc;
-            public List<MemberMetadata> Members;
-        }
-        
-        /// Information about either a field or property on a particular type. 
-        internal struct MemberMetadata {
-            public string ShortName;
-            public MemberInfo Info;
-            public Type Type;
-            
-            public bool IsField;
-            public bool HasConfigMandatoryAttribute;
-            public bool HasConfigAllowMissingAttribute;
-            public bool HasConfigSourceInformationAttribute;
+
+            public List<string> MemberNames;
+            public List<MemberFlags> MemberAttributes;
+            public List<MemberInfo> MemberInfo;
         }
 
         [Flags]
-        internal enum ClassAttributesFlags {
+        internal enum ClassAttributesFlags : byte {
             None = 0,
             HasConfigMandatoryAttribute = 1 << 0,
             HasConfigAllowMissingAttribute = 1 << 1,
             
             Invalid = HasConfigMandatoryAttribute | HasConfigAllowMissingAttribute
+        }
+
+        [Flags]
+        internal enum MemberFlags : byte {
+            None = 0,
+            IsField = 1 << 0,
+            HasConfigMandatoryAttribute = 1 << 1,
+            HasConfigAllowMissingAttribute = 1 << 2,
+            HasConfigSourceInformationAttribute = 1 << 3
         }
         
         ////////////////////////////////////////////
@@ -44,7 +44,7 @@ namespace DarkConfig.Internal {
         ////////////////////////////////////////////
         
         readonly Dictionary<Type, TypeInfo> cachedTypeInfo = new Dictionary<Type, TypeInfo>();
-        
+
         ////////////////////////////////////////////
 
         TypeInfo CacheTypeInfo(Type type) {
@@ -79,40 +79,46 @@ namespace DarkConfig.Internal {
                     memberCount++;
                 }
             }
-            info.Members = new List<MemberMetadata>(memberCount);
+            
+            info.MemberNames = new List<string>(memberCount);
+            info.MemberAttributes = new List<MemberFlags>(memberCount);
+            info.MemberInfo = new List<MemberInfo>(memberCount);
 
             // Read all properties from the type.
             foreach (var propertyInfo in properties) {
-                if (propertyInfo.IsSpecialName || !propertyInfo.CanWrite || !propertyInfo.CanRead) {
+                // TODO (graham) should we skip properties with no getter?
+                // Skip computed properties and delegate types. 
+                if (propertyInfo.IsSpecialName || !propertyInfo.CanWrite || !propertyInfo.CanRead || IsDelegateType(propertyInfo.PropertyType)) {
                     continue;
                 }
-                
-                var metadata = new MemberMetadata {
-                    Info = propertyInfo,
-                    ShortName = RemoveHungarianPrefix(propertyInfo.Name),
-                    IsField = false,
-                    Type = propertyInfo.PropertyType
-                };
-                
+
                 bool ignored = false;
+                var flags = MemberFlags.None;
                 foreach (object attribute in propertyInfo.GetCustomAttributes(true)) {
-                    if (attribute is ConfigMandatoryAttribute) {
-                        metadata.HasConfigMandatoryAttribute = true;
-                    } else if (attribute is ConfigAllowMissingAttribute) {
-                        metadata.HasConfigAllowMissingAttribute = true;
-                    } else if (attribute is ConfigIgnoreAttribute) {
+                    if (attribute is ConfigIgnoreAttribute) {
                         ignored = true;
                         break;
                     }
-                    
-                    if (attribute is ConfigSourceInformationAttribute) {
-                        metadata.HasConfigSourceInformationAttribute = true;
+                    switch (attribute) {
+                        case ConfigMandatoryAttribute: flags |= MemberFlags.HasConfigMandatoryAttribute; break;
+                        case ConfigAllowMissingAttribute: flags |= MemberFlags.HasConfigAllowMissingAttribute; break;
+                        case ConfigSourceInformationAttribute: 
+                            flags |= MemberFlags.HasConfigSourceInformationAttribute;
+                            // Special field to auto-populate with SourceInformation
+                            if (propertyInfo.PropertyType != typeof(string)) {
+                                throw new Exception("Field with ConfigSourceInformation should be a string");
+                            }
+                            break;
                     }
                 }
 
-                if (!ignored) {
-                    info.Members.Add(metadata);
+                if (ignored) {
+                    continue;
                 }
+
+                info.MemberInfo.Add(propertyInfo);
+                info.MemberNames.Add(RemoveHungarianPrefix(propertyInfo.Name));
+                info.MemberAttributes.Add(flags);
             }
 
             // Read all fields from the type.
@@ -120,36 +126,38 @@ namespace DarkConfig.Internal {
                 // Compiler-generated property backing fields have the name "<propertyName>k_BackingField" so 
                 // ignore any fields with names that start with '<'.  Apparently IsSpecialName doesn't cover
                 // this case.
-                if (fieldInfo.IsSpecialName || fieldInfo.Name[0] == '<') {
+                // Also skip delegate types.
+                if (fieldInfo.IsSpecialName || fieldInfo.Name[0] == '<' || IsDelegateType(fieldInfo.FieldType)) {
                     continue;
                 }
                 
-                var metadata = new MemberMetadata {
-                    Info = fieldInfo,
-                    ShortName = RemoveHungarianPrefix(fieldInfo.Name),
-                    IsField = true,
-                    Type = fieldInfo.FieldType
-                };
-                
                 bool ignored = false;
+                var flags = MemberFlags.IsField;
                 foreach (object attribute in fieldInfo.GetCustomAttributes(true)) {
-                    if (attribute is ConfigMandatoryAttribute) {
-                        metadata.HasConfigMandatoryAttribute = true;
-                    } else if (attribute is ConfigAllowMissingAttribute) {
-                        metadata.HasConfigAllowMissingAttribute = true;
-                    } else if (attribute is ConfigIgnoreAttribute) {
+                    if (attribute is ConfigIgnoreAttribute) {
                         ignored = true;
                         break;
                     }
-                    
-                    if (attribute is ConfigSourceInformationAttribute) {
-                        metadata.HasConfigSourceInformationAttribute = true;
+                    switch (attribute) {
+                        case ConfigMandatoryAttribute: flags |= MemberFlags.HasConfigMandatoryAttribute; break;
+                        case ConfigAllowMissingAttribute: flags |= MemberFlags.HasConfigAllowMissingAttribute; break;
+                        case ConfigSourceInformationAttribute: 
+                            flags |= MemberFlags.HasConfigSourceInformationAttribute;
+                            // Special field to auto-populate with SourceInformation
+                            if (fieldInfo.FieldType != typeof(string)) {
+                                throw new Exception("Field with ConfigSourceInformation should be a string");
+                            }
+                            break;
                     }
                 }
 
-                if (!ignored) {
-                    info.Members.Add(metadata);
+                if (ignored) {
+                    continue;
                 }
+
+                info.MemberInfo.Add(fieldInfo);
+                info.MemberNames.Add(RemoveHungarianPrefix(fieldInfo.Name));
+                info.MemberAttributes.Add(flags);
             }
 
             cachedTypeInfo[type] = info;
@@ -159,6 +167,11 @@ namespace DarkConfig.Internal {
         /// Removes one letter hungarian notation prefixes from field names.
         string RemoveHungarianPrefix(string name) {
             return name.Length > 1 && name[1] == '_' ? name.Substring(2) : name;
+        }
+        
+        bool IsDelegateType(Type type) {
+            // http://mikehadlow.blogspot.com/2010/03/how-to-tell-if-type-is-delegate.html
+            return typeof(MulticastDelegate).IsAssignableFrom(type.BaseType);
         }
     }
 }
