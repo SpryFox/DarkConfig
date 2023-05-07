@@ -946,7 +946,7 @@ class ReifiesSingle : TestTypes {
             8342
             "
             , "TestFilename");
-        var inst = Activator.CreateInstance<SingleFieldClass>();
+        var inst = new SingleFieldClass();
         reifier.SetFieldsOnObject(ref inst, doc);
         Assert.That(inst.SingleField, Is.EqualTo(8342));
     }
@@ -958,7 +958,7 @@ class ReifiesSingle : TestTypes {
             [a, b, c, d]
             "
             , "TestFilename");
-        var inst = Activator.CreateInstance<SingleListClass>();
+        var inst = new SingleListClass();
         reifier.SetFieldsOnObject(ref inst, doc);
         Assert.Multiple(() => {
             Assert.That(inst.SingleList[0], Is.EqualTo("a"));
@@ -976,7 +976,7 @@ class ReifiesExtraFields : TestTypes {
         var doc = Configs.ParseString(@"---
             floatKey: 1.56
         ", "TestFilename");
-        var inst = Activator.CreateInstance<TestClass>();
+        var inst = new TestClass();
         reifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.AllowMissingFields);
         Assert.That(inst.floatKey, Is.EqualTo(1.56f));
     }
@@ -989,7 +989,7 @@ class ReifiesExtraFields : TestTypes {
             extraKey2: herp
         ", "TestFilename");
         var exception = Assert.Throws<ExtraFieldsException>(() => {
-            var inst = Activator.CreateInstance<TestClass>();
+            var inst = new TestClass();
             reifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.CaseSensitive);
         });
         // check that it found all the extra keys
@@ -1016,7 +1016,7 @@ class ReifiesMissingFields : TestTypes {
             childFloatKey: 1.25
             staticIntKey: 332
         ", "TestFilename");
-        var inst = Activator.CreateInstance<ChildStruct>();
+        var inst = new ChildStruct();
         reifier.SetFieldsOnStruct(ref inst, doc, ReificationOptions.None);
         Assert.Multiple(() => {
             Assert.That(inst.childIntKey, Is.EqualTo(42));
@@ -1052,7 +1052,7 @@ class ReifiesCaseInsensitive : TestTypes {
             CHILDFLOATKEY: 11
             StaticiNtKey: 5
         ", "TestFilename");
-        var inst = Activator.CreateInstance<ChildStruct>();
+        var inst = new ChildStruct();
         reifier.SetFieldsOnStruct(ref inst, doc, ReificationOptions.None);
         Assert.Multiple(() => {
             Assert.That(inst.childIntKey, Is.EqualTo(32));
@@ -1066,7 +1066,7 @@ class ReifiesCaseInsensitive : TestTypes {
         var doc = Configs.ParseString(@"---
             childintkey: 32
         ", "TestFilename");
-        var inst = Activator.CreateInstance<ChildStruct>();
+        var inst = new ChildStruct();
         reifier.SetFieldsOnStruct(ref inst, doc, ReificationOptions.AllowMissingFields);
         Assert.That(inst.childIntKey, Is.EqualTo(32));
     }
@@ -1080,7 +1080,7 @@ class ReifierAttributes : TestTypes {
             Mandatory: 10
             AllowedMissing: derp
         ", "TestFilename");
-        var inst = Activator.CreateInstance<AttributesClass>();
+        var inst = new AttributesClass();
         reifier.SetFieldsOnObject(ref inst, doc);
         Assert.Multiple(() => {
             Assert.That(inst.Mandatory, Is.EqualTo(10));
@@ -1095,7 +1095,7 @@ class ReifierAttributes : TestTypes {
             AllowedMissing: derp
         ", "TestFilename");
         Assert.Throws<MissingFieldsException>(() => {
-            var inst = Activator.CreateInstance<AttributesClass>();
+            var inst = new AttributesClass();
             reifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.AllowMissingFields);
         });
     }
@@ -1106,7 +1106,7 @@ class ReifierAttributes : TestTypes {
             Mandatory: 15
             MissingOrNotDependingOnDefault: true
         ", "TestFilename");
-        var inst = Activator.CreateInstance<AttributesClass>();
+        var inst = new AttributesClass();
         reifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.None);
         Assert.Multiple(() => {
             Assert.That(inst.Mandatory, Is.EqualTo(15));
@@ -1121,7 +1121,7 @@ class ReifierAttributes : TestTypes {
         var doc = Configs.ParseString(@"---
             Mandatory: 15
         ", "TestFilename");
-        var inst = Activator.CreateInstance<AttributesClass>();
+        var inst = new AttributesClass();
         reifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.AllowMissingFields);
         Assert.Multiple(() => {
             Assert.That(inst.Mandatory, Is.EqualTo(15));
@@ -1139,7 +1139,7 @@ class ReifierAttributes : TestTypes {
             MissingOrNotDependingOnDefault: whut
         ", "TestFilename");
         Assert.Throws<ExtraFieldsException>(() => {
-            var inst = Activator.CreateInstance<AttributesClass>();
+            var inst = new AttributesClass();
             reifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.None);
         });
     }
@@ -1151,7 +1151,7 @@ class ReifierAttributes : TestTypes {
             AllowedMissing: herpe
             MissingOrNotDependingOnDefault: whip
         ", "TestFilename");
-        var inst = Activator.CreateInstance<AttributesClass>();
+        var inst = new AttributesClass();
         reifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.None);
         Assert.Multiple(() => {
             Assert.That(inst.Mandatory, Is.EqualTo(102));
@@ -1167,7 +1167,7 @@ class ReifierAttributes : TestTypes {
             intField: 10
             stringField: uh
         ", "TestFilename");
-        var inst = Activator.CreateInstance<MandatoryClass>();
+        var inst = new MandatoryClass();
         reifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.None);
         Assert.Multiple(() => {
             Assert.That(inst.intField, Is.EqualTo(10));
@@ -1182,7 +1182,7 @@ class ReifierAttributes : TestTypes {
             stringField: uh
         ", "TestFilename");
         Assert.Throws<MissingFieldsException>(() => {
-            var inst = Activator.CreateInstance<MandatoryClass>();
+            var inst = new MandatoryClass();
             reifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.None);
         });
     }
@@ -1193,7 +1193,7 @@ class ReifierAttributes : TestTypes {
             stringField: uh
         ", "TestFilename");
         Assert.Throws<MissingFieldsException>(() => {
-            var inst = Activator.CreateInstance<MandatoryClass>();
+            var inst = new MandatoryClass();
             reifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.AllowMissingFields);
         });
     }
@@ -1203,7 +1203,7 @@ class ReifierAttributes : TestTypes {
         var doc = Configs.ParseString(@"---
             intField: 99
         ", "TestFilename");
-        var inst = Activator.CreateInstance<MandatoryClass>();
+        var inst = new MandatoryClass();
         reifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.None);
         Assert.Multiple(() => {
             Assert.That(inst.intField, Is.EqualTo(99));
@@ -1218,7 +1218,7 @@ class ReifierAttributes : TestTypes {
             stringField: hmm
             listField: [1]
         ", "TestFilename");
-        var inst = Activator.CreateInstance<AllowMissingClass>();
+        var inst = new AllowMissingClass();
         reifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.None);
         Assert.Multiple(() => {
             Assert.That(inst.stringField, Is.EqualTo("hmm"));
@@ -1231,7 +1231,7 @@ class ReifierAttributes : TestTypes {
         var doc = Configs.ParseString(@"---
             stringField: wot
         ", "TestFilename");
-        var inst = Activator.CreateInstance<AllowMissingClass>();
+        var inst = new AllowMissingClass();
         reifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.AllowMissingFields);
         Assert.Multiple(() => {
             Assert.That(inst.stringField, Is.EqualTo("wot"));
@@ -1244,7 +1244,7 @@ class ReifierAttributes : TestTypes {
         var doc = Configs.ParseString(@"---
             stringField: wot
         ", "TestFilename");
-        var inst = Activator.CreateInstance<AllowMissingClass>();
+        var inst = new AllowMissingClass();
         reifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.None);
         Assert.Multiple(() => {
             Assert.That(inst.stringField, Is.EqualTo("wot"));
@@ -1258,7 +1258,7 @@ class ReifierAttributes : TestTypes {
             listField: [a,b]
         ", "TestFilename");
         Assert.Throws<MissingFieldsException>(() => {
-            var inst = Activator.CreateInstance<AllowMissingClass>();
+            var inst = new AllowMissingClass();
             reifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.AllowMissingFields);
         });
     }
@@ -1270,7 +1270,7 @@ class ReifierAttributes : TestTypes {
             extra_field: 33333
         ", "TestFilename");
         Assert.Throws<ExtraFieldsException>(() => {
-            var inst = Activator.CreateInstance<AllowMissingClass>();
+            var inst = new AllowMissingClass();
             reifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.AllowMissingFields);
         });
     }
@@ -1282,7 +1282,7 @@ class ReifierAttributes : TestTypes {
             staticStringValue: newValue
             mandatoryValue: mandatory
         ", "TestFilename");
-        var inst = Activator.CreateInstance<PropertiesClass>();
+        var inst = new PropertiesClass();
         reifier.SetFieldsOnObject(ref inst, doc, ReificationOptions.None);
         Assert.Multiple(() => {
             Assert.That(inst.int1Value, Is.EqualTo(10));
