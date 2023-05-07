@@ -69,21 +69,7 @@ namespace DarkConfig.Internal {
 
             // Grab global settings
             bool ignoreCase = (options & ReificationOptions.CaseSensitive) != ReificationOptions.CaseSensitive;
-            bool checkForMissingFields = (options & ReificationOptions.AllowMissingFields) != ReificationOptions.AllowMissingFields;
             bool checkForExtraFields = (options & ReificationOptions.AllowExtraFields) != ReificationOptions.AllowExtraFields;
-            
-            // Override global settings with type-specific settings
-            if ((typeInfo.AttributeFlags & ReflectionCache.ClassAttributesFlags.HasConfigMandatoryAttribute) != 0) {
-                checkForMissingFields = true;
-            }
-            if ((typeInfo.AttributeFlags & ReflectionCache.ClassAttributesFlags.HasConfigAllowMissingAttribute) != 0) {
-                checkForMissingFields = false;
-            }
-
-            if (GetFirstNonObjectBaseClass(type).ToString() == "UnityEngine.Object") {
-                // Unity Objects have a lot of fields, it never makes sense to set most of them from configs
-                checkForMissingFields = false;
-            }
 
             object setCopy = obj;
             if (doc.Type != DocNodeType.Dictionary) {
@@ -97,12 +83,12 @@ namespace DarkConfig.Internal {
                     var memberInfo = typeInfo.MemberInfo[memberIndex];
                     
                     // Skip static fields
-                    if ((memberFlags & ReflectionCache.MemberFlags.IsField) != 0 && ((FieldInfo) memberInfo).IsStatic) {
+                    if ((memberFlags & ReflectionCache.MemberFlags.Field) != 0 && ((FieldInfo) memberInfo).IsStatic) {
                         continue;
                     }
 
                     // Skip static properties.
-                    if ((memberFlags & ReflectionCache.MemberFlags.IsField) == 0) {
+                    if ((memberFlags & ReflectionCache.MemberFlags.Field) == 0) {
                         var setMethod = ((PropertyInfo) memberInfo).SetMethod;
                         if (setMethod != null && setMethod.IsStatic) {
                             continue;
@@ -119,7 +105,7 @@ namespace DarkConfig.Internal {
                 
                 if (targetMemberIndex != -1 && !foundMultipleEligible) {
                     var targetMemberInfo = typeInfo.MemberInfo[targetMemberIndex];
-                    if ((typeInfo.MemberAttributes[targetMemberIndex] & ReflectionCache.MemberFlags.IsField) != 0) {
+                    if ((typeInfo.MemberAttributes[targetMemberIndex] & ReflectionCache.MemberFlags.Field) != 0) {
                         SetField((FieldInfo)targetMemberInfo, ref setCopy, doc, options);
                     } else {
                         SetProperty((PropertyInfo)targetMemberInfo, ref setCopy, doc, options);
@@ -130,48 +116,36 @@ namespace DarkConfig.Internal {
                 throw new Exception($"Trying to set a field of type: {type} {typeInfo.MemberNames.Count} from value of wrong type: " +
                     (doc.Type == DocNodeType.Scalar ? doc.StringValue : doc.Type.ToString()) + $" at {doc.SourceInformation}");
             }
-
-            var requiredMembers = new List<string>();
+            
             var setMembers = new List<string>();
-
-            bool isAnyFieldMandatory = false;
 
             // Set the fields on the object.
             for (int memberIndex = 0; memberIndex < typeInfo.MemberNames.Count; ++memberIndex) {
                 var memberFlags = typeInfo.MemberAttributes[memberIndex];
                 
-                if ((memberFlags & ReflectionCache.MemberFlags.HasConfigSourceInformationAttribute) != 0) {
+                if ((memberFlags & ReflectionCache.MemberFlags.ConfigSourceInfo) != 0) {
                     // Special field to auto-populate with SourceInformation
-                    if ((memberFlags & ReflectionCache.MemberFlags.IsField) != 0) {
+                    if ((memberFlags & ReflectionCache.MemberFlags.Field) != 0) {
                         SetField((FieldInfo)typeInfo.MemberInfo[memberIndex], ref setCopy, doc.SourceInformation, options);
                     } else {
                         SetProperty((PropertyInfo)typeInfo.MemberInfo[memberIndex], ref setCopy, doc.SourceInformation, options);
                     }
                     continue;
                 }
-                
-                // Override global and class settings per-field.
-                bool memberIsMandatory = (memberFlags & ReflectionCache.MemberFlags.HasConfigMandatoryAttribute) != 0;
-                bool memberAllowMissing = (memberFlags & ReflectionCache.MemberFlags.HasConfigAllowMissingAttribute) != 0;
-                isAnyFieldMandatory |= memberIsMandatory;
-                
+
                 // do meta stuff based on attributes/validation
-                string fieldName = typeInfo.MemberNames[memberIndex];
-
-                if (checkForMissingFields || memberIsMandatory) {
-                    requiredMembers.Add(fieldName);
-                }
-
-                if (doc.TryGetValue(fieldName, ignoreCase, out var node)) {
-                    if ((memberFlags & ReflectionCache.MemberFlags.IsField) != 0) {
+                string memberName = typeInfo.MemberNames[memberIndex];
+                
+                if (doc.TryGetValue(memberName, ignoreCase, out var node)) {
+                    if ((memberFlags & ReflectionCache.MemberFlags.Field) != 0) {
                         SetField((FieldInfo)typeInfo.MemberInfo[memberIndex], ref setCopy, node, options);
                     } else {
                         SetProperty((PropertyInfo)typeInfo.MemberInfo[memberIndex], ref setCopy, node, options);
                     }
-                    setMembers.Add(fieldName);
-                } else if (memberAllowMissing) {
-                    // pretend like we set it
-                    setMembers.Add(fieldName);
+                    setMembers.Add(memberName);
+                } else if (memberIndex >= typeInfo.NumRequired) {
+                    // It's an optional field so pretend like we set it
+                    setMembers.Add(memberName);
                 }
             }
 
@@ -200,16 +174,21 @@ namespace DarkConfig.Internal {
                 }
             }
 
-            if (checkForMissingFields || isAnyFieldMandatory) {
+            if (typeInfo.NumRequired > 0) {
                 // check whether any fields in the class were unset
-                var missing = new List<string>();
-                foreach (var typeField in requiredMembers) {
-                    if (!setMembers.Contains(typeField)) {
-                        missing.Add(typeField);
+                List<string> missing = null;
+
+                for (int memberIndex = 0; memberIndex < typeInfo.NumRequired; ++memberIndex) {
+                    string memberName = typeInfo.MemberNames[memberIndex];
+                    if (setMembers.Contains(memberName)) {
+                        continue;
                     }
+
+                    missing ??= new List<string>();
+                    missing.Add(memberName);
                 }
 
-                if (missing.Count > 0) {
+                if (missing != null) {
                     throw new MissingFieldsException($"Missing doc fields: {JoinList(missing, ", ")} {doc.SourceInformation}");
                 }
             }
@@ -261,36 +240,15 @@ namespace DarkConfig.Internal {
 
             // Grab global settings
             bool caseSensitive = (options & ReificationOptions.CaseSensitive) == ReificationOptions.CaseSensitive;
-            bool allowMissing = (options & ReificationOptions.AllowMissingFields) == ReificationOptions.AllowMissingFields;
             bool allowExtra = (options & ReificationOptions.AllowExtraFields) == ReificationOptions.AllowExtraFields;
-
-            // Override global settings with type-specific settings
-            if ((typeInfo.AttributeFlags & ReflectionCache.ClassAttributesFlags.HasConfigMandatoryAttribute) != 0) {
-                allowMissing = true;
-            }
-            if ((typeInfo.AttributeFlags & ReflectionCache.ClassAttributesFlags.HasConfigAllowMissingAttribute) != 0) {
-                allowMissing = false;
-            }
-
-            if (GetFirstNonObjectBaseClass(type).ToString() == "UnityEngine.Object") {
-                // Unity Objects have a lot of fields, it never makes sense to set most of them from configs
-                allowMissing = false;
-            }
 
             for (int memberIndex = 0; memberIndex < typeInfo.MemberNames.Count; ++memberIndex) {
                 if (!string.Equals(typeInfo.MemberNames[memberIndex], fieldName, StringComparison.OrdinalIgnoreCase)) {
                     continue;
                 }
 
-                var flags = typeInfo.MemberAttributes[memberIndex];
-                
-                // Override global and class settings per-field.
-                bool missingIsOk =
-                    (flags & ReflectionCache.MemberFlags.HasConfigAllowMissingAttribute) != 0 ||
-                    (flags & ReflectionCache.MemberFlags.HasConfigMandatoryAttribute) == 0;
-
                 if (doc.TryGetValue(fieldName, !caseSensitive, out var node)) {
-                    if ((flags & ReflectionCache.MemberFlags.IsField) != 0) {
+                    if ((typeInfo.MemberAttributes[memberIndex] & ReflectionCache.MemberFlags.Field) != 0) {
                         SetField((FieldInfo)typeInfo.MemberInfo[memberIndex], ref obj, node, options);
                     } else {
                         SetProperty((PropertyInfo)typeInfo.MemberInfo[memberIndex], ref obj, node, options);
@@ -298,7 +256,8 @@ namespace DarkConfig.Internal {
                     return true;
                 }
                 
-                if (!missingIsOk) {
+                // Specifying member is mandatory
+                if (memberIndex < typeInfo.NumRequired) {
                     throw new MissingFieldsException($"Missing doc field: {fieldName} {doc.SourceInformation}");
                 }
 
@@ -667,15 +626,6 @@ namespace DarkConfig.Internal {
         readonly ReflectionCache reflectionCache = new ReflectionCache();
 
         /////////////////////////////////////////////////
-
-        Type GetFirstNonObjectBaseClass(Type t) {
-            var curr = t;
-            while (curr.BaseType != null && curr.BaseType != typeof(object)) {
-                curr = curr.BaseType;
-            }
-
-            return curr;
-        }
 
         void SetField(FieldInfo fieldInfo, ref object obj, DocNode doc, ReificationOptions? options) {
             if (obj == null && !fieldInfo.IsStatic) {

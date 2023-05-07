@@ -1002,6 +1002,12 @@ class ReifiesExtraFields : TestTypes {
 
 [TestFixture]
 class ReifiesMissingFields : TestTypes {
+    [SetUp]
+    public void SetUp() {
+        Configs.Clear();
+        Configs.Settings.DefaultReifierOptions = ReificationOptions.None;
+    }
+    
     [Test]
     public void NoException() {
         var doc = Configs.ParseString(@"---
@@ -1024,7 +1030,7 @@ class ReifiesMissingFields : TestTypes {
             childIntKey: 32
         ", "TestFilename");
         var exception = Assert.Throws<MissingFieldsException>(() => {
-            var inst = Activator.CreateInstance<ChildStruct>();
+            var inst = new ChildStruct();
             reifier.SetFieldsOnStruct(ref inst, doc, ReificationOptions.CaseSensitive);
         });
         // check that it found all the missing keys
