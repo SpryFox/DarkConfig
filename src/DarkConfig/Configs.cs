@@ -88,6 +88,7 @@ namespace DarkConfig {
         }
         #endregion
         
+        #region Preloading
         /// <summary>
         /// Preloads all config files into memory.
         /// Preloading must be completed before using any other DarkConfig functionality.
@@ -113,7 +114,9 @@ namespace DarkConfig {
         public static void DoImmediateHotload() {
             FileManager.DoImmediateHotload();
         }
-
+        #endregion
+        
+        #region Container Utils
         /// <summary>
         /// Low-level function for combining a list of DocNode lists into a single DocNode list.
         /// Useful for combining multiple files into a single DocNode.
@@ -172,6 +175,7 @@ namespace DarkConfig {
 
             return result;
         }
+        #endregion
 
         /// <summary>
         /// Cleans up DarkConfig's state, removing all listeners, loaded files, and so on.
@@ -185,6 +189,7 @@ namespace DarkConfig {
             AssertCallback = null;
         }
         
+        #region Files
         public static List<string> GetFilenamesMatchingGlob(string glob) {
             return FileManager.GetFilenamesMatchingGlob(glob);
         }
@@ -196,6 +201,7 @@ namespace DarkConfig {
         public static ConfigFileInfo GetFileInfo(string filename) {
             return FileManager.GetFileInfo(filename);
         }
+        #endregion
         
         #region Parsing YAML
         /// <summary>
@@ -284,6 +290,7 @@ namespace DarkConfig {
         }
         #endregion
         
+        #region FromDocs
         /// <summary>
         /// Register a handler for loading a particular type.
         /// 
@@ -304,6 +311,7 @@ namespace DarkConfig {
         public static void RegisterFromDoc(Type type, FromDocFunc fromDoc) {
             typeReifier.RegisteredFromDocs[type] = fromDoc;
         }
+        #endregion
 
         #region Reify, Apply, SetFields
         /// <summary>
