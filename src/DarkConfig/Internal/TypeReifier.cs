@@ -57,10 +57,10 @@ namespace DarkConfig.Internal {
         /// <param name="options"></param>
         /// <exception cref="ExtraFieldsException"></exception>
         /// <exception cref="MissingFieldsException"></exception>
-        public void SetFieldsOnObject(Type type, ref object obj, DocNode doc, ReificationOptions? options = null) {
-            if (doc == null || obj == null) {
-                return;
-            }
+        void SetFieldsOnObject(Type type, ref object obj, DocNode doc, ReificationOptions? options = null) {
+            if (type == null) { throw new ArgumentNullException(nameof(type)); }
+            if (obj == null) { throw new ArgumentNullException(nameof(obj)); }
+            if (doc == null) { throw new ArgumentNullException(nameof(doc)); }
 
             options ??= Configs.Settings.DefaultReifierOptions;
 
@@ -92,9 +92,11 @@ namespace DarkConfig.Internal {
                 if (targetMemberIndex != -1 && !foundMultipleEligible) {
                     var targetMemberInfo = typeInfo.MemberInfo[targetMemberIndex];
                     if ((typeInfo.MemberAttributes[targetMemberIndex] & ReflectionCache.MemberFlags.Field) != 0) {
-                        SetField((FieldInfo)targetMemberInfo, ref setCopy, doc, options);
+                        var fieldInfo = (FieldInfo) targetMemberInfo;
+                        fieldInfo.SetValue(setCopy, ReadValueOfType(fieldInfo.FieldType, fieldInfo.GetValue(setCopy), doc, options));
                     } else {
-                        SetProperty((PropertyInfo)targetMemberInfo, ref setCopy, doc, options);
+                        var propertyInfo = (PropertyInfo) targetMemberInfo;
+                        propertyInfo.SetValue(setCopy, ReadValueOfType(propertyInfo.PropertyType, propertyInfo.GetValue(setCopy), doc, options));
                     }
                     obj = setCopy;
                     return;
@@ -109,13 +111,14 @@ namespace DarkConfig.Internal {
             // Set the fields on the object.
             for (int memberIndex = 0; memberIndex < typeInfo.MemberNames.Count; ++memberIndex) {
                 var memberFlags = typeInfo.MemberAttributes[memberIndex];
+                var memberInfo = typeInfo.MemberInfo[memberIndex];
                 
                 if ((memberFlags & ReflectionCache.MemberFlags.ConfigSourceInfo) != 0) {
                     // Special field to auto-populate with SourceInformation
                     if ((memberFlags & ReflectionCache.MemberFlags.Field) != 0) {
-                        SetField((FieldInfo)typeInfo.MemberInfo[memberIndex], ref setCopy, doc.SourceInformation, options);
+                        ((FieldInfo)memberInfo).SetValue(setCopy, doc.SourceInformation);
                     } else {
-                        SetProperty((PropertyInfo)typeInfo.MemberInfo[memberIndex], ref setCopy, doc.SourceInformation, options);
+                        ((PropertyInfo)memberInfo).SetValue(setCopy, doc.SourceInformation);
                     }
                     continue;
                 }
@@ -125,9 +128,11 @@ namespace DarkConfig.Internal {
                 
                 if (doc.TryGetValue(key, ignoreCase, out var valueDoc)) {
                     if ((memberFlags & ReflectionCache.MemberFlags.Field) != 0) {
-                        SetField((FieldInfo)typeInfo.MemberInfo[memberIndex], ref setCopy, valueDoc, options);
+                        var fieldInfo = (FieldInfo) typeInfo.MemberInfo[memberIndex];
+                        fieldInfo.SetValue(setCopy, ReadValueOfType(fieldInfo.FieldType, fieldInfo.GetValue(setCopy), valueDoc, options));
                     } else {
-                        SetProperty((PropertyInfo)typeInfo.MemberInfo[memberIndex], ref setCopy, valueDoc, options);
+                        var propertyInfo = (PropertyInfo) typeInfo.MemberInfo[memberIndex];
+                        propertyInfo.SetValue(setCopy, ReadValueOfType(propertyInfo.PropertyType, propertyInfo.GetValue(setCopy), valueDoc, options));
                     }
                     setMemberHashes ??= new List<int>();
                     setMemberHashes.Add((ignoreCase ? key.ToLowerInvariant() : key).GetHashCode());
@@ -221,8 +226,7 @@ namespace DarkConfig.Internal {
                         fieldInfo.SetValue(null, newValue);
                     } else {
                         var propertyInfo = (PropertyInfo) memberInfo;
-                        object newValue = ReadValueOfType(propertyInfo.PropertyType, propertyInfo.GetValue(null), valueDoc, options);
-                        propertyInfo.SetValue(null, newValue);
+                        propertyInfo.SetValue(null, ReadValueOfType(propertyInfo.PropertyType, propertyInfo.GetValue(null), valueDoc, options));
                     }
                     setMemberHashes ??= new List<int>();
                     setMemberHashes.Add((ignoreCase ? memberName.ToLowerInvariant() : memberName).GetHashCode());
@@ -328,9 +332,11 @@ namespace DarkConfig.Internal {
 
                 if (doc.TryGetValue(fieldName, !caseSensitive, out var node)) {
                     if ((typeInfo.MemberAttributes[memberIndex] & ReflectionCache.MemberFlags.Field) != 0) {
-                        SetField((FieldInfo)typeInfo.MemberInfo[memberIndex], ref obj, node, options);
+                        var fieldInfo = (FieldInfo) typeInfo.MemberInfo[memberIndex];
+                        fieldInfo.SetValue(obj, ReadValueOfType(fieldInfo.FieldType, fieldInfo.GetValue(obj), node, options));
                     } else {
-                        SetProperty((PropertyInfo)typeInfo.MemberInfo[memberIndex], ref obj, node, options);
+                        var propertyInfo = (PropertyInfo) typeInfo.MemberInfo[memberIndex];
+                        propertyInfo.SetValue(obj, ReadValueOfType(propertyInfo.PropertyType, propertyInfo.GetValue(obj), node, options));
                     }
                     return true;
                 }
@@ -372,60 +378,60 @@ namespace DarkConfig.Internal {
         /// <summary>
         /// Reads the given doc node and converts it to an instance of the given type.
         /// </summary>
-        /// <param name="fieldType"></param>
-        /// <param name="existing"></param>
-        /// <param name="doc"></param>
-        /// <param name="options"></param>
-        /// <returns></returns>
+        /// <param name="targetType">Type of the value to read</param>
+        /// <param name="existing">An existing instance of that type to update, or null.</param>
+        /// <param name="doc">The DocNode containing the value's data</param>
+        /// <param name="options">Reification options</param>
+        /// <returns>An updated version of <paramref name="existing"/> if it was not null,
+        /// or a new instance of <paramref name="targetType"/> containing new data from <paramref name="doc"/></returns>
         /// <exception cref="Exception"></exception>
         /// <exception cref="ParseException"></exception>
-        /// <exception cref="NotSupportedException"></exception>
-        public object ReadValueOfType(Type fieldType, object existing, DocNode doc, ReificationOptions? options) {
+        public object ReadValueOfType(Type targetType, object existing, DocNode doc, ReificationOptions? options) {
             try {
                 #region Atomic data types
-                if (fieldType == typeof(bool)) { return Convert.ToBoolean(doc.StringValue, System.Globalization.CultureInfo.InvariantCulture); }
+                if (targetType == typeof(bool)) { return Convert.ToBoolean(doc.StringValue, System.Globalization.CultureInfo.InvariantCulture); }
 
                 // floating-point value types
-                if (fieldType == typeof(float)) { return Convert.ToSingle(doc.StringValue, System.Globalization.CultureInfo.InvariantCulture); }
-                if (fieldType == typeof(double)) { return Convert.ToDouble(doc.StringValue, System.Globalization.CultureInfo.InvariantCulture); }
-                if (fieldType == typeof(decimal)) { return Convert.ToDecimal(doc.StringValue, System.Globalization.CultureInfo.InvariantCulture); }
+                if (targetType == typeof(float)) { return Convert.ToSingle(doc.StringValue, System.Globalization.CultureInfo.InvariantCulture); }
+                if (targetType == typeof(double)) { return Convert.ToDouble(doc.StringValue, System.Globalization.CultureInfo.InvariantCulture); }
+                if (targetType == typeof(decimal)) { return Convert.ToDecimal(doc.StringValue, System.Globalization.CultureInfo.InvariantCulture); }
 
                 // integral value types
-                if (fieldType == typeof(sbyte)) { return Convert.ToSByte(doc.StringValue, System.Globalization.CultureInfo.InvariantCulture); }
-                if (fieldType == typeof(byte)) { return Convert.ToByte(doc.StringValue, System.Globalization.CultureInfo.InvariantCulture); }
-                if (fieldType == typeof(char)) { return Convert.ToChar(doc.StringValue, System.Globalization.CultureInfo.InvariantCulture); }
-                if (fieldType == typeof(short)) { return Convert.ToInt16(doc.StringValue, System.Globalization.CultureInfo.InvariantCulture); }
-                if (fieldType == typeof(ushort)) { return Convert.ToUInt16(doc.StringValue, System.Globalization.CultureInfo.InvariantCulture); }
-                if (fieldType == typeof(int)) { return Convert.ToInt32(doc.StringValue, System.Globalization.CultureInfo.InvariantCulture); }
-                if (fieldType == typeof(uint)) { return Convert.ToUInt32(doc.StringValue, System.Globalization.CultureInfo.InvariantCulture); }
-                if (fieldType == typeof(long)) { return Convert.ToInt64(doc.StringValue, System.Globalization.CultureInfo.InvariantCulture); }
-                if (fieldType == typeof(ulong)) { return Convert.ToUInt64(doc.StringValue, System.Globalization.CultureInfo.InvariantCulture); }
+                if (targetType == typeof(sbyte)) { return Convert.ToSByte(doc.StringValue, System.Globalization.CultureInfo.InvariantCulture); }
+                if (targetType == typeof(byte)) { return Convert.ToByte(doc.StringValue, System.Globalization.CultureInfo.InvariantCulture); }
+                if (targetType == typeof(char)) { return Convert.ToChar(doc.StringValue, System.Globalization.CultureInfo.InvariantCulture); }
+                if (targetType == typeof(short)) { return Convert.ToInt16(doc.StringValue, System.Globalization.CultureInfo.InvariantCulture); }
+                if (targetType == typeof(ushort)) { return Convert.ToUInt16(doc.StringValue, System.Globalization.CultureInfo.InvariantCulture); }
+                if (targetType == typeof(int)) { return Convert.ToInt32(doc.StringValue, System.Globalization.CultureInfo.InvariantCulture); }
+                if (targetType == typeof(uint)) { return Convert.ToUInt32(doc.StringValue, System.Globalization.CultureInfo.InvariantCulture); }
+                if (targetType == typeof(long)) { return Convert.ToInt64(doc.StringValue, System.Globalization.CultureInfo.InvariantCulture); }
+                if (targetType == typeof(ulong)) { return Convert.ToUInt64(doc.StringValue, System.Globalization.CultureInfo.InvariantCulture); }
 
                 // String type
-                if (fieldType == typeof(string)) { return doc.StringValue; }
+                if (targetType == typeof(string)) { return doc.StringValue; }
                 #endregion
                 
                 // Enums
-                if (fieldType.IsEnum) {
-                    return Enum.Parse(fieldType, doc.StringValue, (options & ReificationOptions.CaseSensitive) == 0);
+                if (targetType.IsEnum) {
+                    return Enum.Parse(targetType, doc.StringValue, (options & ReificationOptions.CaseSensitive) == 0);
                 }
                 
                 // DocNode
-                if (fieldType == typeof(DocNode)) {
+                if (targetType == typeof(DocNode)) {
                     return doc;
                 }
 
                 // Custom manually-registered reifier. These are allowed to override default parsing behavior.
-                if (RegisteredFromDocs.TryGetValue(fieldType, out var fromDoc)) {
+                if (RegisteredFromDocs.TryGetValue(targetType, out var fromDoc)) {
                     existing = fromDoc(existing, doc);
                     // CallPostDoc(fieldType, ref existing);
                     return existing;
                 }
 
                 #region Arrays
-                if (fieldType.IsArray) { 
-                    int rank = fieldType.GetArrayRank();
-                    var elementType = fieldType.GetElementType();
+                if (targetType.IsArray) { 
+                    int rank = targetType.GetArrayRank();
+                    var elementType = targetType.GetElementType();
                     var arrayValue = existing as Array;
 
                     if (elementType == null) {
@@ -524,19 +530,19 @@ namespace DarkConfig.Internal {
                 #endregion
 
                 #region Generic Collections
-                if (fieldType.IsGenericType) {
+                if (targetType.IsGenericType) {
                     // this chunk of code handles generic dictionaries and lists; it only
                     // works with string keys on the dictionaries, and for now any values
                     // must have zero-args constructors
 
-                    var genericTypeDef = fieldType.GetGenericTypeDefinition();
+                    var genericTypeDef = targetType.GetGenericTypeDefinition();
                     
                     // Dictionary<K,V>
                     if (genericTypeDef == typeof(Dictionary<,>)) {
-                        existing ??= Activator.CreateInstance(fieldType);
+                        existing ??= Activator.CreateInstance(targetType);
                         var existingDict = (System.Collections.IDictionary) existing;
                         
-                        var typeParameters = fieldType.GetGenericArguments();
+                        var typeParameters = targetType.GetGenericArguments();
                         var keyType = typeParameters[0];
                         var valueType = typeParameters[1];
                         var keyNode = new ComposedDocNode(DocNodeType.Scalar, sourceInformation: doc.SourceInformation); // can reuse this one object
@@ -567,9 +573,9 @@ namespace DarkConfig.Internal {
 
                     // List<T>
                     if (genericTypeDef == typeof(List<>)) {
-                        var listElementType = fieldType.GetGenericArguments()[0];
+                        var listElementType = targetType.GetGenericArguments()[0];
 
-                        existing ??= Activator.CreateInstance(fieldType);
+                        existing ??= Activator.CreateInstance(targetType);
                         var existingList = (System.Collections.IList) existing;
 
                         // Remove any extra existing slots we won't need.
@@ -592,18 +598,18 @@ namespace DarkConfig.Internal {
 
                     // HashSet<T>
                     if (genericTypeDef == typeof(HashSet<>)) {
-                        var setEntryType = fieldType.GetGenericArguments()[0];
+                        var setEntryType = targetType.GetGenericArguments()[0];
 
                         if (existing != null) {
                             // There's no way to migrate existing data since changing any existing data in the set constitutes a new, different set element by definition.
                             // ...so just call Clear on it if necessary.
-                            fieldType.GetMethod("Clear")?.Invoke(existing, null);
+                            targetType.GetMethod("Clear")?.Invoke(existing, null);
                         } else {
-                            existing = Activator.CreateInstance(fieldType);
+                            existing = Activator.CreateInstance(targetType);
                         }
 
                         // HashSet<> has no generic-less object interface we can use, so use reflection to add elements
-                        var addMethod = fieldType.GetMethod("Add");
+                        var addMethod = targetType.GetMethod("Add");
                         foreach (var value in doc.Values) {
                             addMethod?.Invoke(existing, new[] { ReadValueOfType(setEntryType, null, value, options) });
                         }
@@ -617,13 +623,13 @@ namespace DarkConfig.Internal {
                         if (doc.Type == DocNodeType.Scalar && string.Equals(doc.StringValue ,"null", comparisonOptions)) {
                             return null;
                         }
-                        var innerType = Nullable.GetUnderlyingType(fieldType);
+                        var innerType = Nullable.GetUnderlyingType(targetType);
                         return ReadValueOfType(innerType, existing, doc, options);
                     }
                 }
                 #endregion
 
-                var typeInfo = reflectionCache.GetTypeInfo(fieldType);
+                var typeInfo = reflectionCache.GetTypeInfo(targetType);
                 
                 // Call a FromDoc method if one exists in the type
                 if (typeInfo.FromDoc != null) {
@@ -639,8 +645,8 @@ namespace DarkConfig.Internal {
                         throw;
                     }
                 } else {
-                    existing ??= Activator.CreateInstance(fieldType);
-                    SetFieldsOnObject(fieldType, ref existing, doc, options);
+                    existing ??= Activator.CreateInstance(targetType);
+                    SetFieldsOnObject(targetType, ref existing, doc, options);
                 }
                 
                 // Call a PostDoc function for this type if it exists.
@@ -654,7 +660,7 @@ namespace DarkConfig.Internal {
                         throw e.InnerException;
                     }
                 }
-                    
+                
                 return existing;
             } catch (Exception e) {
                 throw new ParseException($"Exception based on document starting at: {doc.SourceInformation}", e);
@@ -666,46 +672,6 @@ namespace DarkConfig.Internal {
         readonly ReflectionCache reflectionCache = new ReflectionCache();
 
         /////////////////////////////////////////////////
-
-        void SetField(FieldInfo fieldInfo, ref object obj, DocNode doc, ReificationOptions? options) {
-            if (obj == null && !fieldInfo.IsStatic) {
-                // silently don't set non-static fields
-                return;
-            }
-            object existing = fieldInfo.GetValue(obj);
-            object updated = ReadValueOfType(fieldInfo.FieldType, existing, doc, options);
-            SetField(fieldInfo, ref obj, updated, options);
-        }
-
-        void SetField(FieldInfo fieldInfo, ref object obj, object updated, ReificationOptions? options) {
-            if (obj == null && !fieldInfo.IsStatic) {
-                // silently don't set non-static fields
-                return;
-            }
-            object setCopy = obj; // needed for structs
-            fieldInfo.SetValue(setCopy, updated);
-            obj = setCopy;
-        }
-
-        void SetProperty(PropertyInfo propertyInfo, ref object obj, DocNode doc, ReificationOptions? options) {
-            if (obj == null && !propertyInfo.CanWrite) {
-                // silently don't set non-static fields
-                return;
-            }
-            object existing = propertyInfo.GetValue(obj);
-            object updated = ReadValueOfType(propertyInfo.PropertyType, existing, doc, options);
-            SetProperty(propertyInfo, ref obj, updated, options);
-        }
-
-        void SetProperty(PropertyInfo propertyInfo, ref object obj, object updated, ReificationOptions? options) {
-            if (obj == null && !propertyInfo.CanWrite) {
-                // silently don't set non-static properties
-                return;
-            }
-            object setCopy = obj; // needed for structs
-            propertyInfo.SetValue(setCopy, updated);
-            obj = setCopy;
-        }
 
         /// String.Join for Lists. Only used for logging.
         string JoinList(IReadOnlyList<string> args, string joinStr) {
