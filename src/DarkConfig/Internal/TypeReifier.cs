@@ -63,6 +63,17 @@ namespace DarkConfig.Internal {
             bool ignoreCase = (options & ReificationOptions.CaseSensitive) != ReificationOptions.CaseSensitive;
             
             var typeInfo = reflectionCache.GetTypeInfo(type);
+            
+            // Set source info if necessary
+            if (!string.IsNullOrEmpty(typeInfo.SourceInfoMemberName)) {
+                var sourceInfoAttributes = typeInfo.SourceInfoMemberAttributes;
+                if ((sourceInfoAttributes & ReflectionCache.MemberFlags.Field) != 0) {
+                    ((FieldInfo) typeInfo.SourceInfoMemberInfo).SetValue(null, doc.SourceInformation);
+                } else {
+                    ((PropertyInfo) typeInfo.SourceInfoMemberInfo).SetValue(null, doc.SourceInformation);
+                }
+            }
+            
             List<int> setMemberHashes = null;
 
             // Set all the static fields and properties
@@ -72,20 +83,8 @@ namespace DarkConfig.Internal {
                     continue;
                 }
                 
-                var memberInfo = typeInfo.MemberInfo[memberIndex];
-                
-                // Special field to auto-populate with SourceInformation
-                if ((memberFlags & ReflectionCache.MemberFlags.ConfigSourceInfo) != 0) {
-                    if ((memberFlags & ReflectionCache.MemberFlags.Field) != 0) {
-                        ((FieldInfo) memberInfo).SetValue(null, doc.SourceInformation);
-                    } else {
-                        ((PropertyInfo) memberInfo).SetValue(null, doc.SourceInformation);
-                    }
-                    continue;
-                }
-
-                // do meta stuff based on attributes/validation
                 string memberName = typeInfo.MemberNames[memberIndex];
+                var memberInfo = typeInfo.MemberInfo[memberIndex];
 
                 if (doc.TryGetValue(memberName, ignoreCase, out var valueDoc)) {
                     if ((memberFlags & ReflectionCache.MemberFlags.Field) != 0) {
@@ -556,21 +555,20 @@ namespace DarkConfig.Internal {
             
             bool ignoreCase = (options & ReificationOptions.CaseSensitive) != ReificationOptions.CaseSensitive;
             List<int> setMemberHashes = null;
+            
+            // Set source info if necessary
+            if (!string.IsNullOrEmpty(typeInfo.SourceInfoMemberName)) {
+                var sourceInfoAttributes = typeInfo.SourceInfoMemberAttributes;
+                if ((sourceInfoAttributes & ReflectionCache.MemberFlags.Field) != 0) {
+                    ((FieldInfo) typeInfo.SourceInfoMemberInfo).SetValue(setCopy, doc.SourceInformation);
+                } else {
+                    ((PropertyInfo) typeInfo.SourceInfoMemberInfo).SetValue(setCopy, doc.SourceInformation);
+                }
+            }
 
             // Set the fields on the object.
             for (int memberIndex = 0; memberIndex < typeInfo.MemberNames.Count; ++memberIndex) {
                 var memberFlags = typeInfo.MemberAttributes[memberIndex];
-                var memberInfo = typeInfo.MemberInfo[memberIndex];
-                
-                if ((memberFlags & ReflectionCache.MemberFlags.ConfigSourceInfo) != 0) {
-                    // Special field to auto-populate with SourceInformation
-                    if ((memberFlags & ReflectionCache.MemberFlags.Field) != 0) {
-                        ((FieldInfo)memberInfo).SetValue(setCopy, doc.SourceInformation);
-                    } else {
-                        ((PropertyInfo)memberInfo).SetValue(setCopy, doc.SourceInformation);
-                    }
-                    continue;
-                }
 
                 // do meta stuff based on attributes/validation
                 string key = typeInfo.MemberNames[memberIndex];

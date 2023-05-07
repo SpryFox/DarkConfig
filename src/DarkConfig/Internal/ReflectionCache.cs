@@ -13,16 +13,19 @@ namespace DarkConfig.Internal {
 
             public int NumRequired;
             public List<string> MemberNames;
-            public List<MemberFlags> MemberAttributes;
             public List<MemberInfo> MemberInfo;
+            public List<MemberFlags> MemberAttributes;
+
+            public string SourceInfoMemberName;
+            public MemberInfo SourceInfoMemberInfo;
+            public MemberFlags SourceInfoMemberAttributes;
         }
 
         [Flags]
         internal enum MemberFlags : byte {
             None = 0,
             Field = 1 << 0,
-            ConfigSourceInfo = 1 << 1,
-            Static = 1 << 2
+            Static = 1 << 1
         }
         
         ////////////////////////////////////////////
@@ -89,6 +92,7 @@ namespace DarkConfig.Internal {
                 var flags = MemberFlags.None;
                 bool propertyHasConfigMandatoryAttribute = false;
                 bool propertyHasConfigAllowMissingAttribute = false;
+                bool propertyHasSourceInfoAttribute = false;
                 foreach (object attribute in propertyInfo.GetCustomAttributes(true)) {
                     if (attribute is ConfigIgnoreAttribute) {
                         ignored = true;
@@ -106,11 +110,17 @@ namespace DarkConfig.Internal {
                             propertyHasConfigAllowMissingAttribute = true;
                             break;
                         case ConfigSourceInformationAttribute:
-                            flags |= MemberFlags.ConfigSourceInfo;
                             // Special field to auto-populate with SourceInformation
+                            
+                            if (!string.IsNullOrEmpty(info.SourceInfoMemberName)) {
+                                throw new Exception($"Property {propertyInfo.Name} annotated with ConfigSourceInformation, but type {type.Name} "
+                                    + $"already has a member named {info.SourceInfoMemberName} with that annotation");
+                            }
                             if (propertyInfo.PropertyType != typeof(string)) {
                                 throw new Exception($"Property {propertyInfo.Name} annotated with ConfigSourceInformation must be a string");
                             }
+                            
+                            propertyHasSourceInfoAttribute = true;
                             break;
                     }
                 }
@@ -127,10 +137,16 @@ namespace DarkConfig.Internal {
                     flags |= MemberFlags.Static;
                 }
 
-                int insertionPoint = required ? info.NumRequired++ : info.MemberNames.Count;
-                info.MemberNames.Insert(insertionPoint, RemoveHungarianPrefix(propertyInfo.Name));
-                info.MemberInfo.Insert(insertionPoint, propertyInfo);
-                info.MemberAttributes.Insert(insertionPoint, flags);
+                if (propertyHasSourceInfoAttribute) {
+                    info.SourceInfoMemberName = RemoveHungarianPrefix(propertyInfo.Name);
+                    info.SourceInfoMemberInfo = propertyInfo;
+                    info.SourceInfoMemberAttributes = flags;
+                } else {
+                    int insertionPoint = required ? info.NumRequired++ : info.MemberNames.Count;
+                    info.MemberNames.Insert(insertionPoint, RemoveHungarianPrefix(propertyInfo.Name));
+                    info.MemberInfo.Insert(insertionPoint, propertyInfo);
+                    info.MemberAttributes.Insert(insertionPoint, flags);
+                }
             }
 
             // Read all fields from the type.
@@ -149,6 +165,7 @@ namespace DarkConfig.Internal {
                 var flags = MemberFlags.Field;
                 bool fieldHasConfigMandatoryAttribute = false;
                 bool fieldHasConfigAllowMissingAttribute = false;
+                bool fieldHasSourceInformationAttribute = false;
                 foreach (object attribute in fieldInfo.GetCustomAttributes(true)) {
                     if (attribute is ConfigIgnoreAttribute) {
                         ignored = true;
@@ -163,12 +180,18 @@ namespace DarkConfig.Internal {
                             fieldHasConfigAllowMissingAttribute = true;
                             required = false; 
                             break;
-                        case ConfigSourceInformationAttribute: 
-                            flags |= MemberFlags.ConfigSourceInfo;
+                        case ConfigSourceInformationAttribute:
                             // Special field to auto-populate with SourceInformation
+                            
+                            if (!string.IsNullOrEmpty(info.SourceInfoMemberName)) {
+                                throw new Exception($"Field {fieldInfo.Name} annotated with ConfigSourceInformation, but type {type.Name} "
+                                    + $"already has a member named {info.SourceInfoMemberName} with that annotation");
+                            }
                             if (fieldInfo.FieldType != typeof(string)) {
                                 throw new Exception("Field with ConfigSourceInformation should be a string");
                             }
+                            
+                            fieldHasSourceInformationAttribute = true;
                             break;
                     }
                 }
@@ -185,10 +208,16 @@ namespace DarkConfig.Internal {
                     flags |= MemberFlags.Static;
                 }
 
-                int insertionPoint = required ? info.NumRequired++ : info.MemberNames.Count;
-                info.MemberNames.Insert(insertionPoint, RemoveHungarianPrefix(fieldInfo.Name));
-                info.MemberInfo.Insert(insertionPoint, fieldInfo);
-                info.MemberAttributes.Insert(insertionPoint, flags);
+                if (fieldHasSourceInformationAttribute) {
+                    info.SourceInfoMemberName = RemoveHungarianPrefix(fieldInfo.Name);
+                    info.SourceInfoMemberInfo = fieldInfo;
+                    info.SourceInfoMemberAttributes = flags;
+                } else {
+                    int insertionPoint = required ? info.NumRequired++ : info.MemberNames.Count;
+                    info.MemberNames.Insert(insertionPoint, RemoveHungarianPrefix(fieldInfo.Name));
+                    info.MemberInfo.Insert(insertionPoint, fieldInfo);
+                    info.MemberAttributes.Insert(insertionPoint, flags);
+                }
             }
 
             cachedTypeInfo[type] = info;
@@ -196,16 +225,16 @@ namespace DarkConfig.Internal {
         }
         
         /// Removes one letter hungarian notation prefixes from field names.
-        string RemoveHungarianPrefix(string name) {
+        static string RemoveHungarianPrefix(string name) {
             return name.Length > 1 && name[1] == '_' ? name.Substring(2) : name;
         }
-        
-        bool IsDelegateType(Type type) {
+
+        static bool IsDelegateType(Type type) {
             // http://mikehadlow.blogspot.com/2010/03/how-to-tell-if-type-is-delegate.html
             return typeof(MulticastDelegate).IsAssignableFrom(type.BaseType);
         }
-        
-        Type GetFirstNonObjectBaseClass(Type t) {
+
+        static Type GetFirstNonObjectBaseClass(Type t) {
             var curr = t;
             while (curr.BaseType != null && curr.BaseType != typeof(object)) {
                 curr = curr.BaseType;
