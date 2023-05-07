@@ -22,9 +22,11 @@ namespace DarkConfig.Internal {
         /// <param name="options"></param>
         /// <typeparam name="T"></typeparam>
         public void SetFieldsOnStruct<T>(ref T obj, DocNode doc, ReificationOptions? options = null) where T : struct {
-            var type = typeof(T);
+            if (doc == null) { throw new ArgumentNullException(nameof(doc)); }
+            
+            // Manually box the struct value and then put it through the normal object code path.
             object setRef = obj;
-            SetFieldsOnObject(type, ref setRef, doc, options);
+            SetFieldsOnObject(typeof(T), ref setRef, doc, options);
             obj = (T) setRef;
         }
 
@@ -36,150 +38,16 @@ namespace DarkConfig.Internal {
         /// <param name="options">(optional) Reifier options</param>
         /// <typeparam name="T"></typeparam>
         public void SetFieldsOnObject<T>(ref T obj, DocNode doc, ReificationOptions? options = null) where T : class {
-            if (obj == null) {
-                throw new ArgumentNullException(nameof(obj));
-            }
+            if (obj == null) { throw new ArgumentNullException(nameof(obj)); }
+            if (doc == null) { throw new ArgumentNullException(nameof(doc)); }
             
             // if T is object, that is not the real type so call GetType() to get the underlying type.
             var objType = typeof(T) == typeof(object) ? obj.GetType() : typeof(T);
             
+            // We need setRef here because refs are not covariant
             object setRef = obj;
             SetFieldsOnObject(objType, ref setRef, doc, options);
             obj = (T) setRef;
-        }
-
-        /// <summary>
-        /// Sets all members on the object obj based on the appropriate key from doc.
-        /// </summary>
-        /// <param name="type"></param>
-        /// <param name="obj"></param>
-        /// <param name="doc"></param>
-        /// <param name="options"></param>
-        /// <exception cref="ExtraFieldsException"></exception>
-        /// <exception cref="MissingFieldsException"></exception>
-        void SetFieldsOnObject(Type type, ref object obj, DocNode doc, ReificationOptions? options = null) {
-            if (type == null) { throw new ArgumentNullException(nameof(type)); }
-            if (obj == null) { throw new ArgumentNullException(nameof(obj)); }
-            if (doc == null) { throw new ArgumentNullException(nameof(doc)); }
-
-            options ??= Configs.Settings.DefaultReifierOptions;
-
-            var typeInfo = reflectionCache.GetTypeInfo(type);
-
-            object setCopy = obj;
-            if (doc.Type != DocNodeType.Dictionary) {
-                // ==== Special Case ====
-                // Allow specifying object types with a single property or field as a scalar value in configs.
-                // This is syntactic sugar that lets us wrap values in classes.
-                int targetMemberIndex = -1;
-                bool foundMultipleEligible = false;
-                for (int memberIndex = 0; memberIndex < typeInfo.MemberAttributes.Count; memberIndex++) {
-                    var memberFlags = typeInfo.MemberAttributes[memberIndex];
-                    
-                    // Skip static fields and properties
-                    if ((memberFlags & ReflectionCache.MemberFlags.Static) != 0) {
-                        continue;
-                    }
-
-                    if (targetMemberIndex == -1) {
-                        targetMemberIndex = memberIndex;
-                    } else {
-                        foundMultipleEligible = true;
-                        break;
-                    }
-                }
-                
-                if (targetMemberIndex != -1 && !foundMultipleEligible) {
-                    var targetMemberInfo = typeInfo.MemberInfo[targetMemberIndex];
-                    if ((typeInfo.MemberAttributes[targetMemberIndex] & ReflectionCache.MemberFlags.Field) != 0) {
-                        var fieldInfo = (FieldInfo) targetMemberInfo;
-                        fieldInfo.SetValue(setCopy, ReadValueOfType(fieldInfo.FieldType, fieldInfo.GetValue(setCopy), doc, options));
-                    } else {
-                        var propertyInfo = (PropertyInfo) targetMemberInfo;
-                        propertyInfo.SetValue(setCopy, ReadValueOfType(propertyInfo.PropertyType, propertyInfo.GetValue(setCopy), doc, options));
-                    }
-                    obj = setCopy;
-                    return;
-                }
-                throw new Exception($"Trying to set a field of type: {type} {typeInfo.MemberNames.Count} from value of wrong type: " +
-                    (doc.Type == DocNodeType.Scalar ? doc.StringValue : doc.Type.ToString()) + $" at {doc.SourceInformation}");
-            }
-            
-            bool ignoreCase = (options & ReificationOptions.CaseSensitive) != ReificationOptions.CaseSensitive;
-            List<int> setMemberHashes = null;
-
-            // Set the fields on the object.
-            for (int memberIndex = 0; memberIndex < typeInfo.MemberNames.Count; ++memberIndex) {
-                var memberFlags = typeInfo.MemberAttributes[memberIndex];
-                var memberInfo = typeInfo.MemberInfo[memberIndex];
-                
-                if ((memberFlags & ReflectionCache.MemberFlags.ConfigSourceInfo) != 0) {
-                    // Special field to auto-populate with SourceInformation
-                    if ((memberFlags & ReflectionCache.MemberFlags.Field) != 0) {
-                        ((FieldInfo)memberInfo).SetValue(setCopy, doc.SourceInformation);
-                    } else {
-                        ((PropertyInfo)memberInfo).SetValue(setCopy, doc.SourceInformation);
-                    }
-                    continue;
-                }
-
-                // do meta stuff based on attributes/validation
-                string key = typeInfo.MemberNames[memberIndex];
-                
-                if (doc.TryGetValue(key, ignoreCase, out var valueDoc)) {
-                    if ((memberFlags & ReflectionCache.MemberFlags.Field) != 0) {
-                        var fieldInfo = (FieldInfo) typeInfo.MemberInfo[memberIndex];
-                        fieldInfo.SetValue(setCopy, ReadValueOfType(fieldInfo.FieldType, fieldInfo.GetValue(setCopy), valueDoc, options));
-                    } else {
-                        var propertyInfo = (PropertyInfo) typeInfo.MemberInfo[memberIndex];
-                        propertyInfo.SetValue(setCopy, ReadValueOfType(propertyInfo.PropertyType, propertyInfo.GetValue(setCopy), valueDoc, options));
-                    }
-                    setMemberHashes ??= new List<int>();
-                    setMemberHashes.Add((ignoreCase ? key.ToLowerInvariant() : key).GetHashCode());
-                } else if (memberIndex >= typeInfo.NumRequired) {
-                    // It's an optional field so pretend like we set it
-                    setMemberHashes ??= new List<int>();
-                    setMemberHashes.Add((ignoreCase ? key.ToLowerInvariant() : key).GetHashCode());
-                }
-            }
-
-            // Check whether any fields in the doc were unused 
-            if ((options & ReificationOptions.AllowExtraFields) == 0) {
-                var extraDocFields = new List<string>();
-                
-                foreach (var kv in doc.Pairs) {
-                    int docKeyHash = (ignoreCase ? kv.Key.ToLowerInvariant() : kv.Key).GetHashCode();
-                    if (setMemberHashes == null || !setMemberHashes.Contains(docKeyHash)) {
-                        extraDocFields.Add(kv.Key);
-                    }
-                }
-
-                if (extraDocFields.Count > 0) {
-                    throw new ExtraFieldsException($"Extra doc fields: {JoinList(extraDocFields, ", ")} {doc.SourceInformation}");
-                }
-            }
-
-            // check whether any fields in the class were unset
-            if (typeInfo.NumRequired > 0) {
-                List<string> missingMembers = null;
-
-                for (int memberIndex = 0; memberIndex < typeInfo.NumRequired; ++memberIndex) {
-                    string memberName = typeInfo.MemberNames[memberIndex];
-                    int memberNameHash = (ignoreCase ? memberName.ToLowerInvariant() : memberName).GetHashCode();
-                    if (setMemberHashes != null && setMemberHashes.Contains(memberNameHash)) {
-                        continue;
-                    }
-
-                    missingMembers ??= new List<string>();
-                    missingMembers.Add(memberName);
-                }
-
-                if (missingMembers != null) {
-                    throw new MissingFieldsException($"Missing doc fields: {JoinList(missingMembers, ", ")} {doc.SourceInformation}");
-                }
-            }
-
-            obj = setCopy;
         }
 
         /// <summary>
@@ -191,7 +59,7 @@ namespace DarkConfig.Internal {
         /// <param name="options">Reification options</param>
         /// <exception cref="ExtraFieldsException">If more keys were present in the dictionary than static type members.</exception>
         /// <exception cref="MissingFieldsException">If one or more static members were missing from the config data.</exception>
-        public void SetStaticFieldsOnClass(Type type, DocNode doc, ReificationOptions options) {
+        public void SetStaticMembers(Type type, DocNode doc, ReificationOptions options) {
             bool ignoreCase = (options & ReificationOptions.CaseSensitive) != ReificationOptions.CaseSensitive;
             
             var typeInfo = reflectionCache.GetTypeInfo(type);
@@ -278,7 +146,7 @@ namespace DarkConfig.Internal {
                 }
             }
         }
-        
+
         /// <summary>
         /// Sets a single field value on an object from the given docnode dict.
         /// 
@@ -293,67 +161,10 @@ namespace DarkConfig.Internal {
         /// <exception cref="ExtraFieldsException">If the field does not exist as a member of <typeparamref name="T"/> and extra fields are disallowed</exception>
         /// <exception cref="MissingFieldsException">If the field is marked as mandatory and is missing in the yaml doc</exception>
         public bool SetFieldOnObject<T>(ref T obj, string fieldName, DocNode doc, ReificationOptions? options = null) where T : class {
-            object setCopy = obj;
-            bool containedField = SetFieldOnObject(typeof(T), ref setCopy, fieldName, doc, options);
-            obj = (T)setCopy;
-            return containedField;
-        }
-
-        /// <summary>
-        /// Sets a single field value on an object from the given docnode dict.
-        ///
-        /// This is mostly only useful as a helper when writing FromDoc's
-        /// </summary>
-        /// <param name="type">The type of obj</param>
-        /// <param name="obj">The object to set the field on</param>
-        /// <param name="fieldName">The name of the field to set</param>
-        /// <param name="doc">A yaml dictionary to grab the value from</param>
-        /// <param name="options">Reification options override</param>
-        /// <returns>true if we successfully set the field, false otherwise</returns>
-        /// <exception cref="ExtraFieldsException">If the field does not exist as a member of <paramref name="type"/> and extra fields are disallowed</exception>
-        /// <exception cref="MissingFieldsException">If the field is marked as mandatory and is missing in the yaml doc</exception>
-        public bool SetFieldOnObject(Type type, ref object obj, string fieldName, DocNode doc, ReificationOptions? options = null) {
-            if (doc == null) {
-                return false;
-            }
-
-            var typeInfo = reflectionCache.GetTypeInfo(type);
-
-            options ??= Configs.Settings.DefaultReifierOptions;
-
-            // Grab global settings
-            bool caseSensitive = (options & ReificationOptions.CaseSensitive) == ReificationOptions.CaseSensitive;
-            bool allowExtra = (options & ReificationOptions.AllowExtraFields) == ReificationOptions.AllowExtraFields;
-
-            for (int memberIndex = 0; memberIndex < typeInfo.MemberNames.Count; ++memberIndex) {
-                if (!string.Equals(typeInfo.MemberNames[memberIndex], fieldName, StringComparison.OrdinalIgnoreCase)) {
-                    continue;
-                }
-
-                if (doc.TryGetValue(fieldName, !caseSensitive, out var node)) {
-                    if ((typeInfo.MemberAttributes[memberIndex] & ReflectionCache.MemberFlags.Field) != 0) {
-                        var fieldInfo = (FieldInfo) typeInfo.MemberInfo[memberIndex];
-                        fieldInfo.SetValue(obj, ReadValueOfType(fieldInfo.FieldType, fieldInfo.GetValue(obj), node, options));
-                    } else {
-                        var propertyInfo = (PropertyInfo) typeInfo.MemberInfo[memberIndex];
-                        propertyInfo.SetValue(obj, ReadValueOfType(propertyInfo.PropertyType, propertyInfo.GetValue(obj), node, options));
-                    }
-                    return true;
-                }
-                
-                // Specifying member is mandatory
-                if (memberIndex < typeInfo.NumRequired) {
-                    throw new MissingFieldsException($"Missing doc field: {fieldName} {doc.SourceInformation}");
-                }
-
-                return false;
-            }
-
-            if (!allowExtra) {
-                throw new ExtraFieldsException($"Extra doc fields: {fieldName} {doc.SourceInformation}");
-            }
-
-            return false;
+            object setRef = obj;
+            bool containedMember = SetMember(typeof(T), ref setRef, fieldName, doc, options);
+            obj = (T)setRef;
+            return containedMember;
         }
 
         /// <summary>
@@ -368,11 +179,11 @@ namespace DarkConfig.Internal {
         /// <typeparam name="T">The type of <paramref name="obj"/></typeparam>
         /// <exception cref="ExtraFieldsException">If the field does not exist as a member of <typeparamref name="T"/> and extra fields are disallowed</exception>
         /// <exception cref="MissingFieldsException">If the field is marked as mandatory and is missing in the yaml doc</exception>
-        public void SetFieldOnStruct<T>(ref T obj, string fieldName, DocNode doc, ReificationOptions? options = null) where T : struct {
-            var type = typeof(T);
+        public bool SetFieldOnStruct<T>(ref T obj, string fieldName, DocNode doc, ReificationOptions? options = null) where T : struct {
             object setRef = obj;
-            SetFieldOnObject(type, ref setRef, fieldName, doc, options);
+            bool containedMember = SetMember(typeof(T), ref setRef, fieldName, doc, options);
             obj = (T)setRef;
+            return containedMember;
         }
 
         /// <summary>
@@ -684,6 +495,197 @@ namespace DarkConfig.Internal {
             }
 
             return sb.ToString();
+        }
+        
+        /// <summary>
+        /// Sets all members on the object obj based on the appropriate key from doc.
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="obj"></param>
+        /// <param name="doc"></param>
+        /// <param name="options"></param>
+        /// <exception cref="ExtraFieldsException"></exception>
+        /// <exception cref="MissingFieldsException"></exception>
+        void SetFieldsOnObject(Type type, ref object obj, DocNode doc, ReificationOptions? options = null) {
+            if (type == null) { throw new ArgumentNullException(nameof(type)); }
+            if (obj == null) { throw new ArgumentNullException(nameof(obj)); }
+            if (doc == null) { throw new ArgumentNullException(nameof(doc)); }
+
+            options ??= Configs.Settings.DefaultReifierOptions;
+
+            var typeInfo = reflectionCache.GetTypeInfo(type);
+
+            object setCopy = obj;
+            if (doc.Type != DocNodeType.Dictionary) {
+                // ==== Special Case ====
+                // Allow specifying object types with a single property or field as a scalar value in configs.
+                // This is syntactic sugar that lets us wrap values in classes.
+                int targetMemberIndex = -1;
+                bool foundMultipleEligible = false;
+                for (int memberIndex = 0; memberIndex < typeInfo.MemberAttributes.Count; memberIndex++) {
+                    var memberFlags = typeInfo.MemberAttributes[memberIndex];
+                    
+                    // Skip static fields and properties
+                    if ((memberFlags & ReflectionCache.MemberFlags.Static) != 0) {
+                        continue;
+                    }
+
+                    if (targetMemberIndex == -1) {
+                        targetMemberIndex = memberIndex;
+                    } else {
+                        foundMultipleEligible = true;
+                        break;
+                    }
+                }
+                
+                if (targetMemberIndex != -1 && !foundMultipleEligible) {
+                    var targetMemberInfo = typeInfo.MemberInfo[targetMemberIndex];
+                    if ((typeInfo.MemberAttributes[targetMemberIndex] & ReflectionCache.MemberFlags.Field) != 0) {
+                        var fieldInfo = (FieldInfo) targetMemberInfo;
+                        fieldInfo.SetValue(setCopy, ReadValueOfType(fieldInfo.FieldType, fieldInfo.GetValue(setCopy), doc, options));
+                    } else {
+                        var propertyInfo = (PropertyInfo) targetMemberInfo;
+                        propertyInfo.SetValue(setCopy, ReadValueOfType(propertyInfo.PropertyType, propertyInfo.GetValue(setCopy), doc, options));
+                    }
+                    obj = setCopy;
+                    return;
+                }
+                throw new Exception($"Trying to set a field of type: {type} {typeInfo.MemberNames.Count} from value of wrong type: " +
+                    (doc.Type == DocNodeType.Scalar ? doc.StringValue : doc.Type.ToString()) + $" at {doc.SourceInformation}");
+            }
+            
+            bool ignoreCase = (options & ReificationOptions.CaseSensitive) != ReificationOptions.CaseSensitive;
+            List<int> setMemberHashes = null;
+
+            // Set the fields on the object.
+            for (int memberIndex = 0; memberIndex < typeInfo.MemberNames.Count; ++memberIndex) {
+                var memberFlags = typeInfo.MemberAttributes[memberIndex];
+                var memberInfo = typeInfo.MemberInfo[memberIndex];
+                
+                if ((memberFlags & ReflectionCache.MemberFlags.ConfigSourceInfo) != 0) {
+                    // Special field to auto-populate with SourceInformation
+                    if ((memberFlags & ReflectionCache.MemberFlags.Field) != 0) {
+                        ((FieldInfo)memberInfo).SetValue(setCopy, doc.SourceInformation);
+                    } else {
+                        ((PropertyInfo)memberInfo).SetValue(setCopy, doc.SourceInformation);
+                    }
+                    continue;
+                }
+
+                // do meta stuff based on attributes/validation
+                string key = typeInfo.MemberNames[memberIndex];
+                
+                if (doc.TryGetValue(key, ignoreCase, out var valueDoc)) {
+                    if ((memberFlags & ReflectionCache.MemberFlags.Field) != 0) {
+                        var fieldInfo = (FieldInfo) typeInfo.MemberInfo[memberIndex];
+                        fieldInfo.SetValue(setCopy, ReadValueOfType(fieldInfo.FieldType, fieldInfo.GetValue(setCopy), valueDoc, options));
+                    } else {
+                        var propertyInfo = (PropertyInfo) typeInfo.MemberInfo[memberIndex];
+                        propertyInfo.SetValue(setCopy, ReadValueOfType(propertyInfo.PropertyType, propertyInfo.GetValue(setCopy), valueDoc, options));
+                    }
+                    setMemberHashes ??= new List<int>();
+                    setMemberHashes.Add((ignoreCase ? key.ToLowerInvariant() : key).GetHashCode());
+                } else if (memberIndex >= typeInfo.NumRequired) {
+                    // It's an optional field so pretend like we set it
+                    setMemberHashes ??= new List<int>();
+                    setMemberHashes.Add((ignoreCase ? key.ToLowerInvariant() : key).GetHashCode());
+                }
+            }
+
+            // Check whether any fields in the doc were unused 
+            if ((options & ReificationOptions.AllowExtraFields) == 0) {
+                var extraDocFields = new List<string>();
+                
+                foreach (var kv in doc.Pairs) {
+                    int docKeyHash = (ignoreCase ? kv.Key.ToLowerInvariant() : kv.Key).GetHashCode();
+                    if (setMemberHashes == null || !setMemberHashes.Contains(docKeyHash)) {
+                        extraDocFields.Add(kv.Key);
+                    }
+                }
+
+                if (extraDocFields.Count > 0) {
+                    throw new ExtraFieldsException($"Extra doc fields: {JoinList(extraDocFields, ", ")} {doc.SourceInformation}");
+                }
+            }
+
+            // check whether any fields in the class were unset
+            if (typeInfo.NumRequired > 0) {
+                List<string> missingMembers = null;
+
+                for (int memberIndex = 0; memberIndex < typeInfo.NumRequired; ++memberIndex) {
+                    string memberName = typeInfo.MemberNames[memberIndex];
+                    int memberNameHash = (ignoreCase ? memberName.ToLowerInvariant() : memberName).GetHashCode();
+                    if (setMemberHashes != null && setMemberHashes.Contains(memberNameHash)) {
+                        continue;
+                    }
+
+                    missingMembers ??= new List<string>();
+                    missingMembers.Add(memberName);
+                }
+
+                if (missingMembers != null) {
+                    throw new MissingFieldsException($"Missing doc fields: {JoinList(missingMembers, ", ")} {doc.SourceInformation}");
+                }
+            }
+
+            obj = setCopy;
+        }
+
+        /// <summary>
+        /// Sets a single field or property value on an object from the given DocNode dict.
+        ///
+        /// This is mostly only useful as a helper when writing FromDoc's
+        /// </summary>
+        /// <param name="type">The type of obj</param>
+        /// <param name="obj">The object to set the field on</param>
+        /// <param name="fieldName">The name of the field to set</param>
+        /// <param name="doc">A yaml dictionary to grab the value from</param>
+        /// <param name="options">Reification options override</param>
+        /// <returns>true if we successfully set the field, false otherwise</returns>
+        /// <exception cref="ExtraFieldsException">If the field does not exist as a member of <paramref name="type"/> and extra fields are disallowed</exception>
+        /// <exception cref="MissingFieldsException">If the field is marked as mandatory and is missing in the yaml doc</exception>
+        bool SetMember(Type type, ref object obj, string fieldName, DocNode doc, ReificationOptions? options = null) {
+            if (doc == null) {
+                return false;
+            }
+
+            var typeInfo = reflectionCache.GetTypeInfo(type);
+
+            options ??= Configs.Settings.DefaultReifierOptions;
+
+            // Grab global settings
+            bool ignoreCase = (options & ReificationOptions.CaseSensitive) == 0;
+            bool allowExtra = (options & ReificationOptions.AllowExtraFields) == ReificationOptions.AllowExtraFields;
+
+            for (int memberIndex = 0; memberIndex < typeInfo.MemberNames.Count; ++memberIndex) {
+                if (!string.Equals(typeInfo.MemberNames[memberIndex], fieldName, StringComparison.OrdinalIgnoreCase)) {
+                    continue;
+                }
+
+                if (doc.TryGetValue(fieldName, ignoreCase, out var node)) {
+                    if ((typeInfo.MemberAttributes[memberIndex] & ReflectionCache.MemberFlags.Field) != 0) {
+                        var fieldInfo = (FieldInfo) typeInfo.MemberInfo[memberIndex];
+                        fieldInfo.SetValue(obj, ReadValueOfType(fieldInfo.FieldType, fieldInfo.GetValue(obj), node, options));
+                    } else {
+                        var propertyInfo = (PropertyInfo) typeInfo.MemberInfo[memberIndex];
+                        propertyInfo.SetValue(obj, ReadValueOfType(propertyInfo.PropertyType, propertyInfo.GetValue(obj), node, options));
+                    }
+                    return true;
+                }
+                
+                // Specifying member is mandatory
+                if (memberIndex < typeInfo.NumRequired) {
+                    throw new MissingFieldsException($"Missing doc field: {fieldName} {doc.SourceInformation}");
+                }
+
+                return false;
+            }
+
+            if (!allowExtra) {
+                throw new ExtraFieldsException($"Extra doc fields: {fieldName} {doc.SourceInformation}");
+            }
+
+            return false;
         }
     }
 }

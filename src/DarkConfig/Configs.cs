@@ -447,7 +447,7 @@ namespace DarkConfig {
         /// <param name="doc">The config doc to read.</param>
         /// <param name="options">(optional) Override default and type-defined reification behavior.</param>
         public static void ReifyStatic(Type type, DocNode doc, ReificationOptions? options = null) {
-            typeReifier.SetStaticFieldsOnClass(type, doc, options ?? Settings.DefaultReifierOptions);
+            typeReifier.SetStaticMembers(type, doc, options ?? Settings.DefaultReifierOptions);
         }
 
         /// <summary>
