@@ -27,15 +27,11 @@ namespace DarkConfig {
     /// <returns>False if the delegate should be un-registered for future reload callbacks.  True otherwise.</returns>
     public delegate bool ReloadFunc(DocNode doc);
     
-    /// A custom assertion function
-    public delegate void AssertFunc(bool test, string message);
-    
     /// A callback when DarkConfig logs a message, warning or error.
     public delegate void LogFunc(LogVerbosity verbosity, string message);
 
     public static class Configs {
         const string LOG_GUARD = "DC_LOGGING_ENABLED";
-        const string ASSERT_GUARD = "DC_ASSERTS_ENABLED";
         const string LogPrefix = "[DarkConfig] ";
         
         /////////////////////////////////////////////////
@@ -45,7 +41,6 @@ namespace DarkConfig {
 
         internal static Internal.ConfigFileManager FileManager { get; private set; } = new Internal.ConfigFileManager();
         
-        public static AssertFunc AssertCallback;
         public static LogFunc LogCallback;
         
         /// True if config file preloading is complete, false otherwise.
@@ -166,8 +161,9 @@ namespace DarkConfig {
 
             var result = new ComposedDocNode(DocNodeType.Dictionary, sourceInformation: sourceInformation);
             foreach (var doc in docs) {
-                Assert(doc.Type == DocNodeType.Dictionary,
-                    "Expected all DocNodes to be dictionaries in CombineDict.");
+                if (doc.Type != DocNodeType.Dictionary) {
+                    throw new ParseException("Expected all DocNodes to be dictionaries in CombineDict.");
+                }
                 foreach (var kv in doc.Pairs) {
                     result[kv.Key] = kv.Value;
                 }
@@ -186,7 +182,6 @@ namespace DarkConfig {
             FileManager = new Internal.ConfigFileManager();
             processors = new List<ConfigProcessor>();
             LogCallback = null;
-            AssertCallback = null;
         }
         
         #region Files
@@ -578,18 +573,6 @@ namespace DarkConfig {
 
         /////////////////////////////////////////////////
 
-        [System.Diagnostics.Conditional(ASSERT_GUARD)]
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static void Assert(bool test, string message) {
-            if (AssertCallback != null) {
-                AssertCallback(test, message);
-            } else {
-                DefaultAssertCallback(test, message);
-            }
-        }
-        
-        /////////////////////////////////////////////////
-
         static Internal.TypeReifier typeReifier = new Internal.TypeReifier();
 
         static List<ConfigProcessor> processors = new List<ConfigProcessor>();
@@ -607,10 +590,6 @@ namespace DarkConfig {
             return docNode;
         }
 
-        static void DefaultAssertCallback(bool test, string message) {
-            System.Diagnostics.Debug.Assert(test, message);
-        }
-        
         [System.Diagnostics.Conditional(LOG_GUARD)]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static void Log(LogVerbosity level, string msg) {
