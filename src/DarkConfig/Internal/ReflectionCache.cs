@@ -21,7 +21,8 @@ namespace DarkConfig.Internal {
         internal enum MemberFlags : byte {
             None = 0,
             Field = 1 << 0,
-            ConfigSourceInfo = 1 << 1
+            ConfigSourceInfo = 1 << 1,
+            Static = 1 << 2
         }
         
         ////////////////////////////////////////////
@@ -120,6 +121,11 @@ namespace DarkConfig.Internal {
                 if (ignored) {
                     continue;
                 }
+                
+                var setMethod = propertyInfo.SetMethod;
+                if (setMethod != null && setMethod.IsStatic) {
+                    flags |= MemberFlags.Static;
+                }
 
                 int insertionPoint = required ? info.NumRequired++ : info.MemberNames.Count;
                 info.MemberNames.Insert(insertionPoint, RemoveHungarianPrefix(propertyInfo.Name));
@@ -173,6 +179,10 @@ namespace DarkConfig.Internal {
 
                 if (ignored) {
                     continue;
+                }
+
+                if (fieldInfo.IsStatic) {
+                    flags |= MemberFlags.Static;
                 }
 
                 int insertionPoint = required ? info.NumRequired++ : info.MemberNames.Count;

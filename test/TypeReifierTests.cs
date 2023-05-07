@@ -930,6 +930,7 @@ class ReifiesStatic : TestTypes {
             , "TestFilename");
         Configs.ReifyStatic(typeof(PureStatic), doc);
         Assert.Multiple(() => {
+            Assert.That(PureStatic.staticStringList, Is.Not.Null);
             Assert.That(PureStatic.staticStringList[0], Is.EqualTo("herp"));
             Assert.That(PureStatic.staticStringList[1], Is.EqualTo("derp"));
         });

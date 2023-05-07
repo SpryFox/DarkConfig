@@ -197,6 +197,104 @@ namespace DarkConfig.Internal {
         }
 
         /// <summary>
+        /// Sets all static fields and properties for a given type with the values in the given
+        /// DocNode dictionary
+        /// </summary>
+        /// <param name="type">Set this type's static fields and properties</param>
+        /// <param name="doc">Dictionary with static field and property data</param>
+        /// <param name="options">Reification options</param>
+        /// <exception cref="ExtraFieldsException">If more keys were present in the dictionary than static type members.</exception>
+        /// <exception cref="MissingFieldsException">If one or more static members were missing from the config data.</exception>
+        public void SetStaticFieldsOnClass(Type type, DocNode doc, ReificationOptions options) {
+            bool ignoreCase = (options & ReificationOptions.CaseSensitive) != ReificationOptions.CaseSensitive;
+            
+            var typeInfo = reflectionCache.GetTypeInfo(type);
+            List<int> setMemberHashes = null;
+
+            // Set all the static fields and properties
+            for (int memberIndex = 0; memberIndex < typeInfo.MemberNames.Count; ++memberIndex) {
+                var memberFlags = typeInfo.MemberAttributes[memberIndex];
+                if ((memberFlags & ReflectionCache.MemberFlags.Static) == 0) {
+                    continue;
+                }
+                
+                var memberInfo = typeInfo.MemberInfo[memberIndex];
+                
+                // Special field to auto-populate with SourceInformation
+                if ((memberFlags & ReflectionCache.MemberFlags.ConfigSourceInfo) != 0) {
+                    if ((memberFlags & ReflectionCache.MemberFlags.Field) != 0) {
+                        ((FieldInfo) memberInfo).SetValue(null, doc.SourceInformation);
+                    } else {
+                        ((PropertyInfo) memberInfo).SetValue(null, doc.SourceInformation);
+                    }
+                    continue;
+                }
+
+                // do meta stuff based on attributes/validation
+                string memberName = typeInfo.MemberNames[memberIndex];
+
+                if (doc.TryGetValue(memberName, ignoreCase, out var valueDoc)) {
+                    if ((memberFlags & ReflectionCache.MemberFlags.Field) != 0) {
+                        var fieldInfo = (FieldInfo) memberInfo;
+                        object newValue = ReadValueOfType(fieldInfo.FieldType, fieldInfo.GetValue(null), valueDoc, options);
+                        fieldInfo.SetValue(null, newValue);
+                    } else {
+                        var propertyInfo = (PropertyInfo) memberInfo;
+                        object newValue = ReadValueOfType(propertyInfo.PropertyType, propertyInfo.GetValue(null), valueDoc, options);
+                        propertyInfo.SetValue(null, newValue);
+                    }
+                    setMemberHashes ??= new List<int>();
+                    setMemberHashes.Add((ignoreCase ? memberName.ToLowerInvariant() : memberName).GetHashCode());
+                } else if (memberIndex >= typeInfo.NumRequired) {
+                    // It's an optional field so pretend like we set it
+                    setMemberHashes ??= new List<int>();
+                    setMemberHashes.Add((ignoreCase ? memberName.ToLowerInvariant() : memberName).GetHashCode());
+                }
+            }
+            
+            // Check whether any fields in the doc were unused 
+            if ((options & ReificationOptions.AllowExtraFields) == 0) {
+                var extraDocFields = new List<string>();
+                
+                foreach (var kv in doc.Pairs) {
+                    int docKeyHash = (ignoreCase ? kv.Key.ToLowerInvariant() : kv.Key).GetHashCode();
+                    if (setMemberHashes == null || !setMemberHashes.Contains(docKeyHash)) {
+                        extraDocFields.Add(kv.Key);
+                    }
+                }
+
+                if (extraDocFields.Count > 0) {
+                    throw new ExtraFieldsException($"Extra doc fields: {JoinList(extraDocFields, ", ")} {doc.SourceInformation}");
+                }
+            }
+
+            // check whether any fields in the class were unset
+            if (typeInfo.NumRequired > 0) {
+                List<string> missingMembers = null;
+
+                for (int memberIndex = 0; memberIndex < typeInfo.NumRequired; ++memberIndex) {
+                    var memberFlags = typeInfo.MemberAttributes[memberIndex];
+                    if ((memberFlags & ReflectionCache.MemberFlags.Static) == 0) {
+                        continue;
+                    }
+
+                    string memberName = typeInfo.MemberNames[memberIndex];
+                    int memberNameHash = (ignoreCase ? memberName.ToLowerInvariant() : memberName).GetHashCode();
+                    if (setMemberHashes != null && setMemberHashes.Contains(memberNameHash)) {
+                        continue;
+                    }
+
+                    missingMembers ??= new List<string>();
+                    missingMembers.Add(memberName);
+                }
+
+                if (missingMembers != null) {
+                    throw new MissingFieldsException($"Missing doc fields: {JoinList(missingMembers, ", ")} {doc.SourceInformation}");
+                }
+            }
+        }
+        
+        /// <summary>
         /// Sets a single field value on an object from the given docnode dict.
         /// 
         /// This is mostly only useful as a helper when writing FromDoc's
