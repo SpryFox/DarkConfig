@@ -63,85 +63,66 @@ namespace DarkConfig.Internal {
             bool ignoreCase = (options & ReificationOptions.CaseSensitive) != ReificationOptions.CaseSensitive;
             
             var typeInfo = reflectionCache.GetTypeInfo(type);
-            
-            // Set source info if necessary
-            if (!string.IsNullOrEmpty(typeInfo.SourceInfoMemberName)) {
-                var sourceInfoAttributes = typeInfo.SourceInfoMemberAttributes;
-                if ((sourceInfoAttributes & ReflectionCache.MemberFlags.Field) != 0) {
-                    ((FieldInfo) typeInfo.SourceInfoMemberInfo).SetValue(null, doc.SourceInformation);
-                } else {
-                    ((PropertyInfo) typeInfo.SourceInfoMemberInfo).SetValue(null, doc.SourceInformation);
-                }
-            }
-            
-            List<int> setMemberHashes = null;
 
-            // Set all the static fields and properties
-            for (int memberIndex = 0; memberIndex < typeInfo.MemberNames.Count; ++memberIndex) {
-                var memberFlags = typeInfo.MemberAttributes[memberIndex];
-                if ((memberFlags & ReflectionCache.MemberFlags.Static) == 0) {
+            List<string> missingRequiredMemberNames = null;
+            var setMemberHashes = new List<int>();
+
+            // Set static fields.
+            for (int fieldIndex = 0; fieldIndex < typeInfo.StaticFieldNames.Count; fieldIndex++) {
+                string fieldName = typeInfo.StaticFieldNames[fieldIndex];
+                var fieldInfo = typeInfo.StaticFieldInfos[fieldIndex];
+
+                if (!doc.TryGetValue(fieldName, ignoreCase, out var valueDoc)) {
+                    if (fieldIndex < typeInfo.NumRequiredStaticFields) {
+                        missingRequiredMemberNames ??= new List<string>();
+                        missingRequiredMemberNames.Add(fieldName);
+                    }
                     continue;
                 }
-                
-                string memberName = typeInfo.MemberNames[memberIndex];
-                var memberInfo = typeInfo.MemberInfo[memberIndex];
 
-                if (doc.TryGetValue(memberName, ignoreCase, out var valueDoc)) {
-                    if ((memberFlags & ReflectionCache.MemberFlags.Field) != 0) {
-                        var fieldInfo = (FieldInfo) memberInfo;
-                        object newValue = ReadValueOfType(fieldInfo.FieldType, fieldInfo.GetValue(null), valueDoc, options);
-                        fieldInfo.SetValue(null, newValue);
-                    } else {
-                        var propertyInfo = (PropertyInfo) memberInfo;
-                        propertyInfo.SetValue(null, ReadValueOfType(propertyInfo.PropertyType, propertyInfo.GetValue(null), valueDoc, options));
-                    }
-                    setMemberHashes ??= new List<int>();
-                    setMemberHashes.Add((ignoreCase ? memberName.ToLowerInvariant() : memberName).GetHashCode());
-                } else if (memberIndex >= typeInfo.NumRequired) {
-                    // It's an optional field so pretend like we set it
-                    setMemberHashes ??= new List<int>();
-                    setMemberHashes.Add((ignoreCase ? memberName.ToLowerInvariant() : memberName).GetHashCode());
-                }
+                object newValue = typeInfo.SourceInfoMemberName == fieldName ? doc.SourceInformation
+                    : ReadValueOfType(fieldInfo.FieldType, fieldInfo.GetValue(null), valueDoc, options);
+                setMemberHashes.Add(ignoreCase ? fieldName.ToLowerInvariant().GetHashCode() : fieldName.GetHashCode());
+                fieldInfo.SetValue(null, newValue);
             }
             
-            // Check whether any fields in the doc were unused 
-            if ((options & ReificationOptions.AllowExtraFields) == 0) {
+            // Set static properties.
+            for (int propertyIndex = 0; propertyIndex < typeInfo.StaticPropertyNames.Count; propertyIndex++) {
+                string propertyName = typeInfo.StaticPropertyNames[propertyIndex];
+                var propertyInfo = typeInfo.StaticPropertyInfos[propertyIndex];
+
+                if (!doc.TryGetValue(propertyName, ignoreCase, out var valueDoc)) {
+                    if (propertyIndex < typeInfo.NumRequiredStaticProperties) {
+                        missingRequiredMemberNames ??= new List<string>();
+                        missingRequiredMemberNames.Add(propertyName);
+                    }
+                    continue;
+                }
+
+                object newValue = typeInfo.SourceInfoMemberName == propertyName ? doc.SourceInformation
+                    : ReadValueOfType(propertyInfo.PropertyType, propertyInfo.GetValue(null), valueDoc, options);
+                setMemberHashes.Add(ignoreCase ? propertyName.ToLowerInvariant().GetHashCode() : propertyName.GetHashCode());
+                propertyInfo.SetValue(null, newValue);
+            }
+
+            // Check whether any required members in the type were not set.
+            if (missingRequiredMemberNames != null && missingRequiredMemberNames.Count > 0) {
+                throw new MissingFieldsException($"Missing doc fields: {JoinList(missingRequiredMemberNames, ", ")} {doc.SourceInformation}");
+            }
+            
+            // Check whether any fields in the doc were unused.
+            if ((options & ReificationOptions.AllowExtraFields) == 0 && setMemberHashes.Count != doc.Count) {
                 var extraDocFields = new List<string>();
                 
                 foreach (var kv in doc.Pairs) {
                     int docKeyHash = (ignoreCase ? kv.Key.ToLowerInvariant() : kv.Key).GetHashCode();
-                    if (setMemberHashes == null || !setMemberHashes.Contains(docKeyHash)) {
+                    if (!setMemberHashes.Contains(docKeyHash)) {
                         extraDocFields.Add(kv.Key);
                     }
                 }
 
                 if (extraDocFields.Count > 0) {
                     throw new ExtraFieldsException($"Extra doc fields: {JoinList(extraDocFields, ", ")} {doc.SourceInformation}");
-                }
-            }
-
-            // check whether any fields in the class were unset
-            if (typeInfo.NumRequired > 0) {
-                List<string> missingMembers = null;
-
-                for (int memberIndex = 0; memberIndex < typeInfo.NumRequired; ++memberIndex) {
-                    var memberFlags = typeInfo.MemberAttributes[memberIndex];
-                    if ((memberFlags & ReflectionCache.MemberFlags.Static) == 0) {
-                        continue;
-                    }
-
-                    string memberName = typeInfo.MemberNames[memberIndex];
-                    int memberNameHash = (ignoreCase ? memberName.ToLowerInvariant() : memberName).GetHashCode();
-                    if (setMemberHashes != null && setMemberHashes.Contains(memberNameHash)) {
-                        continue;
-                    }
-
-                    missingMembers ??= new List<string>();
-                    missingMembers.Add(memberName);
-                }
-
-                if (missingMembers != null) {
-                    throw new MissingFieldsException($"Missing doc fields: {JoinList(missingMembers, ", ")} {doc.SourceInformation}");
                 }
             }
         }
@@ -519,113 +500,125 @@ namespace DarkConfig.Internal {
                 // ==== Special Case ====
                 // Allow specifying object types with a single property or field as a scalar value in configs.
                 // This is syntactic sugar that lets us wrap values in classes.
-                int targetMemberIndex = -1;
-                bool foundMultipleEligible = false;
-                for (int memberIndex = 0; memberIndex < typeInfo.MemberAttributes.Count; memberIndex++) {
-                    var memberFlags = typeInfo.MemberAttributes[memberIndex];
-                    
-                    // Skip static fields and properties
-                    if ((memberFlags & ReflectionCache.MemberFlags.Static) != 0) {
-                        continue;
-                    }
-
-                    if (targetMemberIndex == -1) {
-                        targetMemberIndex = memberIndex;
-                    } else {
-                        foundMultipleEligible = true;
-                        break;
-                    }
+                if (typeInfo.FieldNames.Count + typeInfo.PropertyNames.Count != 1) {
+                    throw new Exception($"Trying to set a value of type: {type} {typeInfo.FieldNames.Count + typeInfo.PropertyNames.Count}"
+                        + $" from value of wrong type: " +
+                        (doc.Type == DocNodeType.Scalar ? doc.StringValue : doc.Type.ToString()) + $" at {doc.SourceInformation}");
                 }
                 
-                if (targetMemberIndex != -1 && !foundMultipleEligible) {
-                    var targetMemberInfo = typeInfo.MemberInfo[targetMemberIndex];
-                    if ((typeInfo.MemberAttributes[targetMemberIndex] & ReflectionCache.MemberFlags.Field) != 0) {
-                        var fieldInfo = (FieldInfo) targetMemberInfo;
-                        fieldInfo.SetValue(setCopy, ReadValueOfType(fieldInfo.FieldType, fieldInfo.GetValue(setCopy), doc, options));
-                    } else {
-                        var propertyInfo = (PropertyInfo) targetMemberInfo;
-                        propertyInfo.SetValue(setCopy, ReadValueOfType(propertyInfo.PropertyType, propertyInfo.GetValue(setCopy), doc, options));
-                    }
-                    obj = setCopy;
-                    return;
+                if (typeInfo.FieldNames.Count > 0) {
+                    var fieldInfo = typeInfo.FieldInfos[0];
+                    fieldInfo.SetValue(setCopy, ReadValueOfType(fieldInfo.FieldType, fieldInfo.GetValue(setCopy), doc, options));
                 }
-                throw new Exception($"Trying to set a field of type: {type} {typeInfo.MemberNames.Count} from value of wrong type: " +
-                    (doc.Type == DocNodeType.Scalar ? doc.StringValue : doc.Type.ToString()) + $" at {doc.SourceInformation}");
+
+                if (typeInfo.PropertyNames.Count > 0) {
+                    var propertyInfo = typeInfo.PropertyInfos[0];
+                    propertyInfo.SetValue(setCopy, ReadValueOfType(propertyInfo.PropertyType, propertyInfo.GetValue(setCopy), doc, options));
+                }
+
+                obj = setCopy;
+                return;
             }
             
             bool ignoreCase = (options & ReificationOptions.CaseSensitive) != ReificationOptions.CaseSensitive;
-            List<int> setMemberHashes = null;
-            
-            // Set source info if necessary
-            if (!string.IsNullOrEmpty(typeInfo.SourceInfoMemberName)) {
-                var sourceInfoAttributes = typeInfo.SourceInfoMemberAttributes;
-                if ((sourceInfoAttributes & ReflectionCache.MemberFlags.Field) != 0) {
-                    ((FieldInfo) typeInfo.SourceInfoMemberInfo).SetValue(setCopy, doc.SourceInformation);
-                } else {
-                    ((PropertyInfo) typeInfo.SourceInfoMemberInfo).SetValue(setCopy, doc.SourceInformation);
-                }
-            }
 
             // Set the fields on the object.
-            for (int memberIndex = 0; memberIndex < typeInfo.MemberNames.Count; ++memberIndex) {
-                var memberFlags = typeInfo.MemberAttributes[memberIndex];
+            var setMemberHashes = new List<int>();
+            List<string> missingRequiredMembers = null;
+            
+            // Set fields.
+            for (int fieldIndex = 0; fieldIndex < typeInfo.FieldNames.Count; fieldIndex++) {
+                string fieldName = typeInfo.FieldNames[fieldIndex];
+                var fieldInfo = typeInfo.FieldInfos[fieldIndex];
 
-                // do meta stuff based on attributes/validation
-                string key = typeInfo.MemberNames[memberIndex];
-                
-                if (doc.TryGetValue(key, ignoreCase, out var valueDoc)) {
-                    if ((memberFlags & ReflectionCache.MemberFlags.Field) != 0) {
-                        var fieldInfo = (FieldInfo) typeInfo.MemberInfo[memberIndex];
-                        fieldInfo.SetValue(setCopy, ReadValueOfType(fieldInfo.FieldType, fieldInfo.GetValue(setCopy), valueDoc, options));
-                    } else {
-                        var propertyInfo = (PropertyInfo) typeInfo.MemberInfo[memberIndex];
-                        propertyInfo.SetValue(setCopy, ReadValueOfType(propertyInfo.PropertyType, propertyInfo.GetValue(setCopy), valueDoc, options));
+                if (!doc.TryGetValue(fieldName, ignoreCase, out var valueDoc)) {
+                    if (fieldIndex < typeInfo.NumRequiredFields) {
+                        missingRequiredMembers ??= new List<string>();
+                        missingRequiredMembers.Add(fieldName);
                     }
-                    setMemberHashes ??= new List<int>();
-                    setMemberHashes.Add((ignoreCase ? key.ToLowerInvariant() : key).GetHashCode());
-                } else if (memberIndex >= typeInfo.NumRequired) {
-                    // It's an optional field so pretend like we set it
-                    setMemberHashes ??= new List<int>();
-                    setMemberHashes.Add((ignoreCase ? key.ToLowerInvariant() : key).GetHashCode());
+                    continue;
                 }
+
+                object newValue = typeInfo.SourceInfoMemberName == fieldName ? doc.SourceInformation 
+                    : ReadValueOfType(fieldInfo.FieldType, fieldInfo.GetValue(setCopy), valueDoc, options);
+                setMemberHashes.Add(ignoreCase ? fieldName.ToLowerInvariant().GetHashCode() : fieldName.GetHashCode());
+                fieldInfo.SetValue(setCopy, newValue);
             }
 
-            // Check whether any fields in the doc were unused 
-            if ((options & ReificationOptions.AllowExtraFields) == 0) {
+            // Set properties.
+            for (int propertyIndex = 0; propertyIndex < typeInfo.PropertyNames.Count; propertyIndex++) {
+                string propertyName = typeInfo.PropertyNames[propertyIndex];
+                var propertyInfo = typeInfo.PropertyInfos[propertyIndex];
+
+                if (!doc.TryGetValue(propertyName, ignoreCase, out var valueDoc)) {
+                    if (propertyIndex < typeInfo.NumRequiredFields) {
+                        missingRequiredMembers ??= new List<string>();
+                        missingRequiredMembers.Add(propertyName);
+                    }
+                    continue;
+                }
+
+                object newValue = typeInfo.SourceInfoMemberName == propertyName ? doc.SourceInformation 
+                    : ReadValueOfType(propertyInfo.PropertyType, propertyInfo.GetValue(setCopy), valueDoc, options);
+                setMemberHashes.Add(ignoreCase ? propertyName.ToLowerInvariant().GetHashCode() : propertyName.GetHashCode());
+                propertyInfo.SetValue(setCopy, newValue);
+            }
+
+            // Set static fields.
+            for (int fieldIndex = 0; fieldIndex < typeInfo.StaticFieldNames.Count; fieldIndex++) {
+                string fieldName = typeInfo.StaticFieldNames[fieldIndex];
+                var fieldInfo = typeInfo.StaticFieldInfos[fieldIndex];
+
+                if (!doc.TryGetValue(fieldName, ignoreCase, out var valueDoc)) {
+                    if (fieldIndex < typeInfo.NumRequiredStaticFields) {
+                        missingRequiredMembers ??= new List<string>();
+                        missingRequiredMembers.Add(fieldName);
+                    }
+                    continue;
+                }
+
+                object newValue = typeInfo.SourceInfoMemberName == fieldName ? doc.SourceInformation
+                    : ReadValueOfType(fieldInfo.FieldType, fieldInfo.GetValue(null), valueDoc, options);
+                setMemberHashes.Add(ignoreCase ? fieldName.ToLowerInvariant().GetHashCode() : fieldName.GetHashCode());
+                fieldInfo.SetValue(null, newValue);
+            }
+            
+            // Set static properties.
+            for (int propertyIndex = 0; propertyIndex < typeInfo.StaticPropertyNames.Count; propertyIndex++) {
+                string propertyName = typeInfo.StaticPropertyNames[propertyIndex];
+                var propertyInfo = typeInfo.StaticPropertyInfos[propertyIndex];
+
+                if (!doc.TryGetValue(propertyName, ignoreCase, out var valueDoc)) {
+                    if (propertyIndex < typeInfo.NumRequiredStaticProperties) {
+                        missingRequiredMembers ??= new List<string>();
+                        missingRequiredMembers.Add(propertyName);
+                    }
+                    continue;
+                }
+
+                object newValue = typeInfo.SourceInfoMemberName == propertyName ? doc.SourceInformation
+                    : ReadValueOfType(propertyInfo.PropertyType, propertyInfo.GetValue(null), valueDoc, options);
+                setMemberHashes.Add(ignoreCase ? propertyName.ToLowerInvariant().GetHashCode() : propertyName.GetHashCode());
+                propertyInfo.SetValue(null, newValue);
+            }
+
+            // Throw an error if any required fields in the class were unset
+            if (missingRequiredMembers != null) {
+                throw new MissingFieldsException($"Missing doc fields: {JoinList(missingRequiredMembers, ", ")} {doc.SourceInformation}");
+            }
+
+            // Check whether any fields in the doc were unused
+            if (setMemberHashes.Count != doc.Count) {
                 var extraDocFields = new List<string>();
-                
                 foreach (var kv in doc.Pairs) {
                     int docKeyHash = (ignoreCase ? kv.Key.ToLowerInvariant() : kv.Key).GetHashCode();
-                    if (setMemberHashes == null || !setMemberHashes.Contains(docKeyHash)) {
+                    if (!setMemberHashes.Contains(docKeyHash)) {
                         extraDocFields.Add(kv.Key);
                     }
                 }
-
-                if (extraDocFields.Count > 0) {
-                    throw new ExtraFieldsException($"Extra doc fields: {JoinList(extraDocFields, ", ")} {doc.SourceInformation}");
-                }
+                throw new ExtraFieldsException($"Extra doc fields: {JoinList(extraDocFields, ", ")} {doc.SourceInformation}");
             }
-
-            // check whether any fields in the class were unset
-            if (typeInfo.NumRequired > 0) {
-                List<string> missingMembers = null;
-
-                for (int memberIndex = 0; memberIndex < typeInfo.NumRequired; ++memberIndex) {
-                    string memberName = typeInfo.MemberNames[memberIndex];
-                    int memberNameHash = (ignoreCase ? memberName.ToLowerInvariant() : memberName).GetHashCode();
-                    if (setMemberHashes != null && setMemberHashes.Contains(memberNameHash)) {
-                        continue;
-                    }
-
-                    missingMembers ??= new List<string>();
-                    missingMembers.Add(memberName);
-                }
-
-                if (missingMembers != null) {
-                    throw new MissingFieldsException($"Missing doc fields: {JoinList(missingMembers, ", ")} {doc.SourceInformation}");
-                }
-            }
-
+            
             obj = setCopy;
         }
 
@@ -636,13 +629,13 @@ namespace DarkConfig.Internal {
         /// </summary>
         /// <param name="type">The type of obj</param>
         /// <param name="obj">The object to set the field on</param>
-        /// <param name="fieldName">The name of the field to set</param>
+        /// <param name="memberName">The name of the field to set</param>
         /// <param name="doc">A yaml dictionary to grab the value from</param>
         /// <param name="options">Reification options override</param>
         /// <returns>true if we successfully set the field, false otherwise</returns>
         /// <exception cref="ExtraFieldsException">If the field does not exist as a member of <paramref name="type"/> and extra fields are disallowed</exception>
         /// <exception cref="MissingFieldsException">If the field is marked as mandatory and is missing in the yaml doc</exception>
-        bool SetMember(Type type, ref object obj, string fieldName, DocNode doc, ReificationOptions? options = null) {
+        bool SetMember(Type type, ref object obj, string memberName, DocNode doc, ReificationOptions? options = null) {
             if (doc == null) {
                 return false;
             }
@@ -655,32 +648,76 @@ namespace DarkConfig.Internal {
             bool ignoreCase = (options & ReificationOptions.CaseSensitive) == 0;
             bool allowExtra = (options & ReificationOptions.AllowExtraFields) == ReificationOptions.AllowExtraFields;
 
-            for (int memberIndex = 0; memberIndex < typeInfo.MemberNames.Count; ++memberIndex) {
-                if (!string.Equals(typeInfo.MemberNames[memberIndex], fieldName, StringComparison.OrdinalIgnoreCase)) {
+            bool docHasKey = doc.TryGetValue(memberName, ignoreCase, out var valueDoc);
+
+            // Look for it in the fields list
+            for (int fieldIndex = 0; fieldIndex < typeInfo.FieldNames.Count; ++fieldIndex) {
+                if (!string.Equals(typeInfo.FieldNames[fieldIndex], memberName, ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal)) {
                     continue;
                 }
 
-                if (doc.TryGetValue(fieldName, ignoreCase, out var node)) {
-                    if ((typeInfo.MemberAttributes[memberIndex] & ReflectionCache.MemberFlags.Field) != 0) {
-                        var fieldInfo = (FieldInfo) typeInfo.MemberInfo[memberIndex];
-                        fieldInfo.SetValue(obj, ReadValueOfType(fieldInfo.FieldType, fieldInfo.GetValue(obj), node, options));
-                    } else {
-                        var propertyInfo = (PropertyInfo) typeInfo.MemberInfo[memberIndex];
-                        propertyInfo.SetValue(obj, ReadValueOfType(propertyInfo.PropertyType, propertyInfo.GetValue(obj), node, options));
+                if (!docHasKey) {
+                    if (fieldIndex < typeInfo.NumRequiredFields) {
+                        throw new MissingFieldsException($"Missing doc field: {memberName} {doc.SourceInformation}");
                     }
-                    return true;
+                    return false;
                 }
                 
-                // Specifying member is mandatory
-                if (memberIndex < typeInfo.NumRequired) {
-                    throw new MissingFieldsException($"Missing doc field: {fieldName} {doc.SourceInformation}");
+                var fieldInfo = typeInfo.FieldInfos[fieldIndex];
+                fieldInfo.SetValue(obj, ReadValueOfType(fieldInfo.FieldType, fieldInfo.GetValue(obj), valueDoc, options));
+                return true;
+            }
+            
+            // Look for it in the properties list
+            for (int propertyIndex = 0; propertyIndex < typeInfo.PropertyNames.Count; ++propertyIndex) {
+                if (!string.Equals(typeInfo.PropertyNames[propertyIndex], memberName, ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal)) {
+                    continue;
                 }
 
-                return false;
+                if (!docHasKey) {
+                    if (propertyIndex < typeInfo.NumRequiredProperties) {
+                        throw new MissingFieldsException($"Missing doc field: {memberName} {doc.SourceInformation}");
+                    }
+                    return false;
+                }
+                
+                var propertyInfo = typeInfo.PropertyInfos[propertyIndex];
+                propertyInfo.SetValue(obj, ReadValueOfType(propertyInfo.PropertyType, propertyInfo.GetValue(obj), valueDoc, options));
+                return true;
+            }
+
+            // Look for it in the static fields list
+            for (int fieldIndex = 0; fieldIndex < typeInfo.StaticFieldNames.Count; ++fieldIndex) {
+                if (!string.Equals(typeInfo.StaticFieldNames[fieldIndex], memberName, ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal)) {
+                    continue;
+                }
+
+                if (!docHasKey) {
+                    return false;
+                }
+                
+                var fieldInfo = typeInfo.StaticFieldInfos[fieldIndex];
+                fieldInfo.SetValue(obj, ReadValueOfType(fieldInfo.FieldType, fieldInfo.GetValue(obj), valueDoc, options));
+                return true;
+            }
+            
+            // Look for it in the static properties list
+            for (int propertyIndex = 0; propertyIndex < typeInfo.StaticPropertyNames.Count; ++propertyIndex) {
+                if (!string.Equals(typeInfo.StaticPropertyNames[propertyIndex], memberName, ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal)) {
+                    continue;
+                }
+
+                if (!docHasKey) {
+                    return false;
+                }
+                
+                var propertyInfo = typeInfo.StaticPropertyInfos[propertyIndex];
+                propertyInfo.SetValue(obj, ReadValueOfType(propertyInfo.PropertyType, propertyInfo.GetValue(obj), valueDoc, options));
+                return true;
             }
 
             if (!allowExtra) {
-                throw new ExtraFieldsException($"Extra doc fields: {fieldName} {doc.SourceInformation}");
+                throw new ExtraFieldsException($"Extra doc fields: {memberName} {doc.SourceInformation}");
             }
 
             return false;
