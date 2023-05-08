@@ -100,22 +100,17 @@ namespace DarkConfig.Internal {
                         break;
                     }
                     
-                    switch (attribute) {
-                        // Explicit Required/Optional attributes on a field override the type and global defaults.
-                        case ConfigMandatoryAttribute:
-                            required = true;
-                            numRequirementAttributes++;
-                            break;
-                        case ConfigAllowMissingAttribute: 
-                            required = false;
-                            numRequirementAttributes++;
-                            break;
-                        case ConfigSourceInformationAttribute:
-                            sourceInfo = true;
-                            break;
-                        case ConfigKeyAttribute:
-                            propertyName = ((ConfigKeyAttribute)attribute).Key;
-                            break;
+                    // Explicit Required/Optional attributes on a field override the type and global defaults.
+                    if (attribute is ConfigMandatoryAttribute) {
+                        required = true;
+                        numRequirementAttributes++;
+                    } else if (attribute is ConfigAllowMissingAttribute) {
+                        required = false;
+                        numRequirementAttributes++;
+                    } else if (attribute is ConfigSourceInformationAttribute) {
+                        sourceInfo = true;
+                    } else if (attribute is ConfigKeyAttribute) {
+                        propertyName = ((ConfigKeyAttribute)attribute).Key;
                     }
                 }
                 
@@ -182,21 +177,18 @@ namespace DarkConfig.Internal {
                         ignored = true;
                         break;
                     }
-                    switch (attribute) {
-                        case ConfigMandatoryAttribute:
-                            required = true;
-                            numRequirementAttributes++;
-                            break;
-                        case ConfigAllowMissingAttribute:
-                            required = false; 
-                            numRequirementAttributes++;
-                            break;
-                        case ConfigSourceInformationAttribute:
-                            sourceInfo = true;
-                            break;
-                        case ConfigKeyAttribute:
-                            fieldName = ((ConfigKeyAttribute)attribute).Key;
-                            break;
+                    
+                    // Explicit Required/Optional attributes on a field override the type and global defaults.
+                    if (attribute is ConfigMandatoryAttribute) {
+                        required = true;
+                        numRequirementAttributes++;
+                    } else if (attribute is ConfigAllowMissingAttribute) {
+                        required = false; 
+                        numRequirementAttributes++;
+                    } else if (attribute is ConfigSourceInformationAttribute) {
+                        sourceInfo = true;
+                    } else if (attribute is ConfigKeyAttribute) {
+                        fieldName = ((ConfigKeyAttribute)attribute).Key;
                     }
                 }
                 
