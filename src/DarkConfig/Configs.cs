@@ -437,7 +437,7 @@ namespace DarkConfig {
         /// <param name="options">(optional) Override default and type-defined reification behavior.</param>
         /// <typeparam name="T">The type who's static members should be updated.</typeparam>
         public static void ReifyStatic<T>(DocNode doc, ReificationOptions? options = null) {
-            ReifyStatic(typeof(T), doc, options);
+            typeReifier.SetStaticMembers(typeof(T), doc, options ?? Settings.DefaultReifierOptions);
         }
 
         /// <summary>

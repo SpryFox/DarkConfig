@@ -87,6 +87,8 @@ namespace DarkConfig.Internal {
                     continue;
                 }
                 
+                string propertyName = RemoveHungarianPrefix(propertyInfo.Name);
+                
                 // Explicit Required/Optional attributes on the type override the global defaults.
                 bool ignored = false;
                 bool required = typeMemberRequiredDefault;
@@ -111,8 +113,12 @@ namespace DarkConfig.Internal {
                         case ConfigSourceInformationAttribute:
                             sourceInfo = true;
                             break;
+                        case ConfigKeyAttribute:
+                            propertyName = ((ConfigKeyAttribute)attribute).Key;
+                            break;
                     }
                 }
+                
                 if (numRequirementAttributes == 2) {
                     throw new Exception($"Property {propertyInfo.Name} has both Mandatory and AllowMissing attributes");
                 }
@@ -121,11 +127,6 @@ namespace DarkConfig.Internal {
                     continue;
                 }
 
-                var setMethod = propertyInfo.SetMethod;
-                bool isStatic = (setMethod != null && setMethod.IsStatic);
-
-                string memberName = RemoveHungarianPrefix(propertyInfo.Name);
-                
                 if (sourceInfo) {
                     // Special field to auto-populate with SourceInformation
                     if (!string.IsNullOrEmpty(info.SourceInfoMemberName)) {
@@ -135,25 +136,25 @@ namespace DarkConfig.Internal {
                     if (propertyInfo.PropertyType != typeof(string)) {
                         throw new Exception($"Property {propertyInfo.Name} annotated with ConfigSourceInformation must be a string");
                     }
-                    info.SourceInfoMemberName = memberName;
+                    info.SourceInfoMemberName = propertyName;
                 }
                 
-                if (isStatic) {
+                if (propertyInfo.SetMethod?.IsStatic == true) {
                     if (required) {
-                        info.StaticPropertyNames.Insert(info.NumRequiredStaticProperties, memberName);
+                        info.StaticPropertyNames.Insert(info.NumRequiredStaticProperties, propertyName);
                         info.StaticPropertyInfos.Insert(info.NumRequiredStaticProperties, propertyInfo);
                         info.NumRequiredStaticProperties++;
                     } else {
-                        info.StaticPropertyNames.Add(memberName);
+                        info.StaticPropertyNames.Add(propertyName);
                         info.StaticPropertyInfos.Add(propertyInfo);
                     }
                 } else {
                     if (required) {
-                        info.PropertyNames.Insert(info.NumRequiredProperties, memberName);
+                        info.PropertyNames.Insert(info.NumRequiredProperties, propertyName);
                         info.PropertyInfos.Insert(info.NumRequiredProperties, propertyInfo);
                         info.NumRequiredProperties++;
                     } else {
-                        info.PropertyNames.Add(memberName);
+                        info.PropertyNames.Add(propertyName);
                         info.PropertyInfos.Add(propertyInfo);
                     }
                 }
@@ -168,6 +169,8 @@ namespace DarkConfig.Internal {
                 if (fieldInfo.IsSpecialName || fieldInfo.Name[0] == '<' || IsDelegateType(fieldInfo.FieldType)) {
                     continue;
                 }
+                
+                string fieldName = RemoveHungarianPrefix(fieldInfo.Name);
                 
                 // Explicit Required/Optional attributes on the type override the global defaults.
                 bool ignored = false;
@@ -191,19 +194,19 @@ namespace DarkConfig.Internal {
                         case ConfigSourceInformationAttribute:
                             sourceInfo = true;
                             break;
+                        case ConfigKeyAttribute:
+                            fieldName = ((ConfigKeyAttribute)attribute).Key;
+                            break;
                     }
-                }
-
-                if (ignored) {
-                    continue;
                 }
                 
                 if (numRequirementAttributes == 2) {
                     throw new Exception($"Field {fieldInfo.Name} has both Mandatory and AllowMissing attributes");
                 }
-                
-                bool isStatic = fieldInfo.IsStatic;
-                string memberName = RemoveHungarianPrefix(fieldInfo.Name);
+
+                if (ignored) {
+                    continue;
+                }
 
                 if (sourceInfo) {
                     // Special field to auto-populate with SourceInformation
@@ -216,26 +219,25 @@ namespace DarkConfig.Internal {
                         throw new Exception("Field with ConfigSourceInformation should be a string");
                     }
 
-                    info.SourceInfoMemberName = memberName;
+                    info.SourceInfoMemberName = fieldName;
                 }
-                
-                
-                if (isStatic) {
+
+                if (fieldInfo.IsStatic) {
                     if (required) {
-                        info.StaticFieldNames.Insert(info.NumRequiredStaticFields, memberName);
+                        info.StaticFieldNames.Insert(info.NumRequiredStaticFields, fieldName);
                         info.StaticFieldInfos.Insert(info.NumRequiredStaticFields, fieldInfo);
                         info.NumRequiredStaticFields++;
                     } else {
-                        info.StaticFieldNames.Add(memberName);
+                        info.StaticFieldNames.Add(fieldName);
                         info.StaticFieldInfos.Add(fieldInfo);
                     }
                 } else {
                     if (required) {
-                        info.FieldNames.Insert(info.NumRequiredFields, memberName);
+                        info.FieldNames.Insert(info.NumRequiredFields, fieldName);
                         info.FieldInfos.Insert(info.NumRequiredFields, fieldInfo);
                         info.NumRequiredFields++;
                     } else {
-                        info.FieldNames.Add(memberName);
+                        info.FieldNames.Add(fieldName);
                         info.FieldInfos.Add(fieldInfo);
                     }
                 }
