@@ -207,7 +207,7 @@ namespace DarkConfig.Internal {
             var results = new HashSet<string>();
             
             foreach (var source in sources) {
-                RegexUtils.FilterMatching(pattern, source.AllFiles.Keys, results);
+                RegexUtils.FilterMatching(pattern, source.GetSortedFilenames(), results);
             }
             
             return new List<string>(results);
