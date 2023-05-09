@@ -56,9 +56,9 @@ namespace DarkConfig {
         /// String describing the position and context in the source format (e.g. line number).
         public abstract string SourceInformation { get; }
         
-        public T As<T>() {
+        public T As<T>(ReificationOptions? options = null) {
             var result = default(T);
-            Configs.Reify(ref result, this);
+            Configs.Reify(ref result, this, options);
             return result;
         }
 
