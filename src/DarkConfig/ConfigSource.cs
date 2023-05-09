@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace DarkConfig {
     /// A source of config files to load.
@@ -16,6 +17,18 @@ namespace DarkConfig {
 
         /// Try to hotload config files.  Adds names of changed files to the <paramref name="changedFiles"/> list.
         public virtual void Hotload(List<string> changedFiles) {}
+        
+        /// <summary>
+        /// Enumerates all file lists (aka keys in <c>AllFiles</c>) in sorted order.
+        /// </summary>
+        /// <returns>An enumeration of all the filename keys in sorted order</returns>
+        public IEnumerable<string> GetSortedFilenames()
+        {
+            foreach (string fileName in AllFiles.Keys.OrderBy(it => it))
+            {
+                yield return fileName;
+            }
+        }
         
         /////////////////////////////////////////////////
         
