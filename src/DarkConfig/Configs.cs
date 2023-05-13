@@ -202,22 +202,24 @@ namespace DarkConfig {
         
         #region Parsing YAML
         /// <summary>
-        /// Parses the YAML of a config file
-        /// Caches the result internally so future calls don't re-parse the file data. 
+        /// Get the parsed contents of a preloaded file.
+        /// 
+        /// Preloading must be complete before calling this. 
         /// </summary>
-        /// <param name="filename">The name of the file to parse</param>
+        /// <param name="filename">The shortname of the file (filename without extension)</param>
         /// <returns>The parsed yaml data</returns>
         public static DocNode ParseFile(string filename) {
             return FileManager.ParseFile(filename);
         }
 
         /// <summary>
-        /// Parse a file and register a callback to be called when the file is loaded or hotloaded.
+        /// Get the parsed contents of a preloaded file and register a callback to be called when the file is hotloaded.
         /// 
-        /// The callback is called immediately when Load is called, and every time the file contents change.
-        /// The callback function should return false to unsubscribe itself from future calls, true otherwise.
+        /// The callback is called immediately with the parsed file contents, and again every time the file contents change.
+        /// The callback function should return <c>false</c> to unsubscribe itself from future calls.  Otherwise it should return
+        /// <c>true</c> to continue being called when the file is hotloaded.
         /// 
-        /// Preloading must be complete before calling ParseFile.
+        /// Preloading must be complete before calling this.
         /// </summary>
         /// <param name="filename">The file to parse</param>
         /// <param name="callback">Reload callback to register. Called immediately with the parsed file data.</param>
@@ -226,24 +228,24 @@ namespace DarkConfig {
         }
 
         /// <summary>
-        /// Low-level function to read a YAML string into a DocNode.
+        /// Parse a YAML string into a DocNode.
         /// </summary>
-        /// <param name="yamlData">the YAML to read</param>
+        /// <param name="yamlData">the YAML to parse</param>
         /// <param name="debugFilename">A filename used for error reporting</param>
         /// <returns>The parsed DocNode</returns>
         public static DocNode ParseString(string yamlData, string debugFilename) {
-            return LoadDocFromTextReader(new StringReader(yamlData), debugFilename);
+            return ParseYamlFromTextReader(new StringReader(yamlData), debugFilename);
         }
 
         /// <summary>
-        /// Low-level function to read a YAML stream into a DocNode.
+        /// Parse a YAML stream into a DocNode.
         /// </summary>
         /// <param name="stream">a stream of the YAML to read</param>
         /// <param name="filename">A filename used for error reporting</param>
         /// <param name="ignoreProcessors">Don't use config processors</param>
         /// <returns>The parsed DocNode</returns>
-        public static DocNode LoadDocFromStream(Stream stream, string filename, bool ignoreProcessors = false) {
-            return LoadDocFromTextReader(new StreamReader(stream), filename, ignoreProcessors);
+        public static DocNode ParseStream(Stream stream, string filename, bool ignoreProcessors = false) {
+            return ParseYamlFromTextReader(new StreamReader(stream), filename, ignoreProcessors);
         }
         
         /// <summary>
@@ -259,7 +261,7 @@ namespace DarkConfig {
         /// Called when the files are loaded.
         /// Registered as a reload callback for the merged files.
         /// </param>
-        public static void LoadFilesAsList(string glob, ReloadFunc callback) {
+        public static void ParseFilesAsList(string glob, HotloadCallbackFunc callback) {
             string destFile = glob + "_file";
             FileManager.RegisterCombinedFile(FileManager.GetFilenamesMatchingGlob(glob), destFile, CombineList);
             FileManager.ParseFile(destFile, callback);
@@ -280,7 +282,7 @@ namespace DarkConfig {
         /// Called when the files are loaded.
         /// Registered as a reload callback for the merged files.
         /// </param>
-        public static void LoadFilesAsMergedDict(string glob, ReloadFunc callback) {
+        public static void ParseFilesAsMergedDict(string glob, HotloadCallbackFunc callback) {
             string combinedFilename = glob + "_file";
             FileManager.RegisterCombinedFile(FileManager.GetFilenamesMatchingGlob(glob), combinedFilename, CombineDict);
             FileManager.ParseFile(combinedFilename, callback);
@@ -605,7 +607,7 @@ namespace DarkConfig {
 
         /////////////////////////////////////////////////
 
-        static DocNode LoadDocFromTextReader(TextReader reader, string filename, bool ignoreProcessors = false) {
+        static DocNode ParseYamlFromTextReader(TextReader reader, string filename, bool ignoreProcessors = false) {
             var yaml = new YamlStream();
             yaml.Load(reader);
             DocNode docNode = yaml.Documents.Count <= 0 ? new YamlDocNode(null, filename)

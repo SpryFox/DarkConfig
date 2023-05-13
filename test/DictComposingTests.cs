@@ -39,7 +39,7 @@ class DictComposingTests {
         DocNode MixedDict = null;
 
         // load all files from the DictDir into one dict
-        Configs.LoadFilesAsMergedDict("*", d => {
+        Configs.ParseFilesAsMergedDict("*", d => {
             MixedDict = d;
             return true;
         });

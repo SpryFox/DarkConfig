@@ -46,7 +46,7 @@ class ListComposingTests {
         var CharactersEndingInOrn = new List<Character>();
 
         // load all files from the ListDir into one list
-        Configs.LoadFilesAsList("*", d => {
+        Configs.ParseFilesAsList("*", d => {
             Assert.That(d.Count, Is.EqualTo(4));
             Configs.Reify(ref CharactersEndingInOrn, d);
             return true;

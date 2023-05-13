@@ -878,7 +878,7 @@ class TypeReifierTests : TestTypes {
 
     [Test]
     public void EmptyDocStreamReturnsDocNode() {
-        var doc = Configs.LoadDocFromStream(new System.IO.MemoryStream(), "EmptyDoc");
+        var doc = Configs.ParseStream(new System.IO.MemoryStream(), "EmptyDoc");
         Assert.Multiple(() => {
             Assert.That(doc, Is.Not.Null);
             Assert.That(doc, Is.InstanceOf<DocNode>());
