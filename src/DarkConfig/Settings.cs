@@ -19,13 +19,12 @@ namespace DarkConfig {
     }
 
     public enum LogVerbosity {
-        Error,
-        Warn,
+	    Warn,
         Info
     }
 
 	public class Settings {
-		/// Default options for refication.  Change this if you want to change
+		/// Default options for reification.  Change this if you want to change
         /// DarkConfig behavior without passing in parameters to each call.
         public ReificationOptions DefaultReifierOptions = ReificationOptions.AllowMissingExtraFields | ReificationOptions.CaseSensitive;
 
