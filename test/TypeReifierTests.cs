@@ -118,6 +118,12 @@ class TestTypes {
         public string mandatoryValue { get; set; } = null;
     }
 
+    [ConfigMandatory]
+    protected class ClassWithInstancedAndStaticData {
+        public int instancedVal;
+        public static bool staticVal = false;
+    }
+
     protected ReificationOptions defaults;
     protected TypeReifier reifier;
 
@@ -935,6 +941,24 @@ class ReifiesStatic : TestTypes {
             Assert.That(PureStatic.staticStringList[1], Is.EqualTo("derp"));
         });
     }
+
+    [Test]
+    public void ReifyDoesntSetStaticFields()
+    {
+        var doc = Configs.ParseString("{instancedVal: 10, staticVal: true}", "ReifyDoesntSetStaticFields");
+        var instance = new ClassWithInstancedAndStaticData();
+        var exception = Assert.Throws<ExtraFieldsException>(() => {
+            reifier.SetFieldsOnObject(ref instance, doc, ReificationOptions.None);
+        });
+        Assert.That(exception, Is.Not.Null);
+        Assert.That(exception.Message, Does.Contain("staticVal"));
+        Assert.Multiple(() =>
+        {
+            Assert.That(instance, Is.Not.Null);
+            Assert.That(instance.instancedVal, Is.EqualTo(10));
+            Assert.That(ClassWithInstancedAndStaticData.staticVal, Is.False);
+        });
+    }
 }
 
 [TestFixture]
@@ -1014,14 +1038,13 @@ class ReifiesMissingFields : TestTypes {
         var doc = Configs.ParseString(@"---
             childIntKey: 42
             childFloatKey: 1.25
-            staticIntKey: 332
         ", "TestFilename");
         var inst = new ChildStruct();
         reifier.SetFieldsOnStruct(ref inst, doc, ReificationOptions.None);
         Assert.Multiple(() => {
             Assert.That(inst.childIntKey, Is.EqualTo(42));
             Assert.That(inst.childFloatKey, Is.EqualTo(1.25));
-            Assert.That(ChildStruct.staticIntKey, Is.EqualTo(332));
+            Assert.That(ChildStruct.staticIntKey, Is.EqualTo(0));
         });
     }
 
@@ -1038,7 +1061,7 @@ class ReifiesMissingFields : TestTypes {
         Assert.Multiple(() => {
             Assert.That(exception, Is.Not.Null);
             Assert.That(exception.Message.IndexOf("childFloatKey", StringComparison.Ordinal), Is.GreaterThanOrEqualTo(0));
-            Assert.That(exception.Message.IndexOf("staticIntKey", StringComparison.Ordinal), Is.GreaterThanOrEqualTo(0));
+            Assert.That(exception.Message.IndexOf("staticIntKey", StringComparison.Ordinal), Is.EqualTo(-1));
         });
     }
 }
@@ -1050,14 +1073,13 @@ class ReifiesCaseInsensitive : TestTypes {
         var doc = Configs.ParseString(@"---
             childintkey: 32
             CHILDFLOATKEY: 11
-            StaticiNtKey: 5
         ", "TestFilename");
         var inst = new ChildStruct();
         reifier.SetFieldsOnStruct(ref inst, doc, ReificationOptions.None);
         Assert.Multiple(() => {
             Assert.That(inst.childIntKey, Is.EqualTo(32));
             Assert.That(inst.childFloatKey, Is.EqualTo(11));
-            Assert.That(ChildStruct.staticIntKey, Is.EqualTo(5));
+            Assert.That(ChildStruct.staticIntKey, Is.EqualTo(0));
         });
     }
 
@@ -1279,7 +1301,6 @@ class ReifierAttributes : TestTypes {
     public void PropertiesClassAcceptsSetting() {
         var doc = Configs.ParseString(@"---
             int1Value: 10
-            staticStringValue: newValue
             mandatoryValue: mandatory
         ", "TestFilename");
         var inst = new PropertiesClass();
@@ -1289,7 +1310,7 @@ class ReifierAttributes : TestTypes {
             Assert.That(inst.int2Value, Is.EqualTo(2));
             Assert.That(inst.backing3Int, Is.EqualTo(3));
             Assert.That(inst.int4Value, Is.EqualTo(4));
-            Assert.That(PropertiesClass.staticStringValue, Is.EqualTo("newValue"));
+            Assert.That(PropertiesClass.staticStringValue, Is.EqualTo("static str"));
             Assert.That(inst.allowMissing, Is.EqualTo("missing"));
             Assert.That(inst.mandatoryValue, Is.EqualTo("mandatory"));
         });

@@ -571,44 +571,6 @@ namespace DarkConfig.Internal {
                 propertyInfo.SetValue(setCopy, newValue);
             }
 
-            // Set static fields.
-            for (int fieldIndex = 0; fieldIndex < typeInfo.StaticFieldNames.Count; fieldIndex++) {
-                string fieldName = typeInfo.StaticFieldNames[fieldIndex];
-                var fieldInfo = typeInfo.StaticFieldInfos[fieldIndex];
-
-                if (!doc.TryGetValue(fieldName, ignoreCase, out var valueDoc)) {
-                    if (fieldIndex < typeInfo.NumRequiredStaticFields) {
-                        missingRequiredMembers ??= new List<string>();
-                        missingRequiredMembers.Add(fieldName);
-                    }
-                    continue;
-                }
-
-                object newValue = typeInfo.SourceInfoMemberName == fieldName ? doc.SourceInformation
-                    : ReadValueOfType(fieldInfo.FieldType, fieldInfo.GetValue(null), valueDoc, options);
-                setMemberHashes.Add(ignoreCase ? fieldName.ToLowerInvariant().GetHashCode() : fieldName.GetHashCode());
-                fieldInfo.SetValue(null, newValue);
-            }
-            
-            // Set static properties.
-            for (int propertyIndex = 0; propertyIndex < typeInfo.StaticPropertyNames.Count; propertyIndex++) {
-                string propertyName = typeInfo.StaticPropertyNames[propertyIndex];
-                var propertyInfo = typeInfo.StaticPropertyInfos[propertyIndex];
-
-                if (!doc.TryGetValue(propertyName, ignoreCase, out var valueDoc)) {
-                    if (propertyIndex < typeInfo.NumRequiredStaticProperties) {
-                        missingRequiredMembers ??= new List<string>();
-                        missingRequiredMembers.Add(propertyName);
-                    }
-                    continue;
-                }
-
-                object newValue = typeInfo.SourceInfoMemberName == propertyName ? doc.SourceInformation
-                    : ReadValueOfType(propertyInfo.PropertyType, propertyInfo.GetValue(null), valueDoc, options);
-                setMemberHashes.Add(ignoreCase ? propertyName.ToLowerInvariant().GetHashCode() : propertyName.GetHashCode());
-                propertyInfo.SetValue(null, newValue);
-            }
-
             // Throw an error if any required fields in the class were unset
             if (missingRequiredMembers != null) {
                 throw new MissingFieldsException($"Missing doc fields: {JoinList(missingRequiredMembers, ", ")} {doc.SourceInformation}");
