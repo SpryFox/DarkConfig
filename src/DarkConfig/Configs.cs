@@ -530,31 +530,44 @@ namespace DarkConfig {
         #endregion
 
         #region Processors
+        /// <summary>
         /// Add a config processor
+        /// </summary>
+        /// <param name="processor">The config processor to register</param>
         public static void AddConfigProcessor(ConfigProcessor processor) {
             processors.Add(processor);
         }
 
+        /// <summary>
         /// Remove a config processor
+        /// </summary>
+        /// <param name="processor">The config processor to unregister</param>
         public static void RemoveConfigProcessor(ConfigProcessor processor) {
             processors.Remove(processor);
         }
 
         /// Number of currently registered config processors
         public static int NumConfigProcessors => processors.Count;
-
-        /// Removes all config processors
+        
+        /// Unregisters all config processors
         public static void ClearConfigProcessors() {
             processors.Clear();
         }
 
+        /// <summary>
         /// Enumerate all config processors
+        /// </summary>
+        /// <returns>An enumeration of the currently registered config processors</returns>
         public static IEnumerable<ConfigProcessor> GetConfigProcessors() {
             return processors;
         }
 
+        /// <summary>
         /// Run all the config processors on this doc
         /// Useful for manual atypical flows
+        /// </summary>
+        /// <param name="filename">The filename associated with this data (used by some config processors)</param>
+        /// <param name="doc">The parsed data to process</param>
         public static void ProcessWithConfigProcessors(string filename, ref DocNode doc) {
             if (doc.Type == DocNodeType.Invalid) {
                 return;
