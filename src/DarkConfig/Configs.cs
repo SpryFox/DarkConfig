@@ -19,6 +19,8 @@ namespace DarkConfig {
     /// <param name="doc">the DocNode that is meant to update the object</param>
     /// <returns>The updated/created object</returns>
     public delegate object FromDocFunc(object obj, DocNode doc);
+    
+    public delegate object PostDocFunc(object obj);
 
     /// <summary>
     /// A callback to be called when a file is hotloaded.
@@ -305,6 +307,30 @@ namespace DarkConfig {
         /// <param name="fromDoc">Custom config parsing function for the type</param>
         public static void RegisterFromDoc(Type type, FromDocFunc fromDoc) {
             typeReifier.RegisteredFromDocs[type] = fromDoc;
+        }
+        #endregion
+        
+        #region PostDocs
+        /// <summary>
+        /// Register a post-serialization callback for a specific type.
+        ///
+        /// Useful for types where you can't easily add a PostDoc static method.
+        /// </summary>
+        /// <param name="postDoc">The post-serialization callback to invoke</param>
+        /// <typeparam name="T">The type to register the callback for</typeparam>
+        public static void RegisterPostDoc<T>(PostDocFunc postDoc) {
+            RegisterPostDoc(typeof(T), postDoc);
+        }
+
+        /// <summary>
+        /// Register a post-serialization callback for a specific type.
+        ///
+        /// Useful for types where you can't easily add a PostDoc static method.
+        /// </summary>
+        /// <param name="type">The type to register the callback for</param>
+        /// <param name="postDoc">The post-serialization callback to invoke</param>
+        public static void RegisterPostDoc(Type type, PostDocFunc postDoc) {
+            typeReifier.RegisteredPostDocs[type] = postDoc;
         }
         #endregion
 

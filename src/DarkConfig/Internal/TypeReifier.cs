@@ -6,6 +6,9 @@ namespace DarkConfig.Internal {
     public class TypeReifier {
         /// Manually-registered FromDoc's
         public readonly Dictionary<Type, FromDocFunc> RegisteredFromDocs = new Dictionary<Type, FromDocFunc>();
+        
+        /// Manually-registered PostDoc's
+        public readonly Dictionary<Type, PostDocFunc> RegisteredPostDocs = new Dictionary<Type, PostDocFunc>();
 
         /////////////////////////////////////////////////
         
@@ -441,15 +444,19 @@ namespace DarkConfig.Internal {
                 }
                 
                 // Call a PostDoc function for this type if it exists.
-                if (typeInfo.PostDoc != null) {
-                    try {
+                try {
+                    if (typeInfo.PostDoc != null) {
                         existing = typeInfo.PostDoc.Invoke(null, new[] {existing});
-                    } catch (TargetInvocationException e) {
-                        if (e.InnerException == null) {
-                            throw;
-                        }
-                        throw e.InnerException;
                     }
+                    // Call a manually-registered PostDoc if it exists
+                    else if (RegisteredPostDocs.TryGetValue(targetType, out var postDocFunc)) {
+                        existing = postDocFunc.Invoke(existing);
+                    }
+                } catch (TargetInvocationException e) {
+                    if (e.InnerException == null) {
+                        throw;
+                    }
+                    throw e.InnerException;
                 }
                 
                 return existing;
