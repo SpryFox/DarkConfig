@@ -89,7 +89,7 @@ namespace DarkConfig.Internal {
         /// <param name="filename">Name of the config to load.</param>
         /// <param name="callback">Called whenever the file is loaded or changed.</param>
         /// <exception cref="ConfigFileNotFoundException">Thrown if a config can't be found with the given name.</exception>
-        public void ParseFile(string filename, ReloadFunc callback) {
+        public void ParseFile(string filename, HotloadCallbackFunc callback) {
             ThrowIfNotPreloaded();
             
             foreach (var source in sources) {
@@ -255,7 +255,7 @@ namespace DarkConfig.Internal {
             // Log and call callbacks for modified files.
             foreach (string filename in modifiedFiles) {
                 Configs.LogInfo($"Hotloading: {filename}");
-                if (reloadCallbacks.TryGetValue(filename, out var callbacks)) {
+                if (hotloadCallbacks.TryGetValue(filename, out var callbacks)) {
                     for (int j = 0; j < callbacks.Count; j++) {
                         if (!callbacks[j](ParseFile(filename))) {
                             callbacks.RemoveAt(j);
@@ -271,9 +271,9 @@ namespace DarkConfig.Internal {
         /// </summary>
         /// <param name="filename">Config file name.</param>
         /// <param name="callback">Called whenever the file is loaded.</param>
-        public void RegisterReloadCallback(string filename, ReloadFunc callback) {
-            if (!reloadCallbacks.TryGetValue(filename, out var callbacks)) {
-                reloadCallbacks[filename] = new List<ReloadFunc> {callback};
+        public void RegisterReloadCallback(string filename, HotloadCallbackFunc callback) {
+            if (!hotloadCallbacks.TryGetValue(filename, out var callbacks)) {
+                hotloadCallbacks[filename] = new List<HotloadCallbackFunc> {callback};
                 return;
             }
 
@@ -294,7 +294,7 @@ namespace DarkConfig.Internal {
         /////////////////////////////////////////////////
         
         float nextHotloadTime;
-        readonly Dictionary<string, List<ReloadFunc>> reloadCallbacks = new Dictionary<string, List<ReloadFunc>>();
+        readonly Dictionary<string, List<HotloadCallbackFunc>> hotloadCallbacks = new Dictionary<string, List<HotloadCallbackFunc>>();
         
         class CombinerData {
             public string[] Filenames;

@@ -27,7 +27,7 @@ namespace DarkConfig {
     /// </summary>
     /// <param name="doc">The new file DocNode</param>
     /// <returns>False if the delegate should be un-registered for future reload callbacks.  True otherwise.</returns>
-    public delegate bool ReloadFunc(DocNode doc);
+    public delegate bool HotloadCallbackFunc(DocNode doc);
     
     /// A callback when DarkConfig logs a message, warning or error.
     public delegate void LogFunc(LogVerbosity verbosity, string message);
@@ -221,7 +221,7 @@ namespace DarkConfig {
         /// </summary>
         /// <param name="filename">The file to parse</param>
         /// <param name="callback">Reload callback to register. Called immediately with the parsed file data.</param>
-        public static void ParseFile(string filename, ReloadFunc callback) {
+        public static void ParseFile(string filename, HotloadCallbackFunc callback) {
             FileManager.ParseFile(filename, callback);
         }
 
