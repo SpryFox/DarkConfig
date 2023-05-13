@@ -588,11 +588,6 @@ namespace DarkConfig {
         public static void LogWarning(string message) {
             Log(LogVerbosity.Warn, message);
         }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void LogError(string message) {
-            Log(LogVerbosity.Error, message);
-        }
         #endregion
         
         public static void Update(float dt) {
