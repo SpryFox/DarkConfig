@@ -79,9 +79,7 @@ namespace DarkConfig {
 
         /// Enumerate all config file sources
         public static IEnumerable<ConfigSource> GetConfigSources() {
-            foreach (var source in FileManager.sources) {
-                yield return source;
-            }
+            return FileManager.sources;
         }
         #endregion
         
@@ -552,9 +550,7 @@ namespace DarkConfig {
 
         /// Enumerate all config processors
         public static IEnumerable<ConfigProcessor> GetConfigProcessors() {
-            foreach (var processor in processors) {
-                yield return processor;
-            }
+            return processors;
         }
 
         /// Run all the config processors on this doc
