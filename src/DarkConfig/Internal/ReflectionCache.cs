@@ -13,26 +13,122 @@ namespace DarkConfig.Internal {
 
             // Source Info
             public string SourceInfoMemberName;
+
+            #region Instanced
+            public byte NumRequiredFields;
+            public byte NumRequiredProperties;
+            public byte NumOptionalFields;
+            // NumOptionalProperties is implicitly defined as the length of the arrays minus the three other counts.
+            // These arrays contain sorted data:
+            // Required fields, then required properties, then optional fields, then optional properties
+            public readonly List<string> MemberNames = new List<string>();
+            public readonly List<MemberInfo> MemberInfos = new List<MemberInfo>();
+            #endregion
+
+            #region Static
+            public byte NumRequiredStaticFields;
+            public byte NumRequiredStaticProperties;
+            public byte NumOptionalStaticFields;
+            // NumOptionalStaticProperties is implicitly defined as the length of the arrays minus the three other counts.
+            // These arrays contain sorted data:
+            // Required fields, then required properties, then optional fields, then optional properties
+            public readonly List<string> StaticMemberNames = new List<string>();
+            public readonly List<MemberInfo> StaticMemberInfos = new List<MemberInfo>();
+            #endregion
             
-            // Fields
-            public int NumRequiredFields = 0;
-            public List<string> FieldNames = new List<string>();
-            public List<FieldInfo> FieldInfos = new List<FieldInfo>();
-            
-            // Properties
-            public int NumRequiredProperties = 0;
-            public List<string> PropertyNames = new List<string>();
-            public List<PropertyInfo> PropertyInfos = new List<PropertyInfo>();
-            
-            // Static Fields
-            public int NumRequiredStaticFields = 0;
-            public List<string> StaticFieldNames = new List<string>();
-            public List<FieldInfo> StaticFieldInfos = new List<FieldInfo>();
-            
-            // Static Properties
-            public int NumRequiredStaticProperties = 0;
-            public List<string> StaticPropertyNames = new List<string>();
-            public List<PropertyInfo> StaticPropertyInfos = new List<PropertyInfo>();
+            public bool IsField(int memberIndex, bool isStatic) {
+                if (isStatic) {
+                    if (memberIndex < NumRequiredStaticFields) {
+                        return true;
+                    }
+                
+                    int staticOptionalsStart = NumRequiredStaticFields + NumRequiredStaticProperties;
+                    return memberIndex >= staticOptionalsStart && memberIndex < (staticOptionalsStart + NumOptionalStaticFields);    
+                }
+                
+                if (memberIndex < NumRequiredFields) {
+                    return true;
+                }
+                
+                int optionalsStart = NumRequiredFields + NumRequiredProperties;
+                return memberIndex >= optionalsStart && memberIndex < (optionalsStart + NumOptionalFields);
+            }
+
+            public bool IsRequired(int memberIndex, bool isStatic) {
+                if (isStatic) {
+                    return memberIndex < NumRequiredStaticFields + NumRequiredStaticProperties;
+                }
+                return memberIndex < NumRequiredFields + NumRequiredProperties;
+            }
+
+            public void AddMember(string memberName, MemberInfo memberInfo, bool isRequired, bool isField, bool isStatic, bool isSourceInfo) {
+                if (isSourceInfo) {
+                    // Special field to auto-populate with SourceInformation
+                    if (!string.IsNullOrEmpty(SourceInfoMemberName)) {
+                        throw new Exception($"Property {memberInfo.Name} annotated with ConfigSourceInformation, but type {memberInfo.DeclaringType?.Name} "
+                            + $"already has a member named {SourceInfoMemberName} with that annotation");
+                    }
+                    if (isField) {
+                        if (((FieldInfo) memberInfo).FieldType != typeof(string)) {
+                            throw new Exception($"Field {memberInfo.Name} in type {memberInfo.DeclaringType?.Name} "
+                                + "annotated with ConfigSourceInformation must be a string");
+                        }
+                    } else {
+                        if (((PropertyInfo) memberInfo).PropertyType != typeof(string)) {
+                            throw new Exception($"Property {memberInfo.Name} in type {memberInfo.DeclaringType?.Name} "
+                                + "annotated with ConfigSourceInformation must be a string");
+                        }
+                    }
+                    
+                    SourceInfoMemberName = memberName;
+                }
+                
+                if (isStatic) {
+                    int insertionIndex;
+
+                    if (isRequired) {
+                        insertionIndex = 0;
+                        if (isField) {
+                            NumRequiredStaticFields++;
+                        } else {
+                            insertionIndex += NumRequiredStaticFields;
+                            NumRequiredStaticProperties++;
+                        }
+                    } else {
+                        insertionIndex = NumRequiredStaticFields + NumRequiredStaticProperties;
+                        if (isField) {
+                            NumOptionalStaticFields++;
+                        } else {
+                            insertionIndex += NumOptionalStaticFields;
+                        }
+                    }
+                    
+                    StaticMemberNames.Insert(insertionIndex, memberName);
+                    StaticMemberInfos.Insert(insertionIndex, memberInfo);
+                } else {
+                    int insertionIndex;
+
+                    if (isRequired) {
+                        insertionIndex = 0;
+                        if (isField) {
+                            NumRequiredFields++;
+                        } else {
+                            insertionIndex += NumRequiredFields;
+                            NumRequiredProperties++;
+                        }
+                    } else {
+                        insertionIndex = NumRequiredFields + NumRequiredProperties;
+                        if (isField) {
+                            NumOptionalFields++;
+                        } else {
+                            insertionIndex += NumOptionalFields;
+                        }
+                    }
+                    
+                    MemberNames.Insert(insertionIndex, memberName);
+                    MemberInfos.Insert(insertionIndex, memberInfo);
+                }
+            }
         }
         
         ////////////////////////////////////////////
@@ -109,8 +205,8 @@ namespace DarkConfig.Internal {
                         numRequirementAttributes++;
                     } else if (attribute is ConfigSourceInformationAttribute) {
                         sourceInfo = true;
-                    } else if (attribute is ConfigKeyAttribute) {
-                        propertyName = ((ConfigKeyAttribute)attribute).Key;
+                    } else if (attribute is ConfigKeyAttribute keyAttribute) {
+                        propertyName = keyAttribute.Key;
                     }
                 }
                 
@@ -118,40 +214,8 @@ namespace DarkConfig.Internal {
                     throw new Exception($"Property {propertyInfo.Name} has both Mandatory and AllowMissing attributes");
                 }
 
-                if (ignored) {
-                    continue;
-                }
-
-                if (sourceInfo) {
-                    // Special field to auto-populate with SourceInformation
-                    if (!string.IsNullOrEmpty(info.SourceInfoMemberName)) {
-                        throw new Exception($"Property {propertyInfo.Name} annotated with ConfigSourceInformation, but type {type.Name} "
-                            + $"already has a member named {info.SourceInfoMemberName} with that annotation");
-                    }
-                    if (propertyInfo.PropertyType != typeof(string)) {
-                        throw new Exception($"Property {propertyInfo.Name} annotated with ConfigSourceInformation must be a string");
-                    }
-                    info.SourceInfoMemberName = propertyName;
-                }
-                
-                if (propertyInfo.SetMethod?.IsStatic == true) {
-                    if (required) {
-                        info.StaticPropertyNames.Insert(info.NumRequiredStaticProperties, propertyName);
-                        info.StaticPropertyInfos.Insert(info.NumRequiredStaticProperties, propertyInfo);
-                        info.NumRequiredStaticProperties++;
-                    } else {
-                        info.StaticPropertyNames.Add(propertyName);
-                        info.StaticPropertyInfos.Add(propertyInfo);
-                    }
-                } else {
-                    if (required) {
-                        info.PropertyNames.Insert(info.NumRequiredProperties, propertyName);
-                        info.PropertyInfos.Insert(info.NumRequiredProperties, propertyInfo);
-                        info.NumRequiredProperties++;
-                    } else {
-                        info.PropertyNames.Add(propertyName);
-                        info.PropertyInfos.Add(propertyInfo);
-                    }
+                if (!ignored) {
+                    info.AddMember(propertyName, propertyInfo, required, false, propertyInfo.SetMethod?.IsStatic == true, sourceInfo);
                 }
             }
 
@@ -187,8 +251,8 @@ namespace DarkConfig.Internal {
                         numRequirementAttributes++;
                     } else if (attribute is ConfigSourceInformationAttribute) {
                         sourceInfo = true;
-                    } else if (attribute is ConfigKeyAttribute) {
-                        fieldName = ((ConfigKeyAttribute)attribute).Key;
+                    } else if (attribute is ConfigKeyAttribute keyAttribute) {
+                        fieldName = keyAttribute.Key;
                     }
                 }
                 
@@ -196,42 +260,8 @@ namespace DarkConfig.Internal {
                     throw new Exception($"Field {fieldInfo.Name} has both Mandatory and AllowMissing attributes");
                 }
 
-                if (ignored) {
-                    continue;
-                }
-
-                if (sourceInfo) {
-                    // Special field to auto-populate with SourceInformation
-                            
-                    if (!string.IsNullOrEmpty(info.SourceInfoMemberName)) {
-                        throw new Exception($"Field {fieldInfo.Name} annotated with ConfigSourceInformation, but type {type.Name} "
-                            + $"already has a member named {info.SourceInfoMemberName} with that annotation");
-                    }
-                    if (fieldInfo.FieldType != typeof(string)) {
-                        throw new Exception("Field with ConfigSourceInformation should be a string");
-                    }
-
-                    info.SourceInfoMemberName = fieldName;
-                }
-
-                if (fieldInfo.IsStatic) {
-                    if (required) {
-                        info.StaticFieldNames.Insert(info.NumRequiredStaticFields, fieldName);
-                        info.StaticFieldInfos.Insert(info.NumRequiredStaticFields, fieldInfo);
-                        info.NumRequiredStaticFields++;
-                    } else {
-                        info.StaticFieldNames.Add(fieldName);
-                        info.StaticFieldInfos.Add(fieldInfo);
-                    }
-                } else {
-                    if (required) {
-                        info.FieldNames.Insert(info.NumRequiredFields, fieldName);
-                        info.FieldInfos.Insert(info.NumRequiredFields, fieldInfo);
-                        info.NumRequiredFields++;
-                    } else {
-                        info.FieldNames.Add(fieldName);
-                        info.FieldInfos.Add(fieldInfo);
-                    }
+                if (!ignored) {
+                    info.AddMember(fieldName, fieldInfo, required, true, fieldInfo.IsStatic, sourceInfo);
                 }
             }
 
