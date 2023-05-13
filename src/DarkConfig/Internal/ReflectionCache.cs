@@ -12,7 +12,8 @@ namespace DarkConfig.Internal {
             public MethodInfo PostDoc;
 
             // Source Info
-            public string SourceInfoMemberName;
+            public int SourceInfoMemberIndex = -1;
+            public int SourceInfoStaticMemberIndex = -1;
 
             #region Instanced
             public byte NumRequiredFields;
@@ -64,9 +65,10 @@ namespace DarkConfig.Internal {
             public void AddMember(string memberName, MemberInfo memberInfo, bool isRequired, bool isField, bool isStatic, bool isSourceInfo) {
                 if (isSourceInfo) {
                     // Special field to auto-populate with SourceInformation
-                    if (!string.IsNullOrEmpty(SourceInfoMemberName)) {
+                    if ((!isStatic && SourceInfoMemberIndex >= 0) || (isStatic && SourceInfoStaticMemberIndex >= 0)) {
+                        string existingName = !isStatic ? MemberNames[SourceInfoMemberIndex] : StaticMemberNames[SourceInfoStaticMemberIndex];
                         throw new Exception($"Property {memberInfo.Name} annotated with ConfigSourceInformation, but type {memberInfo.DeclaringType?.Name} "
-                            + $"already has a member named {SourceInfoMemberName} with that annotation");
+                            + $"already has a member named {existingName} with that annotation");
                     }
                     if (isField) {
                         if (((FieldInfo) memberInfo).FieldType != typeof(string)) {
@@ -79,8 +81,6 @@ namespace DarkConfig.Internal {
                                 + "annotated with ConfigSourceInformation must be a string");
                         }
                     }
-                    
-                    SourceInfoMemberName = memberName;
                 }
                 
                 if (isStatic) {
@@ -103,6 +103,12 @@ namespace DarkConfig.Internal {
                         }
                     }
                     
+                    if (isSourceInfo) {
+                        SourceInfoStaticMemberIndex = insertionIndex;
+                    } else if (insertionIndex <= SourceInfoStaticMemberIndex) {
+                        SourceInfoStaticMemberIndex++;
+                    }
+                    
                     StaticMemberNames.Insert(insertionIndex, memberName);
                     StaticMemberInfos.Insert(insertionIndex, memberInfo);
                 } else {
@@ -123,6 +129,12 @@ namespace DarkConfig.Internal {
                         } else {
                             insertionIndex += NumOptionalFields;
                         }
+                    }
+                    
+                    if (isSourceInfo) {
+                        SourceInfoMemberIndex = insertionIndex;
+                    } else if (insertionIndex <= SourceInfoStaticMemberIndex) {
+                        SourceInfoMemberIndex++;
                     }
                     
                     MemberNames.Insert(insertionIndex, memberName);

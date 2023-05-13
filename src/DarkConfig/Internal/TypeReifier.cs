@@ -82,13 +82,13 @@ namespace DarkConfig.Internal {
 
                 if (typeInfo.IsField(memberIndex, true)) {
                     var fieldInfo = (FieldInfo) typeInfo.StaticMemberInfos[memberIndex];
-                    object newValue = typeInfo.SourceInfoMemberName == memberName ? doc.SourceInformation
+                    object newValue = typeInfo.SourceInfoStaticMemberIndex == memberIndex ? doc.SourceInformation
                         : ReadValueOfType(fieldInfo.FieldType, fieldInfo.GetValue(null), memberDoc, options);
                     setMemberHashes.Add(ignoreCase ? memberName.ToLowerInvariant().GetHashCode() : memberName.GetHashCode());
                     fieldInfo.SetValue(null, newValue);
                 } else {
                     var propertyInfo = (PropertyInfo) typeInfo.StaticMemberInfos[memberIndex];
-                    object newValue = typeInfo.SourceInfoMemberName == memberName ? doc.SourceInformation
+                    object newValue = typeInfo.SourceInfoStaticMemberIndex == memberIndex ? doc.SourceInformation
                         : ReadValueOfType(propertyInfo.PropertyType, propertyInfo.GetValue(null), memberDoc, options);
                     setMemberHashes.Add(ignoreCase ? memberName.ToLowerInvariant().GetHashCode() : memberName.GetHashCode());
                     propertyInfo.SetValue(null, newValue);
@@ -527,14 +527,14 @@ namespace DarkConfig.Internal {
                 if (typeInfo.IsField(memberIndex, false)) {
                     var fieldInfo = (FieldInfo)typeInfo.MemberInfos[memberIndex];
                     
-                    object newValue = typeInfo.SourceInfoMemberName == memberName ? doc.SourceInformation 
+                    object newValue = typeInfo.SourceInfoMemberIndex == memberIndex ? doc.SourceInformation 
                         : ReadValueOfType(fieldInfo.FieldType, fieldInfo.GetValue(setCopy), memberDoc, options);
                     fieldInfo.SetValue(setCopy, newValue);
                     
                     setMemberHashes.Add(ignoreCase ? memberName.ToLowerInvariant().GetHashCode() : memberName.GetHashCode());
                 } else {
                     var propertyInfo = (PropertyInfo) typeInfo.MemberInfos[memberIndex];
-                    object newValue = typeInfo.SourceInfoMemberName == memberName ? doc.SourceInformation 
+                    object newValue = typeInfo.SourceInfoMemberIndex == memberIndex ? doc.SourceInformation 
                         : ReadValueOfType(propertyInfo.PropertyType, propertyInfo.GetValue(setCopy), memberDoc, options);
                     setMemberHashes.Add(ignoreCase ? memberName.ToLowerInvariant().GetHashCode() : memberName.GetHashCode());
                     propertyInfo.SetValue(setCopy, newValue);
