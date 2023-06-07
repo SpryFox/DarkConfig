@@ -17,18 +17,13 @@ namespace DarkConfig {
 
         public override DocNodeType Type {
             get {
-                switch (node) {
-                    case null:
-                        return DocNodeType.Invalid;
-                    case YamlMappingNode _:
-                        return DocNodeType.Dictionary;
-                    case YamlSequenceNode _:
-                        return DocNodeType.List;
-                    case YamlScalarNode _:
-                        return DocNodeType.Scalar;
-                    default:
-                        return DocNodeType.Invalid;
-                }
+                return node switch {
+                    null => DocNodeType.Invalid,
+                    YamlMappingNode _ => DocNodeType.Dictionary,
+                    YamlSequenceNode _ => DocNodeType.List,
+                    YamlScalarNode _ => DocNodeType.Scalar,
+                    _ => DocNodeType.Invalid
+                };
             }
         }
 
@@ -65,16 +60,11 @@ namespace DarkConfig {
 
         public override int Count {
             get {
-                switch (Type) {
-                    case DocNodeType.Dictionary:
-                        return ((YamlMappingNode)node).Children.Count;
-                    case DocNodeType.List:
-                        return ((YamlSequenceNode)node).Children.Count;
-                    case DocNodeType.Invalid:
-                    case DocNodeType.Scalar:
-                    default:
-                        throw new DocNodeAccessException(GenerateAccessExceptionMessage("Countable (Dictionary or List)", Type.ToString()));
-                }
+                return Type switch {
+                    DocNodeType.Dictionary => ((YamlMappingNode)node).Children.Count,
+                    DocNodeType.List => ((YamlSequenceNode)node).Children.Count,
+                    _ => throw new DocNodeAccessException(GenerateAccessExceptionMessage("Countable (Dictionary or List)", Type.ToString()))
+                };
             }
         }
 
@@ -106,7 +96,6 @@ namespace DarkConfig {
 
             result = null;
             return false;
-            // return ((YamlMappingNode) node).Children.ContainsKey(new YamlScalarNode(key));
         }
 
         readonly struct ValuesIterator : IEnumerable<DocNode> {
@@ -116,14 +105,13 @@ namespace DarkConfig {
             }
 
             public IEnumerator<DocNode> GetEnumerator() {
-                var container = ((YamlSequenceNode) node).Children;
-                foreach (YamlNode entry in container) {
+                foreach (var entry in ((YamlSequenceNode) node).Children) {
                     yield return new YamlDocNode(entry, filename);
                 }
             }
 
             IEnumerator IEnumerable.GetEnumerator() {
-                return this.GetEnumerator();
+                return GetEnumerator();
             }
 
             readonly YamlNode node;
@@ -144,17 +132,14 @@ namespace DarkConfig {
             }
 
             public IEnumerator<KeyValuePair<string, DocNode>> GetEnumerator() {
-                var container = ((YamlMappingNode) node).Children;
-                foreach (KeyValuePair<YamlNode, YamlNode> entry in container) {
-                    string k = ((YamlScalarNode) entry.Key).Value;
-                    YamlDocNode v = new YamlDocNode(entry.Value, filename);
-                    yield return new KeyValuePair<string, DocNode>(k, v);
+                foreach (var entry in ((YamlMappingNode) node).Children) {
+                    yield return new KeyValuePair<string, DocNode>(
+                        ((YamlScalarNode) entry.Key).Value,
+                        new YamlDocNode(entry.Value, filename));
                 }
             }
 
-            IEnumerator IEnumerable.GetEnumerator() {
-                return GetEnumerator();
-            }
+            IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
             readonly YamlNode node;
             readonly string filename;

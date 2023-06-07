@@ -119,6 +119,7 @@ namespace DarkConfig {
         /// <param name="docs">A list of DocNodes to combine. All DocNodes must be lists</param>
         /// <returns>The combined DocNode</returns>
         public static DocNode CombineList(List<DocNode> docs) {
+            int count = 0;
             string sourceInformation = "Combination of: [";
             for (int i = 0; i < docs.Count; i++) {
                 if (i > 0) {
@@ -126,17 +127,18 @@ namespace DarkConfig {
                 }
 
                 sourceInformation += docs[i].SourceInformation;
+                count += docs[i].Count;
             }
             sourceInformation += "]";
 
-            var result = new ComposedDocNode(DocNodeType.List, sourceInformation: sourceInformation);
-            foreach (var t in docs) {
-                if (t.Type == DocNodeType.List) { // flatten file containing list
-                    for (int j = 0; j < t.Count; j++) {
-                        result.Add(t[j]);
+            var result = new ComposedDocNode(DocNodeType.List, count, sourceInformation);
+            foreach (var list in docs) {
+                if (list.Type == DocNodeType.List) { // flatten file containing list
+                    for (int j = 0; j < list.Count; j++) {
+                        result.Add(list[j]);
                     }
                 } else {
-                    result.Add(t);
+                    result.Add(list);
                 }
             }
 
@@ -150,22 +152,25 @@ namespace DarkConfig {
         /// <param name="docs">A list of DocNodes to combine. All DocNodes must be dictionaries</param>
         /// <returns>The combined DocNode</returns>
         public static DocNode CombineDict(List<DocNode> docs) {
+            int count = 0;
             string sourceInformation = "Combination of: [";
             for (int i = 0; i < docs.Count; i++) {
                 if (i > 0) {
                     sourceInformation += ", ";
                 }
                 sourceInformation += docs[i].SourceInformation;
+                count += docs[i].Count;
             }
             sourceInformation += "]";
 
-            var result = new ComposedDocNode(DocNodeType.Dictionary, sourceInformation: sourceInformation);
+            var result = new ComposedDocNode(DocNodeType.Dictionary, count, sourceInformation);
             foreach (var doc in docs) {
                 if (doc.Type != DocNodeType.Dictionary) {
                     throw new ParseException("Expected all DocNodes to be dictionaries in CombineDict.");
                 }
-                foreach (var kv in doc.Pairs) {
-                    result[kv.Key] = kv.Value;
+                
+                foreach ((string key, var value) in doc.Pairs) {
+                    result[key] = value;
                 }
             }
 

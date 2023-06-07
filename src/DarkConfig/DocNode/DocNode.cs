@@ -87,49 +87,53 @@ namespace DarkConfig {
                 return false;
             }
             
-            var self = this;
-            if (other.Type != self.Type) {
-                return false;
-            }
-
-            if (Equals(self, other)) {
+            if (ReferenceEquals(this, other)) {
                 return true;
             }
             
-            switch (self.Type) {
+            if (other.Type != Type) {
+                return false;
+            }
+
+            switch (Type) {
                 case DocNodeType.Scalar:
-                    if (other.StringValue == null || self.StringValue == null) {
-                        return self.StringValue == other.StringValue;
+                    if (other.StringValue == null || StringValue == null) {
+                        return StringValue == other.StringValue;
                     }
-                    return other.StringValue.Equals(self.StringValue);
+
+                    return other.StringValue.Equals(StringValue);
                 case DocNodeType.List:
-                    if (other.Count != self.Count) {
+                    if (other.Count != Count) {
                         return false;
                     }
-                    for (int i = 0; i < self.Count; i++) {
-                        if (!self[i].Equals(other[i])) {
+
+                    for (int i = 0; i < Count; i++) {
+                        if (!this[i].Equals(other[i])) {
                             return false;
                         }
                     }
 
                     return true;
                 case DocNodeType.Dictionary:
-                    if (other.Count != self.Count) return false;
-                    
-                    using (var iter1 = self.Pairs.GetEnumerator())
-                    using (var iter2 = other.Pairs.GetEnumerator()) {
-                        while (iter1.MoveNext() && iter2.MoveNext()) {
-                            if (iter1.Current.Key != iter2.Current.Key) return false;
-                            if (!iter1.Current.Value.Equals(iter2.Current.Value)) return false;
+                    if (other.Count != Count) {
+                        return false;
+                    }
+
+                    foreach ((string key, var value) in Pairs) {
+                        if (!other.ContainsKey(key)) {
+                            return false;
+                        }
+                        if (!other[key].Equals(value)) {
+                            return false;
                         }
                     }
 
                     return true;
                 case DocNodeType.Invalid:
                     return true;
+                default:
+                    throw new ArgumentOutOfRangeException();
             }
-
-            return false;
         }
 
         /// Get a hash code for this DocNode that depends on its content, recursively
@@ -157,13 +161,21 @@ namespace DarkConfig {
                     throw new Exception($"Cannot calculate hash code for DocNode type {Type} at: {SourceInformation}");
             }
         }
-
-        /// combines hierarchies.
-        /// lists are concatenated, but dicts are recursively DeepMerged. 
-        /// favours rhs on any conflict.
+         
+        /// <summary>
+        /// Generates a new DocNode that is the result of merging two other DocNodes.
+        /// 
+        /// lists are concatenated.
+        /// Dictionaries are merged and values recursively DeepMerged.
+        /// Favors rhs in the event of any unresolvable conflict.
+        /// </summary>
+        /// <param name="lhs">A DocNode to merge</param>
+        /// <param name="rhs">Another DocNode to merge.  This node takes priority over <paramref name="lhs"/> in conflict resolution.</param>
+        /// <returns>A new DocNode that results from merging <paramref name="lhs"/> and <paramref name="rhs"/></returns>
+        /// <exception cref="ArgumentException">Thrown if the type of <paramref name="lhs"/> does not match the type of <paramref name="rhs"/></exception>
         public static DocNode DeepMerge(DocNode lhs, DocNode rhs) {
             if (lhs.Type != rhs.Type) {
-                throw new ArgumentException("can not merge different types " + lhs.Type + " " + rhs.Type);
+                throw new ArgumentException($"Can't merge different DocNode types: {lhs.Type}, {rhs.Type}");
             }
 
             switch (lhs.Type) {
@@ -187,9 +199,10 @@ namespace DarkConfig {
                     return mergedDict;
                 }
                 case DocNodeType.Scalar:
+                    // Nothing to merge.  RHS takes precedent.
                     return rhs;
-                default:
-                    throw new ArgumentException("can not merge doc nodes of type " + lhs.Type);
+                case DocNodeType.Invalid:
+                default: throw new ArgumentException($"Can't merge doc nodes of type {lhs.Type}");
             }
         }
     }

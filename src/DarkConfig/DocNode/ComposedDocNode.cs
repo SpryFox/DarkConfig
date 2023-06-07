@@ -18,12 +18,13 @@ namespace DarkConfig {
                 case DocNodeType.Scalar:
                     scalar = "";
                     break;
+                case DocNodeType.Invalid:
                 default:
                     throw new Exception($"Can't make a ComposedDocNode instance with Type {type} at {sourceInformation}");
             }
         }
 
-        #region DocNode Methods 
+        #region DocNode 
         public override DocNodeType Type { get; }
 
         /// access the node as if it was a list
@@ -50,16 +51,12 @@ namespace DarkConfig {
             }
         }
 
-        public override int Count {
-            get {
-                switch (Type) {
-                    case DocNodeType.Dictionary: return dictionary.Count;
-                    case DocNodeType.List: return list.Count;
-                    default:
-                        throw new DocNodeAccessException(GenerateAccessExceptionMessage("Countable (Dictionary or List)"));
-                }
-            }
-        }
+        public override int Count => 
+            Type switch {
+                DocNodeType.Dictionary => dictionary.Count,
+                DocNodeType.List => list.Count,
+                _ => throw new DocNodeAccessException(GenerateAccessExceptionMessage("Countable (Dictionary or List)"))
+            };
 
         public override bool ContainsKey(string key, bool ignoreCase = false) {
             CheckTypeIs(DocNodeType.Dictionary);
@@ -158,37 +155,36 @@ namespace DarkConfig {
 
             switch (doc.Type) {
                 case DocNodeType.Scalar: {
-                    var newDoc = new ComposedDocNode(doc.Type, -1, doc.SourceInformation);
-                    newDoc.StringValue = doc.StringValue;
-                    return newDoc;
+                    return new ComposedDocNode(doc.Type, -1, doc.SourceInformation) {
+                        StringValue = doc.StringValue
+                    };
                 }
 
                 case DocNodeType.List: {
                     var newDoc = new ComposedDocNode(doc.Type, doc.Count, doc.SourceInformation);
-                    foreach (var elem in doc.Values) {
-                        var newElem = recursive ? MakeMutable(elem, recursive: recursive, force: force) : elem;
-                        newDoc.Add(newElem);
+                    foreach (var value in doc.Values) {
+                        newDoc.Add(recursive ? MakeMutable(value, recursive: true, force: force) : value);
                     }
                     return newDoc;
                 }
 
                 case DocNodeType.Dictionary: {
                     var newDoc = new ComposedDocNode(doc.Type, doc.Count, doc.SourceInformation);
-                    foreach (var kv in doc.Pairs) {
-                        var newValue = recursive ? MakeMutable(kv.Value, recursive: recursive, force: force) : kv.Value;
-                        newDoc.Add(kv.Key, newValue);
+                    foreach ((string key, var value) in doc.Pairs) {
+                        newDoc.Add(key, recursive ? MakeMutable(value, recursive: true, force: force) : value);
                     }
                     return newDoc;
                 }
 
+                case DocNodeType.Invalid:
                 default:
-                    throw new System.NotImplementedException($"Unknown DocNode type {doc.Type} to make ComposedDocNode from at: {doc.SourceInformation}");
+                    throw new ArgumentOutOfRangeException($"Unknown DocNode type {doc.Type} to make ComposedDocNode from at: {doc.SourceInformation}");
             }
         }
 
         public static ComposedDocNode MakeMutableRef(ref DocNode doc, bool recursive = true) {
-            if (doc is ComposedDocNode cdn) {
-                return cdn;
+            if (doc is ComposedDocNode composedDocNode) {
+                return composedDocNode;
             }
 
             var mutableDoc = MakeMutable(doc, recursive);
@@ -209,7 +205,7 @@ namespace DarkConfig {
         }
         
         string GenerateAccessExceptionMessage(string expectedType) {
-            return string.Concat("Accessing ComposedDocNode as ", expectedType, " but is ", Type.ToString(), ". ");
+            return $"Accessing ComposedDocNode as {expectedType} but is {Type}. ";
         }
     }
 }
