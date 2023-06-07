@@ -142,14 +142,14 @@ namespace DarkConfig {
                 case DocNodeType.List:
                     int seqHash = 0;
                     foreach (var elem in Values) {
-                        seqHash ^= elem.GetDeepHashCode();
+                        seqHash = HashCode.Combine(seqHash, elem.GetDeepHashCode());
                     }
                     return seqHash;
 
                 case DocNodeType.Dictionary:
                     int mapHash = 0;
-                    foreach (var kv in Pairs) {
-                        mapHash ^= kv.Key.GetHashCode() ^ kv.Value.GetDeepHashCode();
+                    foreach ((string key, var value) in Pairs) {
+                        mapHash = HashCode.Combine(mapHash, key.GetHashCode(), value.GetDeepHashCode());
                     }
                     return mapHash;
 
