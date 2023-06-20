@@ -613,7 +613,11 @@ namespace DarkConfig {
 
         static DocNode ParseYamlFromTextReader(TextReader reader, string filename, bool ignoreProcessors = false) {
             var yaml = new YamlStream();
-            yaml.Load(reader);
+            try {
+                yaml.Load(reader);
+            } catch (Exception e) {
+                throw new Exception($"Error loading file '{filename}': {e.Message}");
+            }
             DocNode docNode = yaml.Documents.Count <= 0 ? new YamlDocNode(null, filename)
                 : new YamlDocNode(yaml.Documents[0].RootNode, filename);
             if (!ignoreProcessors) {
