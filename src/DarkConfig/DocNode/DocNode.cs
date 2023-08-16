@@ -55,7 +55,7 @@ namespace DarkConfig {
 
         /// String describing the position and context in the source format (e.g. line number).
         public abstract string SourceInformation { get; }
-        
+
         public T As<T>(ReificationOptions? options = null) {
             var result = default(T);
             Configs.Reify(ref result, this, options);
@@ -86,11 +86,11 @@ namespace DarkConfig {
             if (other == null) {
                 return false;
             }
-            
+
             if (ReferenceEquals(this, other)) {
                 return true;
             }
-            
+
             if (other.Type != Type) {
                 return false;
             }
@@ -161,7 +161,7 @@ namespace DarkConfig {
                     throw new Exception($"Cannot calculate hash code for DocNode type {Type} at: {SourceInformation}");
             }
         }
-         
+
         /// <summary>
         /// Generates a new DocNode that is the result of merging two other DocNodes.
         /// 

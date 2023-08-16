@@ -24,7 +24,7 @@ namespace DarkConfig.Internal {
         /// True if all sources have been preloaded.
         internal bool IsPreloaded { get; private set; }
         internal readonly List<ConfigSource> sources = new List<ConfigSource>();
-        
+
         /////////////////////////////////////////////////   
 
         /// <summary>
@@ -35,7 +35,7 @@ namespace DarkConfig.Internal {
         /// </summary>
         /// <returns></returns>
         public IEnumerable StepPreload() {
-            if (IsPreloaded) { 
+            if (IsPreloaded) {
                 yield break;
             }
 
@@ -91,7 +91,7 @@ namespace DarkConfig.Internal {
         /// <exception cref="ConfigFileNotFoundException">Thrown if a config can't be found with the given name.</exception>
         public void ParseFile(string filename, HotloadCallbackFunc callback) {
             ThrowIfNotPreloaded();
-            
+
             foreach (var source in sources) {
                 if (source.AllFiles.TryGetValue(filename, out var configInfo)) {
                     if (callback(configInfo.Parsed)) {
@@ -107,7 +107,7 @@ namespace DarkConfig.Internal {
                 }
                 return;
             }
-            
+
             throw new ConfigFileNotFoundException(filename);
         }
 
@@ -136,7 +136,7 @@ namespace DarkConfig.Internal {
                 Combiner = combiner,
                 CombinedFilename = newFilename
             };
-            
+
             combiners[newFilename] = combinerData;
 
             foreach (string filename in sourceFilenames) {
@@ -181,7 +181,7 @@ namespace DarkConfig.Internal {
 
             combiners.Remove(combinedFilename);
         }
-        
+
         /// <summary>
         /// Find all files in the index that match a glob pattern.
         ///
@@ -203,19 +203,19 @@ namespace DarkConfig.Internal {
         /// <returns>List of file names matching the given regex.</returns>
         public List<string> GetFilenamesMatchingRegex(Regex pattern) {
             ThrowIfNotPreloaded();
-            
+
             var results = new HashSet<string>();
-            
+
             foreach (var source in sources) {
                 RegexUtils.FilterMatching(pattern, source.GetSortedFilenames(), results);
             }
-            
+
             return new List<string>(results);
         }
 
         public ConfigFileInfo GetFileInfo(string filename) {
             ThrowIfNotPreloaded();
-            
+
             foreach (var source in sources) {
                 if (source.AllFiles.TryGetValue(filename, out var info)) {
                     return info;
@@ -236,7 +236,7 @@ namespace DarkConfig.Internal {
             foreach (var source in sources) {
                 if (!source.CanHotload) {
                     continue;
-                }                
+                }
                 source.Hotload(modifiedFiles);
             }
 
@@ -251,7 +251,7 @@ namespace DarkConfig.Internal {
                     }
                 }
             }
-            
+
             // Log and call callbacks for modified files.
             foreach (string filename in modifiedFiles) {
                 Configs.LogInfo($"Hotloading: {filename}");
@@ -292,10 +292,10 @@ namespace DarkConfig.Internal {
         }
 
         /////////////////////////////////////////////////
-        
+
         float nextHotloadTime;
         readonly Dictionary<string, List<HotloadCallbackFunc>> hotloadCallbacks = new Dictionary<string, List<HotloadCallbackFunc>>();
-        
+
         class CombinerData {
             public string[] Filenames;
             public string CombinedFilename;
@@ -304,7 +304,7 @@ namespace DarkConfig.Internal {
         }
         readonly Dictionary<string, CombinerData> combiners = new Dictionary<string, CombinerData>();
         readonly Dictionary<string, List<CombinerData>> combinersBySubfile = new Dictionary<string, List<CombinerData>>();
-        
+
         /////////////////////////////////////////////////
 
         void ThrowIfNotPreloaded() {

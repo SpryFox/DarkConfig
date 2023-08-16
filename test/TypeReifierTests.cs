@@ -100,7 +100,9 @@ class TestTypes {
         public int int2Value { get; } = 2;
 
         // Set-only property
-        public int int3Value { set => backing3Int = value; }
+        public int int3Value {
+            set => backing3Int = value;
+        }
 
         // Computed property
         public int int4Value => 4;
@@ -943,8 +945,7 @@ class ReifiesStatic : TestTypes {
     }
 
     [Test]
-    public void ReifyDoesntSetStaticFields()
-    {
+    public void ReifyDoesntSetStaticFields() {
         var doc = Configs.ParseString("{instancedVal: 10, staticVal: true}", "ReifyDoesntSetStaticFields");
         var instance = new ClassWithInstancedAndStaticData();
         var exception = Assert.Throws<ExtraFieldsException>(() => {
@@ -952,8 +953,7 @@ class ReifiesStatic : TestTypes {
         });
         Assert.That(exception, Is.Not.Null);
         Assert.That(exception.Message, Does.Contain("staticVal"));
-        Assert.Multiple(() =>
-        {
+        Assert.Multiple(() => {
             Assert.That(instance, Is.Not.Null);
             Assert.That(instance.instancedVal, Is.EqualTo(10));
             Assert.That(ClassWithInstancedAndStaticData.staticVal, Is.False);
@@ -1032,7 +1032,7 @@ class ReifiesMissingFields : TestTypes {
         Configs.Clear();
         Configs.Settings.DefaultReifierOptions = ReificationOptions.None;
     }
-    
+
     [Test]
     public void NoException() {
         var doc = Configs.ParseString(@"---

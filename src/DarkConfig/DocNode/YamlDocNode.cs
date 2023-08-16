@@ -61,8 +61,8 @@ namespace DarkConfig {
         public override int Count {
             get {
                 return Type switch {
-                    DocNodeType.Dictionary => ((YamlMappingNode)node).Children.Count,
-                    DocNodeType.List => ((YamlSequenceNode)node).Children.Count,
+                    DocNodeType.Dictionary => ((YamlMappingNode) node).Children.Count,
+                    DocNodeType.List => ((YamlSequenceNode) node).Children.Count,
                     _ => throw new DocNodeAccessException(GenerateAccessExceptionMessage("Countable (Dictionary or List)", Type.ToString()))
                 };
             }
@@ -70,8 +70,8 @@ namespace DarkConfig {
 
         public override bool ContainsKey(string key, bool ignoreCase = false) {
             AssertTypeIs(DocNodeType.Dictionary);
-            
-            var children = ((YamlMappingNode)node).Children;
+
+            var children = ((YamlMappingNode) node).Children;
             var comparison = ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
             foreach (var yamlKey in children.Keys) {
                 if (yamlKey is YamlScalarNode scalarKey && string.Equals(scalarKey.Value, key, comparison)) {
@@ -84,9 +84,9 @@ namespace DarkConfig {
 
         public override bool TryGetValue(string key, bool ignoreCase, out DocNode result) {
             AssertTypeIs(DocNodeType.Dictionary);
-            
-            var children = ((YamlMappingNode)node).Children;
-            var comparison = ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal; 
+
+            var children = ((YamlMappingNode) node).Children;
+            var comparison = ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
             foreach (var kvp in children) {
                 if (kvp.Key is YamlScalarNode scalarKey && string.Equals(scalarKey.Value, key, comparison)) {
                     result = new YamlDocNode(kvp.Value, filename);
@@ -161,12 +161,12 @@ namespace DarkConfig {
         }
 
         ////////////////////////////////////////////
-        
+
         readonly YamlNode node;
         readonly string filename;
 
         ////////////////////////////////////////////
-        
+
         void AssertTypeIs(DocNodeType type) {
             if (Type != type) {
                 throw new DocNodeAccessException(GenerateAccessExceptionMessage(type.ToString(), Type.ToString()));

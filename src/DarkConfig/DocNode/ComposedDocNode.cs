@@ -24,7 +24,7 @@ namespace DarkConfig {
             }
         }
 
-        #region DocNode 
+        #region DocNode
         public override DocNodeType Type { get; }
 
         /// access the node as if it was a list
@@ -51,7 +51,7 @@ namespace DarkConfig {
             }
         }
 
-        public override int Count => 
+        public override int Count =>
             Type switch {
                 DocNodeType.Dictionary => dictionary.Count,
                 DocNodeType.List => list.Count,
@@ -141,7 +141,7 @@ namespace DarkConfig {
         /////////////////////////////////////////////////
 
         readonly string sourceInfo;
-        
+
         readonly Dictionary<string, DocNode> dictionary;
         readonly List<DocNode> list;
         string scalar;
@@ -203,7 +203,7 @@ namespace DarkConfig {
                 throw new DocNodeAccessException(GenerateAccessExceptionMessage(requiredType.ToString()));
             }
         }
-        
+
         string GenerateAccessExceptionMessage(string expectedType) {
             return $"Accessing ComposedDocNode as {expectedType} but is {Type}. ";
         }

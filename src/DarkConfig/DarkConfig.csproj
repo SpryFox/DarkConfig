@@ -10,11 +10,11 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="YamlDotNet" Version="11.2.1" />
+		<PackageReference Include="YamlDotNet" Version="11.2.1"/>
 	</ItemGroup>
 
 	<Target Name="AfterBuild">
-		<Copy SourceFiles="$(OutputPath)DarkConfig.dll" DestinationFolder="$(SolutionDir)demo/Assets/Plugins" ContinueOnError="true" />
-		<Copy SourceFiles="$(OutputPath)YamlDotNet.dll" DestinationFolder="$(SolutionDir)demo/Assets/Plugins" ContinueOnError="true" />
+		<Copy SourceFiles="$(OutputPath)DarkConfig.dll" DestinationFolder="$(SolutionDir)demo/Assets/Plugins" ContinueOnError="true"/>
+		<Copy SourceFiles="$(OutputPath)YamlDotNet.dll" DestinationFolder="$(SolutionDir)demo/Assets/Plugins" ContinueOnError="true"/>
 	</Target>
 </Project>

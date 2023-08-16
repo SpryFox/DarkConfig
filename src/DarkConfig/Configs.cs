@@ -10,8 +10,8 @@ namespace DarkConfig {
     /// <summary>
     /// A custom method for a specific type that takes a parsed config doc
     /// and sets the fields on an instance of that type.
-    /// 
-    /// It should attempt to update the object in-place, 
+    ///
+    /// It should attempt to update the object in-place,
     /// or if that's not possible, to return a new instance
     /// of the correct type.
     /// </summary>
@@ -19,7 +19,7 @@ namespace DarkConfig {
     /// <param name="doc">the DocNode that is meant to update the object</param>
     /// <returns>The updated/created object</returns>
     public delegate object FromDocFunc(object obj, DocNode doc);
-    
+
     public delegate object PostDocFunc(object obj);
 
     /// <summary>
@@ -28,28 +28,28 @@ namespace DarkConfig {
     /// <param name="doc">The new file DocNode</param>
     /// <returns>False if the delegate should be un-registered for future reload callbacks.  True otherwise.</returns>
     public delegate bool HotloadCallbackFunc(DocNode doc);
-    
+
     /// A callback when DarkConfig logs a message, warning or error.
     public delegate void LogFunc(LogVerbosity verbosity, string message);
 
     public static class Configs {
         const string LOG_GUARD = "DC_LOGGING_ENABLED";
         const string LogPrefix = "[DarkConfig] ";
-        
+
         /////////////////////////////////////////////////
-        
+
         /// Configuration settings for Dark Config itself.
         public static Settings Settings = new Settings();
 
         internal static Internal.ConfigFileManager FileManager { get; private set; } = new Internal.ConfigFileManager();
-        
+
         public static LogFunc LogCallback;
-        
+
         /// True if config file preloading is complete, false otherwise.
         public static bool IsPreloaded => FileManager.IsPreloaded;
 
         /////////////////////////////////////////////////
-        
+
         #region ConfigSources
         /// <summary>
         /// Add a config file source.
@@ -82,7 +82,7 @@ namespace DarkConfig {
             return FileManager.sources;
         }
         #endregion
-        
+
         #region Preloading
         /// <summary>
         /// Preloads all config files into memory.
@@ -110,7 +110,7 @@ namespace DarkConfig {
             FileManager.DoImmediateHotload();
         }
         #endregion
-        
+
         #region Container Utils
         /// <summary>
         /// Low-level function for combining a list of DocNode lists into a single DocNode list.
@@ -168,7 +168,7 @@ namespace DarkConfig {
                 if (doc.Type != DocNodeType.Dictionary) {
                     throw new ParseException("Expected all DocNodes to be dictionaries in CombineDict.");
                 }
-                
+
                 foreach ((string key, var value) in doc.Pairs) {
                     result[key] = value;
                 }
@@ -188,12 +188,12 @@ namespace DarkConfig {
             processors = new List<ConfigProcessor>();
             LogCallback = null;
         }
-        
+
         #region Files
         public static List<string> GetFilenamesMatchingGlob(string glob) {
             return FileManager.GetFilenamesMatchingGlob(glob);
         }
-        
+
         public static List<string> GetFilenamesMatchingRegex(Regex pattern) {
             return FileManager.GetFilenamesMatchingRegex(pattern);
         }
@@ -202,12 +202,12 @@ namespace DarkConfig {
             return FileManager.GetFileInfo(filename);
         }
         #endregion
-        
+
         #region Parsing YAML
         /// <summary>
         /// Get the parsed contents of a preloaded file.
-        /// 
-        /// Preloading must be complete before calling this. 
+        ///
+        /// Preloading must be complete before calling this.
         /// </summary>
         /// <param name="filename">The shortname of the file (filename without extension)</param>
         /// <returns>The parsed yaml data</returns>
@@ -217,11 +217,11 @@ namespace DarkConfig {
 
         /// <summary>
         /// Get the parsed contents of a preloaded file and register a callback to be called when the file is hotloaded.
-        /// 
+        ///
         /// The callback is called immediately with the parsed file contents, and again every time the file contents change.
         /// The callback function should return <c>false</c> to unsubscribe itself from future calls.  Otherwise it should return
         /// <c>true</c> to continue being called when the file is hotloaded.
-        /// 
+        ///
         /// Preloading must be complete before calling this.
         /// </summary>
         /// <param name="filename">The file to parse</param>
@@ -250,12 +250,12 @@ namespace DarkConfig {
         public static DocNode ParseStream(Stream stream, string filename, bool ignoreProcessors = false) {
             return ParseYamlFromTextReader(new StreamReader(stream), filename, ignoreProcessors);
         }
-        
+
         /// <summary>
         /// A function that parses multiple files and delivers it as a single list.
         /// Each file's contents becomes an entry in the list, or if a file contains a list,
         /// it is flattened into the combined doc.
-        /// 
+        ///
         /// The callback is called with the combined config data immediately and also
         /// whenever any of the matching files changes.
         /// </summary>
@@ -278,7 +278,7 @@ namespace DarkConfig {
         /// same as if they were later keys in the same file.
         ///
         /// The callback is called with the combined config data immediately and also
-        /// whenever any of the matching files changes. 
+        /// whenever any of the matching files changes.
         /// </summary>
         /// <param name="glob">Glob describing the files to load</param>
         /// <param name="callback">
@@ -291,11 +291,11 @@ namespace DarkConfig {
             FileManager.ParseFile(combinedFilename, callback);
         }
         #endregion
-        
+
         #region FromDocs
         /// <summary>
         /// Register a handler for loading a particular type.
-        /// 
+        ///
         /// Useful for types where you can't easily add a FromDoc static method.
         /// </summary>
         /// <param name="fromDoc">Custom config parsing function for the type</param>
@@ -314,7 +314,7 @@ namespace DarkConfig {
             typeReifier.RegisteredFromDocs[type] = fromDoc;
         }
         #endregion
-        
+
         #region PostDocs
         /// <summary>
         /// Register a post-serialization callback for a specific type.
@@ -357,7 +357,7 @@ namespace DarkConfig {
             if (obj == null) {
                 return;
             }
-            
+
             var weakReference = new WeakReference(obj);
             FileManager.RegisterReloadCallback(filename, doc => {
                 var t = (T) weakReference.Target;
@@ -369,12 +369,12 @@ namespace DarkConfig {
                 return true;
             });
         }
-        
+
         /// <summary>
         /// Use a config file to update an object.
-        /// 
+        ///
         /// It is not a ref parameter, so it's suitable for use with the 'this' keyword.
-        /// 
+        ///
         /// Preloading must be complete before calling ApplyThis.
         /// </summary>
         /// <param name="filename">Config filename</param>
@@ -383,10 +383,10 @@ namespace DarkConfig {
         public static void ApplyThis<T>(string filename, T obj) {
             Apply(filename, ref obj);
         }
-        
+
         /// <summary>
         /// Use a config file to update the static members of a type.
-        /// 
+        ///
         /// Preloading must be complete before calling ApplyStatic.
         /// </summary>
         /// <param name="filename">Config filename</param>
@@ -414,7 +414,7 @@ namespace DarkConfig {
         ///     string m2;
         /// }
         /// </code>
-        /// 
+        ///
         /// You can create a new instance, or set an existing instance's fields with the document:
         /// <code>
         /// {"m1":1.0, "m2":"test"}
@@ -423,7 +423,7 @@ namespace DarkConfig {
         public static void Reify<T>(ref T obj, DocNode doc, ReificationOptions? options = null) {
             Reify(ref obj, typeof(T), doc, options);
         }
-        
+
         /// <summary>
         /// Sets the public, private and static members of a given type on the given object
         /// based on the contents of the parsed document.
@@ -434,7 +434,7 @@ namespace DarkConfig {
         /// <param name="objType">The concrete type to reify</param>
         /// <param name="doc">The config doc to read.</param>
         /// <param name="options">(optional) Override default and type-defined reification behavior.</param>
-        /// <typeparam name="T">The type of the reference to set or update.</typeparam> 
+        /// <typeparam name="T">The type of the reference to set or update.</typeparam>
         /// <example>
         /// Given this class hierarchy
         /// <code>
@@ -445,7 +445,7 @@ namespace DarkConfig {
         ///     string m2;
         /// }
         /// </code>
-        /// 
+        ///
         /// You can reify an instance of Derived into a Base reference with the document:
         /// <code>
         ///     {"m1":1.0, "m2":"test"}
@@ -514,12 +514,11 @@ namespace DarkConfig {
         /// <param name="doc">The config doc to read.</param>
         /// <param name="options">(optional) Override default and type-defined reification behavior.</param>
         /// <typeparam name="T">The type of <paramref name="obj"/></typeparam>
-		/// <returns>true if we successfully set the field, false otherwise</returns>
-        public static bool SetFieldOnObject<T>(ref T obj, string fieldName, DocNode doc, ReificationOptions? options = null) where T : class
-        {
+        /// <returns>true if we successfully set the field, false otherwise</returns>
+        public static bool SetFieldOnObject<T>(ref T obj, string fieldName, DocNode doc, ReificationOptions? options = null) where T : class {
             return typeReifier.SetFieldOnObject(ref obj, fieldName, doc, options);
         }
-        
+
         /// <summary>
         /// Set a specific field on the given struct from a parsed config.
         /// </summary>
@@ -528,8 +527,7 @@ namespace DarkConfig {
         /// <param name="doc">The config doc to read.</param>
         /// <param name="options">(optional) Override default and type-defined reification behavior.</param>
         /// <typeparam name="T"></typeparam>
-        public static void SetFieldOnStruct<T>(ref T obj, string fieldName, DocNode doc, ReificationOptions? options = null) where T : struct
-        {
+        public static void SetFieldOnStruct<T>(ref T obj, string fieldName, DocNode doc, ReificationOptions? options = null) where T : struct {
             typeReifier.SetFieldOnStruct(ref obj, fieldName, doc, options);
         }
         #endregion
@@ -553,7 +551,7 @@ namespace DarkConfig {
 
         /// Number of currently registered config processors
         public static int NumConfigProcessors => processors.Count;
-        
+
         /// Unregisters all config processors
         public static void ClearConfigProcessors() {
             processors.Clear();
@@ -591,7 +589,7 @@ namespace DarkConfig {
             }
         }
         #endregion
-        
+
         #region Logging
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void LogInfo(string message) {
@@ -603,7 +601,7 @@ namespace DarkConfig {
             Log(LogVerbosity.Warn, message);
         }
         #endregion
-        
+
         public static void Update(float dt) {
             FileManager.Update(dt);
         }
@@ -643,7 +641,7 @@ namespace DarkConfig {
                 DefaultLogCallback(level, LogPrefix + msg);
             }
         }
-        
+
         static void DefaultLogCallback(LogVerbosity verbosity, string message) {
             if (verbosity == LogVerbosity.Info) {
                 Console.Out.WriteLine(message);

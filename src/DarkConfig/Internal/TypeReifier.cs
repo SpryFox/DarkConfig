@@ -6,12 +6,12 @@ namespace DarkConfig.Internal {
     public class TypeReifier {
         /// Manually-registered FromDoc's
         public readonly Dictionary<Type, FromDocFunc> RegisteredFromDocs = new Dictionary<Type, FromDocFunc>();
-        
+
         /// Manually-registered PostDoc's
         public readonly Dictionary<Type, PostDocFunc> RegisteredPostDocs = new Dictionary<Type, PostDocFunc>();
 
         /////////////////////////////////////////////////
-        
+
         public TypeReifier() {
             RegisteredFromDocs[typeof(DateTime)] = BuiltInTypeReifiers.FromDateTime;
             RegisteredFromDocs[typeof(TimeSpan)] = BuiltInTypeReifiers.FromTimeSpan;
@@ -26,7 +26,7 @@ namespace DarkConfig.Internal {
         /// <typeparam name="T"></typeparam>
         public void SetFieldsOnStruct<T>(ref T obj, DocNode doc, ReificationOptions? options = null) where T : struct {
             if (doc == null) { throw new ArgumentNullException(nameof(doc)); }
-            
+
             // Manually box the struct value and then put it through the normal object code path.
             object setRef = obj;
             SetFieldsOnObject(typeof(T), ref setRef, doc, options);
@@ -43,10 +43,10 @@ namespace DarkConfig.Internal {
         public void SetFieldsOnObject<T>(ref T obj, DocNode doc, ReificationOptions? options = null) where T : class {
             if (obj == null) { throw new ArgumentNullException(nameof(obj)); }
             if (doc == null) { throw new ArgumentNullException(nameof(doc)); }
-            
+
             // if T is object, that is not the real type so call GetType() to get the underlying type.
             var objType = typeof(T) == typeof(object) ? obj.GetType() : typeof(T);
-            
+
             // We need setRef here because refs are not covariant
             object setRef = obj;
             SetFieldsOnObject(objType, ref setRef, doc, options);
@@ -64,7 +64,7 @@ namespace DarkConfig.Internal {
         /// <exception cref="MissingFieldsException">If one or more static members were missing from the config data.</exception>
         public void SetStaticMembers(Type type, DocNode doc, ReificationOptions options) {
             bool ignoreCase = (options & ReificationOptions.CaseSensitive) != ReificationOptions.CaseSensitive;
-            
+
             var typeInfo = reflectionCache.GetTypeInfo(type);
 
             List<string> missingRequiredMemberNames = null;
@@ -88,7 +88,7 @@ namespace DarkConfig.Internal {
                 setMemberHashes.Add(ignoreCase ? fieldName.ToLowerInvariant().GetHashCode() : fieldName.GetHashCode());
                 fieldInfo.SetValue(null, newValue);
             }
-            
+
             // Set static properties.
             for (int propertyIndex = 0; propertyIndex < typeInfo.StaticPropertyNames.Count; propertyIndex++) {
                 string propertyName = typeInfo.StaticPropertyNames[propertyIndex];
@@ -112,11 +112,11 @@ namespace DarkConfig.Internal {
             if (missingRequiredMemberNames != null && missingRequiredMemberNames.Count > 0) {
                 throw new MissingFieldsException($"Missing doc fields: {JoinList(missingRequiredMemberNames, ", ")} {doc.SourceInformation}");
             }
-            
+
             // Check whether any fields in the doc were unused.
             if ((options & ReificationOptions.AllowExtraFields) == 0 && setMemberHashes.Count != doc.Count) {
                 var extraDocFields = new List<string>();
-                
+
                 foreach (var kv in doc.Pairs) {
                     int docKeyHash = (ignoreCase ? kv.Key.ToLowerInvariant() : kv.Key).GetHashCode();
                     if (!setMemberHashes.Contains(docKeyHash)) {
@@ -146,7 +146,7 @@ namespace DarkConfig.Internal {
         public bool SetFieldOnObject<T>(ref T obj, string fieldName, DocNode doc, ReificationOptions? options = null) where T : class {
             object setRef = obj;
             bool containedMember = SetMember(typeof(T), ref setRef, fieldName, doc, options);
-            obj = (T)setRef;
+            obj = (T) setRef;
             return containedMember;
         }
 
@@ -165,7 +165,7 @@ namespace DarkConfig.Internal {
         public bool SetFieldOnStruct<T>(ref T obj, string fieldName, DocNode doc, ReificationOptions? options = null) where T : struct {
             object setRef = obj;
             bool containedMember = SetMember(typeof(T), ref setRef, fieldName, doc, options);
-            obj = (T)setRef;
+            obj = (T) setRef;
             return containedMember;
         }
 
@@ -204,12 +204,12 @@ namespace DarkConfig.Internal {
                 // String type
                 if (targetType == typeof(string)) { return doc.StringValue; }
                 #endregion
-                
+
                 // Enums
                 if (targetType.IsEnum) {
                     return Enum.Parse(targetType, doc.StringValue, (options & ReificationOptions.CaseSensitive) == 0);
                 }
-                
+
                 // DocNode
                 if (targetType == typeof(DocNode)) {
                     return doc;
@@ -223,7 +223,7 @@ namespace DarkConfig.Internal {
                 }
 
                 #region Arrays
-                if (targetType.IsArray) { 
+                if (targetType.IsArray) {
                     int rank = targetType.GetArrayRank();
                     var elementType = targetType.GetElementType();
                     var arrayValue = existing as Array;
@@ -231,12 +231,12 @@ namespace DarkConfig.Internal {
                     if (elementType == null) {
                         throw new Exception("Null element type for array.");
                     }
-                    
+
                     if (rank == 1) { // simple arrays
                         if (doc.Count == 0) {
                             return Array.CreateInstance(elementType, 0);
                         }
-                        
+
                         if (arrayValue == null) {
                             arrayValue = Array.CreateInstance(elementType, doc.Count);
                         } else if (arrayValue.Length != doc.Count) {
@@ -259,7 +259,7 @@ namespace DarkConfig.Internal {
                             // Return a zero-length array of the correct dimensions. 
                             return Array.CreateInstance(elementType, new int[rank]);
                         }
-                    
+
                         // Figure out the size of each dimension the array.
                         var lengths = new int[rank];
                         var currentArray = doc;
@@ -269,7 +269,7 @@ namespace DarkConfig.Internal {
                         }
 
                         int[] currentIndex;
-                        
+
                         // Copy existing array data so they can be fed into ReadValueOfType
                         if (arrayValue != null) {
                             // Is the existing array the correct dimensions that we're reading from the config?
@@ -297,12 +297,12 @@ namespace DarkConfig.Internal {
                                     }
                                 }
                                 CopyMultiDimensionalArray(0);
-                                arrayValue = newArray;                                
+                                arrayValue = newArray;
                             }
                         } else {
                             arrayValue = Array.CreateInstance(elementType, lengths);
                         }
-                        
+
                         currentIndex = new int[lengths.Length];
                         void ReadArray(DocNode current, int currentRank) {
                             for (int i = 0; i < current.Count; ++i) {
@@ -318,7 +318,7 @@ namespace DarkConfig.Internal {
                         }
                         ReadArray(doc, 0);
                     }
-                    
+
                     return arrayValue;
                 }
                 #endregion
@@ -330,12 +330,12 @@ namespace DarkConfig.Internal {
                     // must have zero-args constructors
 
                     var genericTypeDef = targetType.GetGenericTypeDefinition();
-                    
+
                     // Dictionary<K,V>
                     if (genericTypeDef == typeof(Dictionary<,>)) {
                         existing ??= Activator.CreateInstance(targetType);
                         var existingDict = (System.Collections.IDictionary) existing;
-                        
+
                         var typeParameters = targetType.GetGenericArguments();
                         var keyType = typeParameters[0];
                         var valueType = typeParameters[1];
@@ -405,16 +405,16 @@ namespace DarkConfig.Internal {
                         // HashSet<> has no generic-less object interface we can use, so use reflection to add elements
                         var addMethod = targetType.GetMethod("Add");
                         foreach (var value in doc.Values) {
-                            addMethod?.Invoke(existing, new[] { ReadValueOfType(setEntryType, null, value, options) });
+                            addMethod?.Invoke(existing, new[] {ReadValueOfType(setEntryType, null, value, options)});
                         }
 
                         return existing;
                     }
-                    
+
                     // Nullable<T>
                     if (genericTypeDef == typeof(Nullable<>)) {
                         var comparisonOptions = (options & ReificationOptions.CaseSensitive) == 0 ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
-                        if (doc.Type == DocNodeType.Scalar && string.Equals(doc.StringValue ,"null", comparisonOptions)) {
+                        if (doc.Type == DocNodeType.Scalar && string.Equals(doc.StringValue, "null", comparisonOptions)) {
                             return null;
                         }
                         var innerType = Nullable.GetUnderlyingType(targetType);
@@ -424,7 +424,7 @@ namespace DarkConfig.Internal {
                 #endregion
 
                 var typeInfo = reflectionCache.GetTypeInfo(targetType);
-                
+
                 // Call a FromDoc method if one exists in the type
                 if (typeInfo.FromDoc != null) {
                     // if there's a custom parser method on the class, delegate all work to that
@@ -434,7 +434,7 @@ namespace DarkConfig.Internal {
                         existing = typeInfo.FromDoc.Invoke(null, new[] {existing, doc});
                     } catch (TargetInvocationException e) {
                         if (e.InnerException != null) {
-                            throw e.InnerException;                            
+                            throw e.InnerException;
                         }
                         throw;
                     }
@@ -442,7 +442,7 @@ namespace DarkConfig.Internal {
                     existing ??= Activator.CreateInstance(targetType);
                     SetFieldsOnObject(targetType, ref existing, doc, options);
                 }
-                
+
                 // Call a PostDoc function for this type if it exists.
                 try {
                     if (typeInfo.PostDoc != null) {
@@ -458,13 +458,13 @@ namespace DarkConfig.Internal {
                     }
                     throw e.InnerException;
                 }
-                
+
                 return existing;
             } catch (Exception e) {
                 throw new ParseException($"Exception based on document starting at: {doc.SourceInformation}", e);
             }
         }
-        
+
         /////////////////////////////////////////////////
 
         readonly ReflectionCache reflectionCache = new ReflectionCache();
@@ -483,7 +483,7 @@ namespace DarkConfig.Internal {
 
             return sb.ToString();
         }
-        
+
         /// <summary>
         /// Sets all members on the object obj based on the appropriate key from doc.
         /// </summary>
@@ -512,7 +512,7 @@ namespace DarkConfig.Internal {
                         + $" from value of wrong type: " +
                         (doc.Type == DocNodeType.Scalar ? doc.StringValue : doc.Type.ToString()) + $" at {doc.SourceInformation}");
                 }
-                
+
                 if (typeInfo.FieldNames.Count > 0) {
                     var fieldInfo = typeInfo.FieldInfos[0];
                     fieldInfo.SetValue(setCopy, ReadValueOfType(fieldInfo.FieldType, fieldInfo.GetValue(setCopy), doc, options));
@@ -526,13 +526,13 @@ namespace DarkConfig.Internal {
                 obj = setCopy;
                 return;
             }
-            
+
             bool ignoreCase = (options & ReificationOptions.CaseSensitive) != ReificationOptions.CaseSensitive;
 
             // Set the fields on the object.
             var setMemberHashes = new List<int>();
             List<string> missingRequiredMembers = null;
-            
+
             // Set fields.
             for (int fieldIndex = 0; fieldIndex < typeInfo.FieldNames.Count; fieldIndex++) {
                 string fieldName = typeInfo.FieldNames[fieldIndex];
@@ -546,7 +546,7 @@ namespace DarkConfig.Internal {
                     continue;
                 }
 
-                object newValue = typeInfo.SourceInfoMemberName == fieldName ? doc.SourceInformation 
+                object newValue = typeInfo.SourceInfoMemberName == fieldName ? doc.SourceInformation
                     : ReadValueOfType(fieldInfo.FieldType, fieldInfo.GetValue(setCopy), valueDoc, options);
                 setMemberHashes.Add(ignoreCase ? fieldName.ToLowerInvariant().GetHashCode() : fieldName.GetHashCode());
                 fieldInfo.SetValue(setCopy, newValue);
@@ -565,7 +565,7 @@ namespace DarkConfig.Internal {
                     continue;
                 }
 
-                object newValue = typeInfo.SourceInfoMemberName == propertyName ? doc.SourceInformation 
+                object newValue = typeInfo.SourceInfoMemberName == propertyName ? doc.SourceInformation
                     : ReadValueOfType(propertyInfo.PropertyType, propertyInfo.GetValue(setCopy), valueDoc, options);
                 setMemberHashes.Add(ignoreCase ? propertyName.ToLowerInvariant().GetHashCode() : propertyName.GetHashCode());
                 propertyInfo.SetValue(setCopy, newValue);
@@ -587,7 +587,7 @@ namespace DarkConfig.Internal {
                 }
                 throw new ExtraFieldsException($"Extra doc fields: {JoinList(extraDocFields, ", ")} {doc.SourceInformation}");
             }
-            
+
             obj = setCopy;
         }
 
@@ -631,12 +631,12 @@ namespace DarkConfig.Internal {
                     }
                     return false;
                 }
-                
+
                 var fieldInfo = typeInfo.FieldInfos[fieldIndex];
                 fieldInfo.SetValue(obj, ReadValueOfType(fieldInfo.FieldType, fieldInfo.GetValue(obj), valueDoc, options));
                 return true;
             }
-            
+
             // Look for it in the properties list
             for (int propertyIndex = 0; propertyIndex < typeInfo.PropertyNames.Count; ++propertyIndex) {
                 if (!string.Equals(typeInfo.PropertyNames[propertyIndex], memberName, ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal)) {
@@ -649,7 +649,7 @@ namespace DarkConfig.Internal {
                     }
                     return false;
                 }
-                
+
                 var propertyInfo = typeInfo.PropertyInfos[propertyIndex];
                 propertyInfo.SetValue(obj, ReadValueOfType(propertyInfo.PropertyType, propertyInfo.GetValue(obj), valueDoc, options));
                 return true;
@@ -664,12 +664,12 @@ namespace DarkConfig.Internal {
                 if (!docHasKey) {
                     return false;
                 }
-                
+
                 var fieldInfo = typeInfo.StaticFieldInfos[fieldIndex];
                 fieldInfo.SetValue(obj, ReadValueOfType(fieldInfo.FieldType, fieldInfo.GetValue(obj), valueDoc, options));
                 return true;
             }
-            
+
             // Look for it in the static properties list
             for (int propertyIndex = 0; propertyIndex < typeInfo.StaticPropertyNames.Count; ++propertyIndex) {
                 if (!string.Equals(typeInfo.StaticPropertyNames[propertyIndex], memberName, ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal)) {
@@ -679,7 +679,7 @@ namespace DarkConfig.Internal {
                 if (!docHasKey) {
                     return false;
                 }
-                
+
                 var propertyInfo = typeInfo.StaticPropertyInfos[propertyIndex];
                 propertyInfo.SetValue(obj, ReadValueOfType(propertyInfo.PropertyType, propertyInfo.GetValue(obj), valueDoc, options));
                 return true;
