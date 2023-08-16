@@ -25,10 +25,10 @@ namespace DarkConfig {
     /// Use #if flags to remove this in production code where it's not needed
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
     public class ConfigSourceInformationAttribute : Attribute { }
-    
+
     /// Specifies a specific named value that should be read from the yaml
     /// and assigned to this field or property.  Useful when you'd prefer to use
-    /// different names in C# and yaml. 
+    /// different names in C# and yaml.
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
     public class ConfigKeyAttribute : Attribute {
         public string Key;

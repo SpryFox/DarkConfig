@@ -18,10 +18,10 @@ class MissingFilesTests {
     public void SetUp() {
         tempDirPath = Path.Combine(Path.GetTempPath(), "ListComposingTests");
         Directory.CreateDirectory(tempDirPath);
-        
+
         Configs.Settings.EnableHotloading = true;
         Configs.Settings.HotloadCheckFrequencySeconds = 0.1f;
-        Configs.AddConfigSource(new FileSource(tempDirPath, hotload:true));
+        Configs.AddConfigSource(new FileSource(tempDirPath, hotload: true));
     }
 
     [TearDown]
@@ -33,7 +33,7 @@ class MissingFilesTests {
     [Test]
     public void MissingFiles() {
         CreateFile("spinner.yaml", "key: ok");
-        
+
         Configs.Preload();
 
         // check the index after preload

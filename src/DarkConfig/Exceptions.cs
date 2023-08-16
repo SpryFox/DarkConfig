@@ -21,7 +21,7 @@ namespace DarkConfig {
         }
 
         public override string StackTrace => wrappedException == null ? base.StackTrace : wrappedException.StackTrace + "\n-----\n" + base.StackTrace;
-        
+
         readonly Exception wrappedException;
     }
 
@@ -34,7 +34,7 @@ namespace DarkConfig {
         public ExtraFieldsException(string message) : base(message) { }
         public ExtraFieldsException(string message, Exception inner) : base(message, inner) { }
     }
-    
+
     public class ConfigFileNotFoundException : FileNotFoundException {
         public ConfigFileNotFoundException(string filename) : base("Couldn't find file " + filename + ". Perhaps it isn't in the index, or wasn't preloaded.", filename) { }
     }

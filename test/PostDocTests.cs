@@ -68,7 +68,7 @@ class PostDocTests {
         var doc = Configs.ParseString("baseKey: 5", FILENAME);
         PostDocClass2 instance = null;
         Configs.RegisterPostDoc<PostDocClass2>(instance => {
-            return new PostDocClass2 { baseKey = 10};
+            return new PostDocClass2 {baseKey = 10};
         });
         Configs.Reify(ref instance, doc);
         Assert.Multiple(() => {

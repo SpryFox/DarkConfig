@@ -13,36 +13,36 @@ namespace DarkConfig.Internal {
 
             // Source Info
             public string SourceInfoMemberName;
-            
+
             // Fields
             public int NumRequiredFields = 0;
             public List<string> FieldNames = new List<string>();
             public List<FieldInfo> FieldInfos = new List<FieldInfo>();
-            
+
             // Properties
             public int NumRequiredProperties = 0;
             public List<string> PropertyNames = new List<string>();
             public List<PropertyInfo> PropertyInfos = new List<PropertyInfo>();
-            
+
             // Static Fields
             public int NumRequiredStaticFields = 0;
             public List<string> StaticFieldNames = new List<string>();
             public List<FieldInfo> StaticFieldInfos = new List<FieldInfo>();
-            
+
             // Static Properties
             public int NumRequiredStaticProperties = 0;
             public List<string> StaticPropertyNames = new List<string>();
             public List<PropertyInfo> StaticPropertyInfos = new List<PropertyInfo>();
         }
-        
+
         ////////////////////////////////////////////
 
         internal TypeInfo GetTypeInfo(Type type) {
             return cachedTypeInfo.TryGetValue(type, out var info) ? info : CacheTypeInfo(type);
         }
-        
+
         ////////////////////////////////////////////
-        
+
         readonly Dictionary<Type, TypeInfo> cachedTypeInfo = new Dictionary<Type, TypeInfo>();
 
         ////////////////////////////////////////////
@@ -60,8 +60,12 @@ namespace DarkConfig.Internal {
             bool typeHasOptionalAttribute = false;
             foreach (object attribute in type.GetCustomAttributes(true)) {
                 switch (attribute) {
-                    case ConfigMandatoryAttribute _: typeHasMandatoryAttribute = true; break;
-                    case ConfigAllowMissingAttribute _: typeHasOptionalAttribute = true; break;
+                    case ConfigMandatoryAttribute _:
+                        typeHasMandatoryAttribute = true;
+                        break;
+                    case ConfigAllowMissingAttribute _:
+                        typeHasOptionalAttribute = true;
+                        break;
                 }
             }
 
@@ -86,9 +90,9 @@ namespace DarkConfig.Internal {
                 if (propertyInfo.IsSpecialName || !propertyInfo.CanWrite || !propertyInfo.CanRead || IsDelegateType(propertyInfo.PropertyType)) {
                     continue;
                 }
-                
+
                 string propertyName = RemoveHungarianPrefix(propertyInfo.Name);
-                
+
                 // Explicit Required/Optional attributes on the type override the global defaults.
                 bool ignored = false;
                 bool required = typeMemberRequiredDefault;
@@ -99,7 +103,7 @@ namespace DarkConfig.Internal {
                         ignored = true;
                         break;
                     }
-                    
+
                     // Explicit Required/Optional attributes on a field override the type and global defaults.
                     if (attribute is ConfigMandatoryAttribute) {
                         required = true;
@@ -110,10 +114,10 @@ namespace DarkConfig.Internal {
                     } else if (attribute is ConfigSourceInformationAttribute) {
                         sourceInfo = true;
                     } else if (attribute is ConfigKeyAttribute) {
-                        propertyName = ((ConfigKeyAttribute)attribute).Key;
+                        propertyName = ((ConfigKeyAttribute) attribute).Key;
                     }
                 }
-                
+
                 if (numRequirementAttributes == 2) {
                     throw new Exception($"Property {propertyInfo.Name} has both Mandatory and AllowMissing attributes");
                 }
@@ -133,7 +137,7 @@ namespace DarkConfig.Internal {
                     }
                     info.SourceInfoMemberName = propertyName;
                 }
-                
+
                 if (propertyInfo.SetMethod?.IsStatic == true) {
                     if (required) {
                         info.StaticPropertyNames.Insert(info.NumRequiredStaticProperties, propertyName);
@@ -164,9 +168,9 @@ namespace DarkConfig.Internal {
                 if (fieldInfo.IsSpecialName || fieldInfo.Name[0] == '<' || IsDelegateType(fieldInfo.FieldType)) {
                     continue;
                 }
-                
+
                 string fieldName = RemoveHungarianPrefix(fieldInfo.Name);
-                
+
                 // Explicit Required/Optional attributes on the type override the global defaults.
                 bool ignored = false;
                 bool required = typeMemberRequiredDefault;
@@ -177,21 +181,21 @@ namespace DarkConfig.Internal {
                         ignored = true;
                         break;
                     }
-                    
+
                     // Explicit Required/Optional attributes on a field override the type and global defaults.
                     if (attribute is ConfigMandatoryAttribute) {
                         required = true;
                         numRequirementAttributes++;
                     } else if (attribute is ConfigAllowMissingAttribute) {
-                        required = false; 
+                        required = false;
                         numRequirementAttributes++;
                     } else if (attribute is ConfigSourceInformationAttribute) {
                         sourceInfo = true;
                     } else if (attribute is ConfigKeyAttribute) {
-                        fieldName = ((ConfigKeyAttribute)attribute).Key;
+                        fieldName = ((ConfigKeyAttribute) attribute).Key;
                     }
                 }
-                
+
                 if (numRequirementAttributes == 2) {
                     throw new Exception($"Field {fieldInfo.Name} has both Mandatory and AllowMissing attributes");
                 }
@@ -202,7 +206,7 @@ namespace DarkConfig.Internal {
 
                 if (sourceInfo) {
                     // Special field to auto-populate with SourceInformation
-                            
+
                     if (!string.IsNullOrEmpty(info.SourceInfoMemberName)) {
                         throw new Exception($"Field {fieldInfo.Name} annotated with ConfigSourceInformation, but type {type.Name} "
                             + $"already has a member named {info.SourceInfoMemberName} with that annotation");
@@ -238,7 +242,7 @@ namespace DarkConfig.Internal {
             cachedTypeInfo[type] = info;
             return info;
         }
-        
+
         /// Removes one letter hungarian notation prefixes from field names.
         static string RemoveHungarianPrefix(string name) {
             return name.Length > 1 && name[1] == '_' ? name.Substring(2) : name;

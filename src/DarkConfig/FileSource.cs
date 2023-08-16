@@ -11,7 +11,7 @@ namespace DarkConfig {
         public override bool CanHotload { get; }
         /// If true, we till update the file modified time on disk with a checksum match, so hotloading won't check again next session
         public bool SetModifiedTimeOnChecksumMatch = false;
-                
+
         ////////////////////////////////////////////
 
         /// <summary>
@@ -30,7 +30,7 @@ namespace DarkConfig {
             baseDir = Path.GetFullPath(dir).Replace('\\', '/'); // Always use forward slashes in paths, even on windows.
             CanHotload = hotload;
             this.ignorePattern = ignorePattern;
-            configFileExtensions = new[]{fileExtension};
+            configFileExtensions = new[] {fileExtension};
         }
 
         /// <summary>
@@ -72,7 +72,7 @@ namespace DarkConfig {
                     changedFiles.Add(newFileInfo.Name);
                     continue;
                 }
-                
+
                 var fileSize = new FileInfo(file).Length;
                 var modified = File.GetLastWriteTimeUtc(file);
 
@@ -81,10 +81,10 @@ namespace DarkConfig {
                 if (fileSize == fileInfo.Size && Math.Abs((modified - fileInfo.Modified).TotalSeconds) < 1f) {
                     continue;
                 }
-                
+
                 using (var fileStream = File.OpenRead(file)) {
                     int checksum = Internal.ChecksumUtils.Checksum(fileStream);
-                    
+
                     if (checksum == fileInfo.Checksum) {
                         // The files are identical (according to the checksum)
                         // Update the file size and modified timestamp
@@ -105,14 +105,14 @@ namespace DarkConfig {
                         }
                         continue;
                     }
-                    
+
                     // File has changed. Hotload it.
                     fileStream.Seek(0, SeekOrigin.Begin);
                     fileInfo.Parsed = Configs.ParseStream(fileStream, file);
                     fileInfo.Checksum = checksum;
                     fileInfo.Modified = modified;
                     fileInfo.Size = fileSize;
-                    
+
                     changedFiles.Add(fileName);
                 }
             }
@@ -126,15 +126,15 @@ namespace DarkConfig {
         public override string ToString() {
             return $"FileSource({baseDir})";
         }
-        
+
         ////////////////////////////////////////////
 
         readonly string baseDir;
         readonly string[] configFileExtensions;
         readonly Regex ignorePattern;
-        
+
         ////////////////////////////////////////////
-        
+
         /// Enumerate all files in the directory with the correct extensions.
         IEnumerable<string> FindConfigsInBaseDir() {
             foreach (var ext in configFileExtensions) {
@@ -151,11 +151,11 @@ namespace DarkConfig {
         string GetFileNameFromPath(string filePath) {
             // Normalize the path to fix any mixed forward and back slashes.
             filePath = Path.GetFullPath(filePath).Replace('\\', '/'); // Always use forward slashes in paths, even on windows.
-            
+
             return Path.ChangeExtension(filePath, null)
                 .Substring(baseDir.Length + 1); // remove the basedir from the path.
         }
-        
+
         /// Reads and parses a file's contents.
         ConfigFileInfo ReadFile(string filePath) {
             using (var fileStream = File.OpenRead(filePath)) {

@@ -33,7 +33,7 @@ class FileSourceTests {
     public void OpenOneFile() {
         CreateFile("derp.yaml", "key: value");
 
-        var fileSource = new FileSource(tempDirPath, hotload:true);
+        var fileSource = new FileSource(tempDirPath, hotload: true);
         foreach (object _ in fileSource.StepPreload()) { }
 
         Assert.Multiple(() => {
@@ -53,7 +53,7 @@ class FileSourceTests {
     public void Hotload_ExistingFile() {
         // Preload a single file.
         CreateFile("derp.yaml", "key: value");
-        var fileSource = new FileSource(tempDirPath, hotload:true);
+        var fileSource = new FileSource(tempDirPath, hotload: true);
         foreach (object _ in fileSource.StepPreload()) { }
         Assert.Multiple(() => {
             Assert.That(fileSource.AllFiles.Count, Is.EqualTo(1));
@@ -62,7 +62,7 @@ class FileSourceTests {
 
         // Modify the file.
         CreateFile("derp.yaml", "key: value2");
-        
+
         // Hotload the file.
         var changedFiles = new List<string>();
         fileSource.Hotload(changedFiles);
@@ -86,7 +86,7 @@ class FileSourceTests {
         CreateFile("derp.yaml", "key: value");
         CreateFile("durr.yaml", "a: b");
 
-        var fileSource = new FileSource(tempDirPath, hotload:true);
+        var fileSource = new FileSource(tempDirPath, hotload: true);
         foreach (object _ in fileSource.StepPreload()) { }
         Assert.That(fileSource.AllFiles, Has.Count.EqualTo(2));
 
@@ -105,21 +105,21 @@ class FileSourceTests {
     public void Hotload_CreatedFile() {
         CreateFile("derp.yaml", "key: value");
 
-        var fileSource = new FileSource(tempDirPath, hotload:true);
+        var fileSource = new FileSource(tempDirPath, hotload: true);
         foreach (object _ in fileSource.StepPreload()) { }
         Assert.That(fileSource.AllFiles, Has.Count.EqualTo(1));
 
         CreateFile("durr.yaml", "a: b");
-        
+
         var changedFiles = new List<string>();
         fileSource.Hotload(changedFiles);
 
         Assert.Multiple(() => {
             Assert.That(fileSource.AllFiles, Has.Count.EqualTo(2));
-            
+
             Assert.That(fileSource.AllFiles.ContainsKey("derp"), Is.True);
             Assert.That(fileSource.AllFiles.ContainsKey("durr"), Is.True);
-            
+
             Assert.That(fileSource.AllFiles["durr"].Parsed["a"].StringValue, Is.EqualTo("b"));
         });
     }
@@ -128,13 +128,13 @@ class FileSourceTests {
     public void Hotload_CreatedThreeFiles() {
         CreateFile("derp.yaml", "key: value");
 
-        var fileSource = new FileSource(tempDirPath, hotload:true);
+        var fileSource = new FileSource(tempDirPath, hotload: true);
         foreach (object _ in fileSource.StepPreload()) { }
 
         CreateFile("durr.yaml", "a: b");
         CreateFile("hurr.yaml", "x: y");
         CreateFile("err.yaml", "u: v");
-        
+
         var changedFiles = new List<string>();
         fileSource.Hotload(changedFiles);
 
@@ -153,12 +153,12 @@ class FileSourceTests {
     public void Hotload_CreatedFileTwice() {
         CreateFile("derp.yaml", "key: value");
 
-        var fileSource = new FileSource(tempDirPath, hotload:true);
+        var fileSource = new FileSource(tempDirPath, hotload: true);
         foreach (object _ in fileSource.StepPreload()) { }
 
         CreateFile("durr.yaml", "a: b");
         CreateFile("hurr.yaml", "x: y");
-        
+
         var changedFiles = new List<string>();
         fileSource.Hotload(changedFiles);
 

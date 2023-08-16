@@ -51,7 +51,7 @@ class DictComposingTests {
             Assert.That(MixedDict["Version"].As<float>(), Is.EqualTo(1.3f));
             Assert.That(MixedDict["Treehouse"].As<bool>(), Is.True);
         });
-        
+
         // Overwrite file contents
         CreateFile("items.yaml", "Chitin: 1000");
 
