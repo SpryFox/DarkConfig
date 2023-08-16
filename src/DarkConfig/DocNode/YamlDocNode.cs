@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using YamlDotNet.RepresentationModel;
@@ -27,7 +27,7 @@ namespace DarkConfig {
             }
         }
 
-        public override string SourceInformation => $"File: {filename}, {node.Start}";
+        public override string SourceInformation => $"File: {filename}, Line: {node.Start.Line}, Col: {node.Start.Column}";
 
         /// <summary>
         /// Access the node as if it was a list

@@ -110,7 +110,7 @@ namespace DarkConfig.Internal {
 
             // Check whether any required members in the type were not set.
             if (missingRequiredMemberNames != null && missingRequiredMemberNames.Count > 0) {
-                throw new MissingFieldsException($"Missing doc fields: {JoinList(missingRequiredMemberNames, ", ")} {doc.SourceInformation}");
+                throw new MissingFieldsException(doc, $"Missing doc fields: {JoinList(missingRequiredMemberNames, ", ")}");
             }
 
             // Check whether any fields in the doc were unused.
@@ -125,14 +125,14 @@ namespace DarkConfig.Internal {
                 }
 
                 if (extraDocFields.Count > 0) {
-                    throw new ExtraFieldsException($"Extra doc fields: {JoinList(extraDocFields, ", ")} {doc.SourceInformation}");
+                    throw new ExtraFieldsException(doc, $"Extra doc fields: {JoinList(extraDocFields, ", ")}");
                 }
             }
         }
 
         /// <summary>
         /// Sets a single field value on an object from the given docnode dict.
-        /// 
+        ///
         /// This is mostly only useful as a helper when writing FromDoc's
         /// </summary>
         /// <param name="obj">The object to set the field on</param>
@@ -241,7 +241,7 @@ namespace DarkConfig.Internal {
                             arrayValue = Array.CreateInstance(elementType, doc.Count);
                         } else if (arrayValue.Length != doc.Count) {
                             // Copy the existing values to the new array so we can feed them
-                            // in as existing values when reading array elements. 
+                            // in as existing values when reading array elements.
                             var oldArr = arrayValue;
                             arrayValue = Array.CreateInstance(elementType, doc.Count);
                             int numToCopy = Math.Min(oldArr.Length, arrayValue.Length);
@@ -256,7 +256,7 @@ namespace DarkConfig.Internal {
                         }
                     } else { // n-dimensional arrays
                         if (doc.Count == 0) {
-                            // Return a zero-length array of the correct dimensions. 
+                            // Return a zero-length array of the correct dimensions.
                             return Array.CreateInstance(elementType, new int[rank]);
                         }
 
@@ -460,8 +460,8 @@ namespace DarkConfig.Internal {
                 }
 
                 return existing;
-            } catch (Exception e) {
-                throw new ParseException($"Exception based on document starting at: {doc.SourceInformation}", e);
+            } catch (Exception e) when (!((e as ParseException)?.HasNode ?? false)) {
+                throw new ParseException(doc, $"Encountered exception", e);
             }
         }
 
@@ -508,9 +508,9 @@ namespace DarkConfig.Internal {
                 // Allow specifying object types with a single property or field as a scalar value in configs.
                 // This is syntactic sugar that lets us wrap values in classes.
                 if (typeInfo.FieldNames.Count + typeInfo.PropertyNames.Count != 1) {
-                    throw new Exception($"Trying to set a value of type: {type} {typeInfo.FieldNames.Count + typeInfo.PropertyNames.Count}"
+                    throw new ParseException(doc, $"Trying to set a value of type: {type} {typeInfo.FieldNames.Count + typeInfo.PropertyNames.Count}"
                         + $" from value of wrong type: " +
-                        (doc.Type == DocNodeType.Scalar ? doc.StringValue : doc.Type.ToString()) + $" at {doc.SourceInformation}");
+                        (doc.Type == DocNodeType.Scalar ? doc.StringValue : doc.Type.ToString()));
                 }
 
                 if (typeInfo.FieldNames.Count > 0) {
@@ -573,7 +573,7 @@ namespace DarkConfig.Internal {
 
             // Throw an error if any required fields in the class were unset
             if (missingRequiredMembers != null) {
-                throw new MissingFieldsException($"Missing doc fields: {JoinList(missingRequiredMembers, ", ")} {doc.SourceInformation}");
+                throw new MissingFieldsException(doc, $"Missing doc fields: {JoinList(missingRequiredMembers, ", ")}");
             }
 
             // Check whether any fields in the doc were unused
@@ -585,7 +585,7 @@ namespace DarkConfig.Internal {
                         extraDocFields.Add(kv.Key);
                     }
                 }
-                throw new ExtraFieldsException($"Extra doc fields: {JoinList(extraDocFields, ", ")} {doc.SourceInformation}");
+                throw new ExtraFieldsException(doc, $"Extra doc fields: {JoinList(extraDocFields, ", ")}");
             }
 
             obj = setCopy;
@@ -627,7 +627,7 @@ namespace DarkConfig.Internal {
 
                 if (!docHasKey) {
                     if (fieldIndex < typeInfo.NumRequiredFields) {
-                        throw new MissingFieldsException($"Missing doc field: {memberName} {doc.SourceInformation}");
+                        throw new MissingFieldsException(doc, $"Missing doc field: {memberName}");
                     }
                     return false;
                 }
@@ -645,7 +645,7 @@ namespace DarkConfig.Internal {
 
                 if (!docHasKey) {
                     if (propertyIndex < typeInfo.NumRequiredProperties) {
-                        throw new MissingFieldsException($"Missing doc field: {memberName} {doc.SourceInformation}");
+                        throw new MissingFieldsException(doc, $"Missing doc field: {memberName}");
                     }
                     return false;
                 }
@@ -686,7 +686,7 @@ namespace DarkConfig.Internal {
             }
 
             if (!allowExtra) {
-                throw new ExtraFieldsException($"Extra doc fields: {memberName} {doc.SourceInformation}");
+                throw new ExtraFieldsException(doc, $"Could not find a member named {memberName} on type {type.Name}");
             }
 
             return false;

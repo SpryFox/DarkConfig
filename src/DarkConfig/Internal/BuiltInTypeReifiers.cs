@@ -9,7 +9,7 @@ namespace DarkConfig.Internal {
         internal static object FromTimeSpan(object existing, DocNode doc) {
             bool isSuccess = TimeSpan.TryParse(doc.StringValue, out var newSpan);
             if (!isSuccess) {
-                throw new ParseException("expected parseable timespan string " + doc.StringValue, null);
+                throw new ParseException(doc, "expected parseable timespan string " + doc.StringValue);
             }
 
             return newSpan;
