@@ -12,27 +12,27 @@ namespace DarkConfig {
     /// bottom.  It's a bit more readable, and most importantly the line
     /// numbers in the config files are much more prominent.
     public class ParseException : Exception {
-        public ParseException(string message) : base(message) {
-            wrappedException = null;
+        public ParseException(DocNode exceptionNode, string message, Exception inner = null) : base((inner != null ? inner.Message + "\n" : "") + message) {
+            _node = exceptionNode;
+            _wrappedException = inner;
         }
 
-        public ParseException(string message, Exception inner) : base((inner != null ? inner.Message : "") + "\n" + message) {
-            wrappedException = inner;
+        public override string StackTrace => _wrappedException == null ? base.StackTrace : _wrappedException.StackTrace + "\n-----\n" + base.StackTrace;
+        public override string Message => base.Message + (HasNode ? $" from {_node.SourceInformation}" : "");
+        public bool HasNode {
+            get { return _node != null; }
         }
 
-        public override string StackTrace => wrappedException == null ? base.StackTrace : wrappedException.StackTrace + "\n-----\n" + base.StackTrace;
-
-        readonly Exception wrappedException;
+        readonly DocNode _node;
+        readonly Exception _wrappedException;
     }
 
     public class MissingFieldsException : ParseException {
-        public MissingFieldsException(string message) : base(message) { }
-        public MissingFieldsException(string message, Exception inner) : base(message, inner) { }
+        public MissingFieldsException(DocNode node, string message) : base(node, message) { }
     }
 
     public class ExtraFieldsException : ParseException {
-        public ExtraFieldsException(string message) : base(message) { }
-        public ExtraFieldsException(string message, Exception inner) : base(message, inner) { }
+        public ExtraFieldsException(DocNode node, string message) : base(node, message) { }
     }
 
     public class ConfigFileNotFoundException : FileNotFoundException {

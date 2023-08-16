@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace DarkConfig {
@@ -158,7 +158,7 @@ namespace DarkConfig {
                     return mapHash;
 
                 default:
-                    throw new Exception($"Cannot calculate hash code for DocNode type {Type} at: {SourceInformation}");
+                    throw new ParseException(this, $"Cannot calculate hash code for DocNode type {Type}");
             }
         }
 

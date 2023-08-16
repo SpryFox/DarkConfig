@@ -166,7 +166,7 @@ namespace DarkConfig {
             var result = new ComposedDocNode(DocNodeType.Dictionary, count, sourceInformation);
             foreach (var doc in docs) {
                 if (doc.Type != DocNodeType.Dictionary) {
-                    throw new ParseException("Expected all DocNodes to be dictionaries in CombineDict.");
+                    throw new ParseException(doc, "Expected all DocNodes to be dictionaries in CombineDict.");
                 }
 
                 foreach ((string key, var value) in doc.Pairs) {
