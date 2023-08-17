@@ -11,6 +11,9 @@ namespace DarkConfig.Internal {
             public MethodInfo FromDoc;
             public MethodInfo PostDoc;
 
+            // lookup of keys for polymorphic unions
+            public Dictionary<string, Type> UnionKeys;
+
             // Source Info
             public string SourceInfoMemberName;
 
@@ -44,10 +47,25 @@ namespace DarkConfig.Internal {
         ////////////////////////////////////////////
 
         readonly Dictionary<Type, TypeInfo> cachedTypeInfo = new Dictionary<Type, TypeInfo>();
+        readonly HashSet<Assembly> prechachedAssemblies = new();
 
         ////////////////////////////////////////////
 
+        // Precache everything in this assembly that requires iterating all types to resolve
+        void PrecacheAssembly(Assembly sourceAssembly) {
+            if (!prechachedAssemblies.Contains(sourceAssembly)) {
+                prechachedAssemblies.Add(sourceAssembly);
+                foreach (Type type in sourceAssembly.GetTypes()) {
+                    if (type.GetCustomAttributes(typeof(ConfigUnionAttribute), false).Length > 0) {
+                        GetTypeInfo(type);
+                    }
+                }
+            }
+        }
+
         TypeInfo CacheTypeInfo(Type type) {
+            PrecacheAssembly(type.Assembly);
+
             var info = new TypeInfo {
                 FromDoc = type.GetMethod("FromDoc", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static),
                 PostDoc = type.GetMethod("PostDoc", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static)
@@ -58,6 +76,7 @@ namespace DarkConfig.Internal {
             // Read class attributes
             bool typeHasMandatoryAttribute = false;
             bool typeHasOptionalAttribute = false;
+            string typeUnionKey = null;
             foreach (object attribute in type.GetCustomAttributes(true)) {
                 switch (attribute) {
                     case ConfigMandatoryAttribute _:
@@ -66,11 +85,26 @@ namespace DarkConfig.Internal {
                     case ConfigAllowMissingAttribute _:
                         typeHasOptionalAttribute = true;
                         break;
+                    case ConfigUnionAttribute UnionAttribute:
+                        typeUnionKey = UnionAttribute.Key.ToLowerInvariant();
+                        break;
                 }
             }
 
             if (typeHasMandatoryAttribute && typeHasOptionalAttribute) {
                 throw new Exception($"Type {type.Name} has both ConfigAllowMissing and ConfigMandatory attributes.");
+            }
+
+            // if type is a union, register it with it's base type
+            if (typeUnionKey != null) {
+                if (type.BaseType == typeof(Object) || type.BaseType == null) {
+                    throw new Exception($"Type {type.Name} has ConfigUnion but is not a child type");
+                }
+                TypeInfo parentInfo = GetTypeInfo(type.BaseType);
+                parentInfo.UnionKeys ??= new Dictionary<string, Type>();
+                if (!parentInfo.UnionKeys.TryAdd(typeUnionKey, type)) {
+                    throw new Exception($"Type {type.Name} has ConfigUnion with duplicate key {typeUnionKey}");
+                }
             }
 
             const BindingFlags MEMBER_BINDING_FLAGS = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static;
@@ -113,8 +147,8 @@ namespace DarkConfig.Internal {
                         numRequirementAttributes++;
                     } else if (attribute is ConfigSourceInformationAttribute) {
                         sourceInfo = true;
-                    } else if (attribute is ConfigKeyAttribute) {
-                        propertyName = ((ConfigKeyAttribute) attribute).Key;
+                    } else if (attribute is ConfigKeyAttribute keyAttribute) {
+                        propertyName = keyAttribute.Key;
                     }
                 }
 
@@ -191,8 +225,8 @@ namespace DarkConfig.Internal {
                         numRequirementAttributes++;
                     } else if (attribute is ConfigSourceInformationAttribute) {
                         sourceInfo = true;
-                    } else if (attribute is ConfigKeyAttribute) {
-                        fieldName = ((ConfigKeyAttribute) attribute).Key;
+                    } else if (attribute is ConfigKeyAttribute keyAttribute) {
+                        fieldName = keyAttribute.Key;
                     }
                 }
 

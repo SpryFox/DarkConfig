@@ -439,8 +439,27 @@ namespace DarkConfig.Internal {
                         throw;
                     }
                 } else {
-                    existing ??= Activator.CreateInstance(targetType);
-                    SetFieldsOnObject(targetType, ref existing, doc, options);
+                    if (typeInfo.UnionKeys != null) {
+                        Object subTypeObject = null;
+                        foreach (var unionKey in typeInfo.UnionKeys) {
+                            if (doc.TryGetValue(unionKey.Key, true, out var subTypeDoc)) {
+                                if (subTypeObject == null) {
+                                    subTypeObject = ReadValueOfType(unionKey.Value, null, subTypeDoc, options);
+                                } else {
+                                    throw new ParseException(doc, $"Union document {targetType} contains multiple subtype keys. Expected only one.");
+                                }
+                            }
+                        }
+
+                        if (subTypeObject == null) {
+                            throw new ParseException(doc, $"Union document {targetType} did not resolve to a subtype");
+                        }
+
+                        existing = subTypeObject;
+                    } else {
+                        existing ??= Activator.CreateInstance(targetType);
+                        SetFieldsOnObject(targetType, ref existing, doc, options);
+                    }
                 }
 
                 // Call a PostDoc function for this type if it exists.
@@ -580,8 +599,9 @@ namespace DarkConfig.Internal {
             if (setMemberHashes.Count != doc.Count) {
                 var extraDocFields = new List<string>();
                 foreach (var kv in doc.Pairs) {
-                    int docKeyHash = (ignoreCase ? kv.Key.ToLowerInvariant() : kv.Key).GetHashCode();
-                    if (!setMemberHashes.Contains(docKeyHash)) {
+                    string docKey = (ignoreCase ? kv.Key.ToLowerInvariant() : kv.Key);
+                    int docKeyHash = docKey.GetHashCode();
+                    if (!setMemberHashes.Contains(docKeyHash) && (typeInfo.UnionKeys == null || !typeInfo.UnionKeys.ContainsKey(docKey))) {
                         extraDocFields.Add(kv.Key);
                     }
                 }

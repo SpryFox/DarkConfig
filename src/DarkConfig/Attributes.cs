@@ -43,6 +43,25 @@ namespace DarkConfig {
             if (string.IsNullOrWhiteSpace(key)) {
                 throw new ArgumentNullException(nameof(key));
             }
+
+            Key = key.Trim();
+        }
+    }
+
+    /// Marks this type as a polymorphic union of it's parent type and indicates it's key
+    [AttributeUsage(AttributeTargets.Class)]
+    public class ConfigUnionAttribute : Attribute {
+        public string Key;
+
+        /// <summary>
+        /// When parsing the parent type, if the key is <paramref name="key"/> then this type will be
+        /// parsed instead.
+        /// </summary>
+        /// <param name="key">The substitute key</param>
+        public ConfigUnionAttribute(string key) {
+            if (string.IsNullOrWhiteSpace(key)) {
+                throw new ArgumentNullException(nameof(key));
+            }
             Key = key.Trim();
         }
     }
