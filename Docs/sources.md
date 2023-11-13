@@ -19,13 +19,13 @@ var configsDir = Path.Combine(Directory.GetCurrentDirectory(), "Configs");
 Configs.AddSource(new FileSource(configsDir));
 
 // load all files with the ".conf" extension from the given path.
-Configs.AddSoruce(new FileSource(configsDir, "conf"))
+Configs.AddSource(new FileSource(configsDir, "conf"))
 
 // load all files with either the ".yml" or ".yaml" extension from the given path.
-Configs.AddSoruce(new FileSource(configsDir, new[]{"yml", "yaml"}))
+Configs.AddSource(new FileSource(configsDir, new[]{"yml", "yaml"}))
 
 // same as above but also enable file hotloading (disabled by default)
-Configs.AddSoruce(new FileSource(configsDir, new[]{"yml", "yaml"}, hotload:true))
+Configs.AddSource(new FileSource(configsDir, new[]{"yml", "yaml"}, hotload:true))
 
 
 // ResourcesSource (Unity only)
