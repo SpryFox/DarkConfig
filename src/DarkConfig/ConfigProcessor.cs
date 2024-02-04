@@ -1,7 +1,3 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-
 namespace DarkConfig {
     /// Processors can modify DocNodes after being parsed from YAML, but before used by the rest of the systems
     /// Note: this is ONLY run on the YAML -> DocNode path, any other DocNode creation is not affected
