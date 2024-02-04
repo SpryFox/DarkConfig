@@ -9,15 +9,15 @@ namespace DarkConfig {
         /// <summary>
         /// </summary>
         /// <param name="node">The YAMLDotNet node</param>
-        /// <param name="filename">Used for error reporting</param>
-        public YamlDocNode(YamlNode node, string filename) {
-            this.node = node;
-            this.filename = filename;
+        /// <param name="sourceFile">Used for error reporting</param>
+        public YamlDocNode(YamlNode node, string sourceFile) {
+            SourceNode = node;
+            SourceFile = sourceFile;
         }
 
         public override DocNodeType Type {
             get {
-                return node switch {
+                return SourceNode switch {
                     null => DocNodeType.Invalid,
                     YamlMappingNode _ => DocNodeType.Dictionary,
                     YamlSequenceNode _ => DocNodeType.List,
@@ -27,7 +27,7 @@ namespace DarkConfig {
             }
         }
 
-        public override string SourceInformation => $"File: {filename}, Line: {node.Start.Line}, Col: {node.Start.Column}";
+        public override string SourceInformation => $"File: {SourceFile}, Line: {SourceNode.Start.Line}, Col: {SourceNode.Start.Column}";
 
         /// <summary>
         /// Access the node as if it was a list
@@ -37,8 +37,8 @@ namespace DarkConfig {
         public override DocNode this[int index] {
             get {
                 AssertTypeIs(DocNodeType.List);
-                var seqNode = (YamlSequenceNode) node;
-                return new YamlDocNode(seqNode.Children[index], filename);
+                var seqNode = (YamlSequenceNode) SourceNode;
+                return new YamlDocNode(seqNode.Children[index], SourceFile);
             }
             set => throw new NotSupportedException();
         }
@@ -51,9 +51,9 @@ namespace DarkConfig {
         public override DocNode this[string key] {
             get {
                 AssertTypeIs(DocNodeType.Dictionary);
-                var mapNode = (YamlMappingNode) node;
+                var mapNode = (YamlMappingNode) SourceNode;
                 var scalarAccessor = new YamlScalarNode(key);
-                return new YamlDocNode(mapNode.Children[scalarAccessor], filename);
+                return new YamlDocNode(mapNode.Children[scalarAccessor], SourceFile);
             }
             set => throw new NotSupportedException();
         }
@@ -61,8 +61,8 @@ namespace DarkConfig {
         public override int Count {
             get {
                 return Type switch {
-                    DocNodeType.Dictionary => ((YamlMappingNode) node).Children.Count,
-                    DocNodeType.List => ((YamlSequenceNode) node).Children.Count,
+                    DocNodeType.Dictionary => ((YamlMappingNode) SourceNode).Children.Count,
+                    DocNodeType.List => ((YamlSequenceNode) SourceNode).Children.Count,
                     _ => throw new DocNodeAccessException(GenerateAccessExceptionMessage("Countable (Dictionary or List)", Type.ToString()))
                 };
             }
@@ -71,7 +71,7 @@ namespace DarkConfig {
         public override bool ContainsKey(string key, bool ignoreCase = false) {
             AssertTypeIs(DocNodeType.Dictionary);
 
-            var children = ((YamlMappingNode) node).Children;
+            var children = ((YamlMappingNode) SourceNode).Children;
             var comparison = ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
             foreach (var yamlKey in children.Keys) {
                 if (yamlKey is YamlScalarNode scalarKey && string.Equals(scalarKey.Value, key, comparison)) {
@@ -85,11 +85,11 @@ namespace DarkConfig {
         public override bool TryGetValue(string key, bool ignoreCase, out DocNode result) {
             AssertTypeIs(DocNodeType.Dictionary);
 
-            var children = ((YamlMappingNode) node).Children;
+            var children = ((YamlMappingNode) SourceNode).Children;
             var comparison = ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
             foreach (var kvp in children) {
                 if (kvp.Key is YamlScalarNode scalarKey && string.Equals(scalarKey.Value, key, comparison)) {
-                    result = new YamlDocNode(kvp.Value, filename);
+                    result = new YamlDocNode(kvp.Value, SourceFile);
                     return true;
                 }
             }
@@ -121,7 +121,7 @@ namespace DarkConfig {
         public override IEnumerable<DocNode> Values {
             get {
                 AssertTypeIs(DocNodeType.List);
-                return new ValuesIterator(node, filename);
+                return new ValuesIterator(SourceNode, SourceFile);
             }
         }
 
@@ -148,22 +148,22 @@ namespace DarkConfig {
         public override IEnumerable<KeyValuePair<string, DocNode>> Pairs {
             get {
                 AssertTypeIs(DocNodeType.Dictionary);
-                return new PairsIterator(node, filename);
+                return new PairsIterator(SourceNode, SourceFile);
             }
         }
 
         public override string StringValue {
             get {
                 AssertTypeIs(DocNodeType.Scalar);
-                return ((YamlScalarNode) node).Value;
+                return ((YamlScalarNode) SourceNode).Value;
             }
             set => throw new NotSupportedException();
         }
 
         ////////////////////////////////////////////
 
-        readonly YamlNode node;
-        readonly string filename;
+        public override YamlNode SourceNode  { get; }
+        public override string SourceFile { get; }
 
         ////////////////////////////////////////////
 
