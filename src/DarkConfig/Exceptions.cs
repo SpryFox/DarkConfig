@@ -13,17 +13,17 @@ namespace DarkConfig {
     /// numbers in the config files are much more prominent.
     public class ParseException : Exception {
         public ParseException(DocNode exceptionNode, string message, Exception inner = null) : base((inner != null ? inner.Message + "\n" : "") + message) {
-            _node = exceptionNode;
+            Node = exceptionNode;
             _wrappedException = inner;
         }
 
         public override string StackTrace => _wrappedException == null ? base.StackTrace : _wrappedException.StackTrace + "\n-----\n" + base.StackTrace;
-        public override string Message => base.Message + (HasNode ? $" from {_node.SourceInformation}" : "");
+        public override string Message => base.Message + (HasNode ? $" from {Node.SourceInformation}" : "");
         public bool HasNode {
-            get { return _node != null; }
+            get { return Node != null; }
         }
 
-        readonly DocNode _node;
+        public readonly DocNode Node;
         readonly Exception _wrappedException;
     }
 
