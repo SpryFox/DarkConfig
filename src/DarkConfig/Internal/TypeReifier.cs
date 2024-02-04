@@ -205,9 +205,11 @@ namespace DarkConfig.Internal {
                 if (targetType == typeof(string)) { return doc.StringValue; }
                 #endregion
 
+                bool ignoreCase = (options & ReificationOptions.CaseSensitive) == 0;
+
                 // Enums
                 if (targetType.IsEnum) {
-                    return Enum.Parse(targetType, doc.StringValue, (options & ReificationOptions.CaseSensitive) == 0);
+                    return Enum.Parse(targetType, doc.StringValue, ignoreCase);
                 }
 
                 // DocNode
@@ -413,7 +415,7 @@ namespace DarkConfig.Internal {
 
                     // Nullable<T>
                     if (genericTypeDef == typeof(Nullable<>)) {
-                        var comparisonOptions = (options & ReificationOptions.CaseSensitive) == 0 ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
+                        var comparisonOptions = ignoreCase ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
                         if (doc.Type == DocNodeType.Scalar && string.Equals(doc.StringValue, "null", comparisonOptions)) {
                             return null;
                         }
@@ -708,7 +710,6 @@ namespace DarkConfig.Internal {
             if (!allowExtra) {
                 throw new ExtraFieldsException(doc, $"Could not find a member named {memberName} on type {type.Name}");
             }
-
             return false;
         }
     }

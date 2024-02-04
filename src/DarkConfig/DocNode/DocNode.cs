@@ -13,8 +13,8 @@ namespace DarkConfig {
         public DocNodeAccessException(string message) : base(message) { }
     }
 
-    /// DocNode represents a node of a parsed document. 
-    /// DocNode is a union type, requiring no casting but behaving differently 
+    /// DocNode represents a node of a parsed document.
+    /// DocNode is a union type, requiring no casting but behaving differently
     /// depending on the underlying value.
     /// DocNode also assumes that all Dictionaries have strings as keys.
     public abstract class DocNode : IEquatable<DocNode> {
@@ -50,7 +50,7 @@ namespace DarkConfig {
         /// Iterates over the values of the list
         public abstract IEnumerable<DocNode> Values { get; }
 
-        /// Iterates over a dictionary 
+        /// Iterates over a dictionary
         public abstract IEnumerable<KeyValuePair<string, DocNode>> Pairs { get; }
 
         /// String describing the position and context in the source format (e.g. line number).
@@ -63,7 +63,7 @@ namespace DarkConfig {
         }
 
         /// <summary>
-        /// Only works on lists.  Checks for the given doc node StringValue in the list.  
+        /// Only works on lists.  Checks for the given doc node StringValue in the list.
         /// </summary>
         /// <param name="item">String to search for</param>
         /// <returns>True if the string exists in this list</returns>
@@ -164,7 +164,7 @@ namespace DarkConfig {
 
         /// <summary>
         /// Generates a new DocNode that is the result of merging two other DocNodes.
-        /// 
+        ///
         /// lists are concatenated.
         /// Dictionaries are merged and values recursively DeepMerged.
         /// Favors rhs in the event of any unresolvable conflict.
