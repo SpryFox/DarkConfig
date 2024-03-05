@@ -244,11 +244,14 @@ namespace DarkConfig {
         /// Parse a YAML stream into a DocNode.
         /// </summary>
         /// <param name="stream">a stream of the YAML to read</param>
-        /// <param name="filename">A filename used for error reporting</param>
+        /// <param name="path">A path used for error reporting</param>
         /// <param name="ignoreProcessors">Don't use config processors</param>
         /// <returns>The parsed DocNode</returns>
-        public static DocNode ParseStream(Stream stream, string filename, bool ignoreProcessors = false) {
-            return ParseYamlFromTextReader(new StreamReader(stream), filename, ignoreProcessors);
+        public static DocNode ParseStream(Stream stream, string path, bool ignoreProcessors = false) {
+            if (!Path.IsPathRooted(path)) {
+                throw new ArgumentException("Must be an absolute path", path);
+            }
+            return ParseYamlFromTextReader(new StreamReader(stream), path, ignoreProcessors);
         }
 
         /// <summary>
