@@ -5,9 +5,11 @@ namespace DarkConfig {
     /// ComposedDocNode is a mutable DocNode implementation, intended to be used to
     /// help compiling multiple source documents into one meta-document.
     public class ComposedDocNode : DocNode {
-        public ComposedDocNode(DocNodeType type, int size = -1, string sourceInformation = null) {
+        public ComposedDocNode(DocNodeType type, int size = -1, string sourceInformation = null, DocNode sourceDocNode = null) {
             Type = type;
-            sourceInfo = sourceInformation;
+            sourceInfo = sourceInformation ?? sourceDocNode?.SourceInformation;
+            SourceFile = sourceDocNode?.SourceFile;
+            SourceNode = sourceDocNode?.SourceNode;
             switch (type) {
                 case DocNodeType.Dictionary:
                     dictionary = size > 0 ? new Dictionary<string, DocNode>(size) : new Dictionary<string, DocNode>();
@@ -107,6 +109,8 @@ namespace DarkConfig {
         }
 
         public override string SourceInformation => sourceInfo ?? "ComposedDocNode " + Type;
+        public override string SourceFile { get; }
+        public override YamlNode SourceNode { get; }
 
         public override string ToString() {
             return $"ComposedDocNode({Type}, {(Type == DocNodeType.Scalar ? scalar : Count.ToString())})";
@@ -155,13 +159,13 @@ namespace DarkConfig {
 
             switch (doc.Type) {
                 case DocNodeType.Scalar: {
-                    return new ComposedDocNode(doc.Type, -1, doc.SourceInformation) {
+                    return new ComposedDocNode(doc.Type, sourceDocNode: doc) {
                         StringValue = doc.StringValue
                     };
                 }
 
                 case DocNodeType.List: {
-                    var newDoc = new ComposedDocNode(doc.Type, doc.Count, doc.SourceInformation);
+                    var newDoc = new ComposedDocNode(doc.Type, doc.Count, sourceDocNode: doc);
                     foreach (var value in doc.Values) {
                         newDoc.Add(recursive ? MakeMutable(value, recursive: true, force: force) : value);
                     }
@@ -169,7 +173,7 @@ namespace DarkConfig {
                 }
 
                 case DocNodeType.Dictionary: {
-                    var newDoc = new ComposedDocNode(doc.Type, doc.Count, doc.SourceInformation);
+                    var newDoc = new ComposedDocNode(doc.Type, doc.Count, sourceDocNode: doc);
                     foreach ((string key, var value) in doc.Pairs) {
                         newDoc.Add(key, recursive ? MakeMutable(value, recursive: true, force: force) : value);
                     }

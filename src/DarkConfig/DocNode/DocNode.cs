@@ -55,6 +55,8 @@ namespace DarkConfig {
 
         /// String describing the position and context in the source format (e.g. line number).
         public abstract string SourceInformation { get; }
+        public abstract string? SourceFile { get; }
+        public abstract YamlDotNet.RepresentationModel.YamlNode? SourceNode { get; }
 
         public T As<T>(ReificationOptions? options = null) {
             var result = default(T);
