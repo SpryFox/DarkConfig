@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using YamlDotNet.RepresentationModel;
 
 namespace DarkConfig {
     /// ComposedDocNode is a mutable DocNode implementation, intended to be used to
