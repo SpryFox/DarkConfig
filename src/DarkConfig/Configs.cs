@@ -621,6 +621,8 @@ namespace DarkConfig {
             var yaml = new YamlStream();
             try {
                 yaml.Load(reader);
+            } catch (YamlDotNet.Core.YamlException e) {
+                throw new YamlFileException(filename, e);
             } catch (Exception e) {
                 throw new Exception($"Error loading file '{filename}': {e.Message}");
             }
