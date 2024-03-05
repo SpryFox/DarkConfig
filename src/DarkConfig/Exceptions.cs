@@ -2,6 +2,17 @@ using System;
 using System.IO;
 
 namespace DarkConfig {
+    public class YamlFileException : Exception {
+        public YamlFileException(string filename, YamlDotNet.Core.YamlException inner)
+            : base($"Encountered error parsing YAML file '{filename}': {inner.Message}", inner) {
+            Filename = filename;
+            YamlException = inner;
+        }
+
+        public string Filename { get; private set; }
+        public YamlDotNet.Core.YamlException YamlException { get; private set; }
+    }
+
     /// The reason for this strange structure is that when Unity prints
     /// exceptions raised in the course of Reifying, often the info you need
     /// (the line number) is buried in the second or Nth exception.  Unity
