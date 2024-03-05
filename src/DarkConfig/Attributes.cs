@@ -48,10 +48,12 @@ namespace DarkConfig {
         }
     }
 
-    /// Marks this type as a polymorphic union of it's parent type and indicates it's key
+    /// <summary>
+    /// Marks this type as a polymorphic union of its parent type and indicates the key whose presence implies this type
+    /// </summary>
     [AttributeUsage(AttributeTargets.Class)]
     public class ConfigUnionAttribute : Attribute {
-        public string Key;
+        public readonly string Key;
 
         /// <summary>
         /// When parsing the parent type, if the key is <paramref name="key"/> then this type will be
