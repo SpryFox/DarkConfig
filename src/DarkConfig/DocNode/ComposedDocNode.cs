@@ -128,6 +128,11 @@ namespace DarkConfig {
             dictionary.Add(key, value);
         }
 
+        public void InsertAt(int index, DocNode value) {
+            CheckTypeIs(DocNodeType.List);
+            list.Insert(index, value);
+        }
+
         public void Remove(DocNode d) {
             CheckTypeIs(DocNodeType.List);
             list.Remove(d);
