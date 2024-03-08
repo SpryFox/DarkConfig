@@ -1,3 +1,4 @@
+using DarkConfig.Internal;
 using System;
 using System.Collections;
 using System.IO;
@@ -650,6 +651,14 @@ namespace DarkConfig {
             } else {
                 Console.Error.WriteLine(message);
             }
+        }
+
+        public static void Document(string documentationRoot, params Type[] rootTypes) {
+            DocumentationGenerator.Document(documentationRoot, new ReflectionCache(), rootTypes);
+        }
+
+        public static string GetDocumentationPath(string documentationRoot, Type type) {
+            return DocumentationGenerator.GetDocumentationPath(documentationRoot, type);
         }
     }
 }

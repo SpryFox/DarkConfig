@@ -92,4 +92,34 @@ namespace DarkConfig {
     /// If the field annotated with inline then we will look for it's properties in the same doc as the parent
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
     public class ConfigInlineAttribute : Attribute { }
+
+    /// Name of this type in documentation, for generic types "<0>" indicates the first template parameter, "<1>" the second, and so on
+    [AttributeUsage(AttributeTargets.Class)]
+    public class ConfigDocumentationNameAttribute : Attribute { 
+        public readonly string Value;
+
+        public ConfigDocumentationNameAttribute(string value) {
+            Value = value;
+        }
+    }
+    
+    /// Description of this type or field
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Field | AttributeTargets.Property, Inherited = false)]
+    public class ConfigDocumentationDescriptionAttribute : Attribute { 
+        public readonly string Value;
+
+        public ConfigDocumentationDescriptionAttribute(string value) {
+            Value = value;
+        }
+    }
+    
+    /// Example yaml of this type
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = true, Inherited = false)]
+    public class ConfigDocumentationExampleAttribute : Attribute { 
+        public readonly string Value;
+
+        public ConfigDocumentationExampleAttribute(string value) {
+            Value = value;
+        }
+    }
 }
