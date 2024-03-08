@@ -1,3 +1,4 @@
+#nullable enable
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -82,7 +83,7 @@ namespace DarkConfig {
             return false;
         }
 
-        public override bool TryGetValue(string key, bool ignoreCase, out DocNode result) {
+        public override bool TryGetValue(string key, bool ignoreCase, out DocNode? result) {
             AssertTypeIs(DocNodeType.Dictionary);
 
             var children = ((YamlMappingNode) SourceNode).Children;
@@ -135,7 +136,7 @@ namespace DarkConfig {
 
             public IEnumerator<KeyValuePair<string, DocNode>> GetEnumerator() {
                 foreach (var entry in ((YamlMappingNode) node).Children) {
-                    yield return new(((YamlScalarNode) entry.Key).Value, new YamlDocNode(entry.Value, filename));
+                    yield return new(((YamlScalarNode) entry.Key).Value!, new YamlDocNode(entry.Value, filename));
                 }
             }
 
@@ -155,7 +156,7 @@ namespace DarkConfig {
         public override string StringValue {
             get {
                 AssertTypeIs(DocNodeType.Scalar);
-                return ((YamlScalarNode) SourceNode).Value;
+                return ((YamlScalarNode) SourceNode).Value!;
             }
             set => throw new NotSupportedException();
         }
