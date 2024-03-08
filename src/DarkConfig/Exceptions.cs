@@ -30,6 +30,7 @@ namespace DarkConfig {
 
         public override string StackTrace => _wrappedException == null ? base.StackTrace : _wrappedException.StackTrace + "\n-----\n" + base.StackTrace;
         public override string Message => base.Message + (HasNode ? $" from {Node.SourceInformation}" : "");
+        public string RawMessage => base.Message;
         public bool HasNode {
             get { return Node != null; }
         }
@@ -38,12 +39,19 @@ namespace DarkConfig {
         readonly Exception _wrappedException;
     }
 
-    public class MissingFieldsException : ParseException {
-        public MissingFieldsException(DocNode node, string message) : base(node, message) { }
+    public class TypedParseException : ParseException {
+        public Type ParsedType;
+        public TypedParseException(Type type, DocNode node, string message) : base(node, message) {
+            ParsedType = type;
+        }
     }
 
-    public class ExtraFieldsException : ParseException {
-        public ExtraFieldsException(DocNode node, string message) : base(node, message) { }
+    public class MissingFieldsException : TypedParseException {
+        public MissingFieldsException(Type type, DocNode node, string message) : base(type, node, message) { }
+    }
+
+    public class ExtraFieldsException : TypedParseException {
+        public ExtraFieldsException(Type type, DocNode node, string message) : base(type, node, message) { }
     }
 
     public class ConfigFileNotFoundException : FileNotFoundException {
