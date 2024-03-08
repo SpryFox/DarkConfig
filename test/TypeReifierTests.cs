@@ -55,11 +55,13 @@ class TestTypes {
         public static List<string> staticStringList = null;
     }
 
-    protected class SingleFieldClass {
+    protected class SingleInlineFieldClass {
+        [ConfigMandatory, ConfigInline]
         public int SingleField = 0;
     }
 
-    protected class SingleListClass {
+    protected class SingleInlineListClass {
+        [ConfigMandatory, ConfigInline]
         public List<string> SingleList = null;
     }
 
@@ -492,7 +494,7 @@ class TypeReifierTests : TestTypes {
     public void SetsStruct() {
         var pc = ReifyString<ParentClass>(@"---
             nestedStruct:
-                childIntKey: 1201                
+                childIntKey: 1201
             ");
         Assert.That(pc.nestedStruct.childIntKey, Is.EqualTo(1201));
     }
@@ -970,7 +972,7 @@ class ReifiesSingle : TestTypes {
             8342
             "
             , "TestFilename");
-        var inst = new SingleFieldClass();
+        var inst = new SingleInlineFieldClass();
         reifier.SetFieldsOnObject(ref inst, doc);
         Assert.That(inst.SingleField, Is.EqualTo(8342));
     }
@@ -982,7 +984,7 @@ class ReifiesSingle : TestTypes {
             [a, b, c, d]
             "
             , "TestFilename");
-        var inst = new SingleListClass();
+        var inst = new SingleInlineListClass();
         reifier.SetFieldsOnObject(ref inst, doc);
         Assert.Multiple(() => {
             Assert.That(inst.SingleList[0], Is.EqualTo("a"));
