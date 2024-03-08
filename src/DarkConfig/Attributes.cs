@@ -67,4 +67,29 @@ namespace DarkConfig {
             Key = key.Trim();
         }
     }
+
+    /// <summary>
+    /// Marks this type as a polymorphic union of its parent type and indicates the key whose presence implies this type
+    /// The key for this union is in the same doc as it's properties. The key is always the first property specified.
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Class)]
+    public class ConfigUnionInlineAttribute : Attribute {
+        public readonly string Key;
+
+        /// <summary>
+        /// When parsing the parent type, if the key is <paramref name="key"/> then this type will be
+        /// parsed instead.
+        /// </summary>
+        /// <param name="key">The substitute key</param>
+        public ConfigUnionInlineAttribute(string key) {
+            if (string.IsNullOrWhiteSpace(key)) {
+                throw new ArgumentNullException(nameof(key));
+            }
+            Key = key.Trim();
+        }
+    }
+
+    /// If the field annotated with inline then we will look for it's properties in the same doc as the parent
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
+    public class ConfigInlineAttribute : Attribute { }
 }
