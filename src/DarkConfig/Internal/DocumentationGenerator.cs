@@ -6,7 +6,6 @@ using System.Reflection;
 using System.Text;
 
 namespace DarkConfig.Internal {
-    
     internal static class DocumentationGenerator {
         const string FileFooter = @"
 <style>
@@ -69,7 +68,7 @@ namespace DarkConfig.Internal {
             }
             Directory.CreateDirectory(documentationRoot);
             Directory.CreateDirectory(Path.Combine(documentationRoot, "Types"));
-            
+
             // find all types and how they relate to each other
             HashSet<Type> types = new();
             HashSet<Type> allTypes = new();
@@ -79,7 +78,7 @@ namespace DarkConfig.Internal {
                 CollectTypes(cache, rootTypes[rootTypeIndex], null, rootTypes[rootTypeIndex], types, relatedTypes);
                 allTypes.UnionWith(types);
             }
-            
+
             // write out index file
             {
                 StringBuilder builder = new();
@@ -97,14 +96,14 @@ namespace DarkConfig.Internal {
 
         private static void WriteToFile(string filePath, StringBuilder builder) {
             builder.AppendLine(FileFooter);
-            
+
             // HACK: squash double newlines
             string document = builder.ToString()
                 .Replace("\r\n", "\n")
                 .Replace("\n\n\n\n", "\n")
                 .Replace("\n\n\n", "\n")
                 .Replace("\n\n", "\n");
-            
+
             File.WriteAllText(filePath, document);
         }
 
@@ -138,12 +137,12 @@ namespace DarkConfig.Internal {
                 if (parentType != null) {
                     AddRelatedType(currentType, parentType, relatedTypes);
                 }
-            
+
                 var typeInfo = cache.GetTypeInfo(currentType);
                 if (typeInfo.UnionKeys != null) {
                     foreach (var unionChild in typeInfo.UnionKeys) {
                         CollectTypes(cache, rootType, currentType, unionChild.Item2, types, relatedTypes);
-                        
+
                         // all union types relate to each other
                         foreach (var unionChild2 in typeInfo.UnionKeys) {
                             AddRelatedType(unionChild.Item2, unionChild2.Item2, relatedTypes);
@@ -167,7 +166,7 @@ namespace DarkConfig.Internal {
                 relatedTypes.Add(hostType, new());
                 relatedTypeList = relatedTypes[hostType];
             }
-            
+
             relatedTypeList.Add(relatedType);
         }
 
@@ -179,7 +178,7 @@ namespace DarkConfig.Internal {
                 string typeFriendlyName = FormatTypeName(type, allTypes, true, true);
                 builder.AppendLine($"- {typeFriendlyName}");
             }
-            
+
             builder.AppendLine($"{FormatHeader(headerDepth + 1)} All Types");
             var typesList = allTypes.ToList();
             typesList.Sort((A, B) => String.CompareOrdinal(A.Name, B.Name));
@@ -193,14 +192,14 @@ namespace DarkConfig.Internal {
 
             string typeFriendlyName = FormatTypeName(type, allTypes, false);
             builder.AppendLine($"{FormatHeader(headerDepth)} {typeFriendlyName}");
-            
+
             var descriptionAttribute = type.GetCustomAttribute<ConfigDocumentationDescriptionAttribute>();
             if (descriptionAttribute != null) {
                 builder.AppendLine(descriptionAttribute.Value);
             }
 
             var typeInfo = allTypes.Contains(type) ? cache.GetTypeInfo(type) : null;
-            
+
             if (type.IsEnum) {
                 builder.AppendLine();
                 builder.AppendLine("Enumeration with the following values:");
@@ -230,7 +229,7 @@ namespace DarkConfig.Internal {
 
                 if (typeInfo != null && typeInfo.MemberNames.Count > 0) {
                     bool singleProperty = TypeIsSingleProperty(typeInfo, out int singlePropertyMemberIndex);
-                    
+
                     builder.AppendLine();
                     builder.AppendLine($"{FormatHeader(headerDepth + 1)} Fields");
                     if (typeInfo.FromDoc != null) {
@@ -240,12 +239,12 @@ namespace DarkConfig.Internal {
                         FieldTableRows(builder, cache, allTypes, typeInfo, singlePropertyMemberIndex);
                         TableEnd(builder);
                     }
-                    
+
                     if (typeInfo.FromDocString != null) {
                         Note(builder, $"This type supports being authored as a single string in addition to as an object. " +
                             "If the above description does not cover how this works (or is missing) talk to your local gameplay engineer and ask them to add one.");
                     }
-                    
+
                     if (singleProperty) {
                         string memberName = FormatName(typeInfo.MemberNames[singlePropertyMemberIndex]);
                         Note(builder, $"With this type you may specify the value of \"{memberName}\" as the value of the whole type.");
@@ -255,7 +254,7 @@ namespace DarkConfig.Internal {
                 builder.AppendLine($"{FormatHeader(headerDepth + 1)} Examples");
 
                 int exampleCount = ExamplesFromAttributes(builder, type, 0);
-                
+
                 if (exampleCount == 0) {
                     StringBuilder exampleBuilderMinimal = new();
                     StringBuilder exampleBuilderExpanded = new();
@@ -290,7 +289,7 @@ namespace DarkConfig.Internal {
 
                 builder.AppendLine();
             }
-            
+
             // related types (for type not displayType)
             if (relatedTypes.TryGetValue(type, out HashSet<Type> relatedTypeList)) {
                 builder.AppendLine();
@@ -300,7 +299,7 @@ namespace DarkConfig.Internal {
                     builder.AppendLine($"- {FormatTypeName(relatedType, allTypes, true)}");
                 }
             }
-            
+
             builder.AppendLine();
         }
 
@@ -321,7 +320,7 @@ namespace DarkConfig.Internal {
                         FieldTableRows(builder, cache, allTypes, memberTypeInfo, -1);
                         continue;
                     }
-                } 
+                }
                 attributesStringBuilder.Clear();
                 if (!typeInfo.IsRequired(memberIndex, false)) {
                     attributesStringBuilder.AppendLine("`Optional`  ");
@@ -364,7 +363,7 @@ namespace DarkConfig.Internal {
 
                     GenerateNote(builder, "Optional, same as a parent type, clipped from example", ref hasNote);
                     return;
-                } 
+                }
             }
             loopProtection = new HashSet<Type>(loopProtection);
             loopProtection.Add(type);
@@ -373,7 +372,7 @@ namespace DarkConfig.Internal {
             if (customExampleAttribute == null) {
                 customExampleAttribute = type.GetCustomAttributes<ConfigDocumentationExampleAttribute>().FirstOrDefault();
             }
-        
+
             if (customExampleAttribute != null) {
                 if (isList) {
                     builder.Append($"{FormatTabs(depth)}- ");
@@ -384,7 +383,7 @@ namespace DarkConfig.Internal {
                 }
                 return;
             }
-            
+
             if (type == typeof(string)) {
                 GenerateExampleForString(builder, depth, drawMinimal, isOptional, isList);
             }
@@ -399,10 +398,10 @@ namespace DarkConfig.Internal {
             }
             else if (type.IsEnum) {
                 GenerateExampleForEnum(type, builder, depth, drawMinimal, isOptional, isList);
-            } 
+            }
             else if (type.IsArray) {
                 GenerateExampleForList(cache, type.GetElementType(), builder, loopProtection, depth, drawMinimal, isOptional, isList);
-            } 
+            }
             else if (type.IsGenericType) {
                 if (TypeIsOrExtendsGeneric(type, typeof(List<>), out var listType)) {
                     GenerateExampleForList(cache, listType.GetGenericArguments()[0], builder, loopProtection, depth, drawMinimal, isOptional, isList);
@@ -413,7 +412,7 @@ namespace DarkConfig.Internal {
                 else if (TypeIsOrExtendsGeneric(type, typeof(Nullable<>), out var nullableType)) {
                     GenerateExampleForType(cache, nullableType.GetGenericArguments()[0], memberInfo, builder, loopProtection, depth, drawMinimal, isOptional, isList);
                 }
-            } 
+            }
             else {
                 if (isOptional) {
                     GenerateNote(builder, "Optional", ref hasNote);
@@ -421,11 +420,11 @@ namespace DarkConfig.Internal {
                 var typeInfo = cache.GetTypeInfo(type);
                 if (typeInfo.UnionKeys != null) {
                     GenerateExampleForUnion(cache, builder, loopProtection, depth, drawMinimal, isOptional, isList, typeInfo, memberInfo);
-                } 
+                }
                 else {
                     if (typeInfo.FromDoc != null) {
                         GenerateNote(builder, "unknown format - type uses custom parsing", ref hasNote);
-                    } 
+                    }
                     else {
                         bool isSinglePropertyWrapper = TypeIsSingleProperty(typeInfo, out int singlePropertyIndex);
                         int numOptionalMembers = typeInfo.NumOptionalFields;
@@ -433,7 +432,7 @@ namespace DarkConfig.Internal {
                             Type memberType = typeInfo.GetMemberType(singlePropertyIndex);
                             GenerateExampleForType(cache, memberType, typeInfo.MemberInfos[singlePropertyIndex], builder, loopProtection, depth + 1, drawMinimal,
                                 false, false);
-                        } 
+                        }
                         else {
                             int childDepth = depth;
                             for (int memberIndex = 0; memberIndex < typeInfo.MemberNames.Count; memberIndex++) {
@@ -445,7 +444,7 @@ namespace DarkConfig.Internal {
                                     GenerateExampleForType(cache, memberType, memberInfo, builder, loopProtection, depth, drawMinimal, false, false);
                                     continue;
                                 }
-                                
+
                                 bool isMemberOptional = !typeInfo.IsRequired(memberIndex, false);
                                 if (drawMinimal && isMemberOptional && depth > 1) {
                                     continue;
@@ -494,7 +493,7 @@ namespace DarkConfig.Internal {
                     }
                     continue;
                 }
-                
+
                 if (loopProtection.Contains(childType))
                 {
                     if (isList)
@@ -549,11 +548,11 @@ namespace DarkConfig.Internal {
             if (isOptional)
             {
                 builder.AppendLine(" # Optional");
-            } 
+            }
             else {
                 builder.AppendLine();
             }
-            
+
             GenerateExampleForType(cache, type, null, builder, loopProtection, depth, drawMinimal, false, true);
         }
 
@@ -563,11 +562,11 @@ namespace DarkConfig.Internal {
             {
                 builder.Append(" # Optional");
                 builder.AppendLine();
-            } 
+            }
             else {
                 builder.AppendLine();
             }
-            
+
             if (isList)
             {
                 builder.AppendLine($"{FormatTabs(depth)}- \"stringKey\": ");
@@ -682,12 +681,12 @@ namespace DarkConfig.Internal {
             {
                 return "Number";
             }
-            
+
             if (type == typeof(int))
             {
                 return "Integer";
             }
-            
+
             var customNameAttribute = type.GetCustomAttribute<ConfigDocumentationNameAttribute>();
             if (type.IsGenericType) {
                 if (type.GetGenericTypeDefinition() == typeof(List<>)) {
@@ -708,7 +707,7 @@ namespace DarkConfig.Internal {
                     return friendlyName;
                 }
             }
-            
+
             if (customNameAttribute != null) {
                 string friendlyName = customNameAttribute.Value;
                 if (linkify) {
@@ -755,7 +754,7 @@ namespace DarkConfig.Internal {
                     return "";
                 }
             }
-            
+
             var descriptionAttribute = type.GetCustomAttribute<ConfigDocumentationDescriptionAttribute>();
             if (descriptionAttribute != null) {
                 return descriptionAttribute.Value;
@@ -793,7 +792,7 @@ namespace DarkConfig.Internal {
         private static void TableAddDescriptionRow(StringBuilder builder, string description, int spanCount) {
             builder.AppendLine($"<tr><td class=\"description\" colspan=\"{spanCount}\">{description}</td></tr>");
         }
-        
+
         private static void TableEnd(StringBuilder builder) {
             builder.AppendLine($"</table>");
         }
@@ -820,7 +819,7 @@ namespace DarkConfig.Internal {
             if (numRequiredMembers > 1 || numRequiredMembers == 0) {
                 return false;
             }
-            
+
             for (int memberIndex = 0; memberIndex < typeInfo.MemberNames.Count; memberIndex++) {
                 if (typeInfo.IsRequired(memberIndex, false)) {
                     outRequiredMemerIndex = memberIndex;
@@ -835,9 +834,9 @@ namespace DarkConfig.Internal {
                     if ((typeInfo.MemberOptions[memberIndex] & ReflectionCache.TypeInfo.MemberOptionFlags.Inline) != 0) {
                         return true;
                     }
-                    
+
                     // other tests?
-                    
+
                     break;
                 }
             }
