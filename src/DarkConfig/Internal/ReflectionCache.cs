@@ -1,8 +1,8 @@
+#nullable enable
+
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
-using YamlDotNet.Core.Tokens;
 
 namespace DarkConfig.Internal {
     /// Cached type reflection data.
@@ -10,13 +10,13 @@ namespace DarkConfig.Internal {
     /// so it's worth trying to reduce how much we need to do it as much as possible.
     internal class ReflectionCache {
         internal class TypeInfo {
-            public MethodInfo FromDoc;
-            public MethodInfo FromDocString;
-            public MethodInfo PostDoc;
+            public MethodInfo? FromDoc;
+            public MethodInfo? FromDocString;
+            public MethodInfo? PostDoc;
 
             // A mapping of union type identifiers to concrete types
-            public MultiCaseDictionary<Type> UnionKeys;
-            public bool IsUnionInline = false;
+            public MultiCaseDictionary<Type>? UnionKeys;
+            public bool IsUnionInline;
 
             // Source Info
             public int SourceInfoMemberIndex = -1;
@@ -41,17 +41,14 @@ namespace DarkConfig.Internal {
                 }
             }
 
-            public object GetMemberValue(object obj, int memberIndex) {
-                MemberInfo member = MemberInfos[memberIndex];
-                if (IsField(memberIndex, false)) {
-                    return ((FieldInfo) member).GetValue(obj);
-                } else {
-                    return ((PropertyInfo) member).GetValue(obj);
-                }
+            public object? GetMemberValue(object obj, int memberIndex) {
+                var member = MemberInfos[memberIndex];
+                return IsField(memberIndex, false) ? ((FieldInfo) member).GetValue(obj)
+                    : ((PropertyInfo) member).GetValue(obj);
             }
 
             public void SetMemberValue(object obj, int memberIndex, object value) {
-                MemberInfo member = MemberInfos[memberIndex];
+                var member = MemberInfos[memberIndex];
                 if (IsField(memberIndex, false)) {
                     ((FieldInfo) member).SetValue(obj, value);
                 } else {
@@ -182,7 +179,7 @@ namespace DarkConfig.Internal {
                     MemberNames.Insert(insertionIndex, memberName);
                     MemberInfos.Insert(insertionIndex, memberInfo);
 
-                    MemberOptionFlags optionFlags = default;
+                    MemberOptionFlags optionFlags = default(MemberOptionFlags);
                     foreach (object attribute in memberInfo.GetCustomAttributes(true)) {
                         switch (attribute) {
                             case ConfigInlineAttribute _:
@@ -204,14 +201,14 @@ namespace DarkConfig.Internal {
         ////////////////////////////////////////////
 
         readonly Dictionary<Type, TypeInfo> cachedTypeInfo = new Dictionary<Type, TypeInfo>();
-        readonly HashSet<Assembly> prechachedAssemblies = new();
+        readonly HashSet<Assembly> precachedAssemblies = new HashSet<Assembly>();
 
         ////////////////////////////////////////////
 
         // Precache everything in this assembly that requires iterating all types to resolve
         bool PrecacheAssembly(Assembly sourceAssembly) {
-            if (!prechachedAssemblies.Contains(sourceAssembly)) {
-                prechachedAssemblies.Add(sourceAssembly);
+            if (!precachedAssemblies.Contains(sourceAssembly)) {
+                precachedAssemblies.Add(sourceAssembly);
                 foreach (Type type in sourceAssembly.GetTypes()) {
                     foreach (object attribute in type.GetCustomAttributes(false)) {
                         switch (attribute) {
@@ -248,7 +245,7 @@ namespace DarkConfig.Internal {
             bool typeHasMandatoryAttribute = false;
             bool typeHasOptionalAttribute = false;
             bool typeHasUnionInlineAttribute = false;
-            string typeUnionKey = null;
+            string? typeUnionKey = null;
             foreach (object attribute in type.GetCustomAttributes(true)) {
                 switch (attribute) {
                     case ConfigMandatoryAttribute _:
