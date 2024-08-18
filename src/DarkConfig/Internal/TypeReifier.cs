@@ -1,3 +1,5 @@
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -92,7 +94,7 @@ namespace DarkConfig.Internal {
             // Set static fields and properties
             var typeInfo = reflectionCache.GetTypeInfo(type);
             var setMemberHashes = new List<int>();
-            List<string> missingRequiredMemberNames = null;
+            List<string>? missingRequiredMemberNames = null;
             for (int memberIndex = 0; memberIndex < typeInfo.StaticMemberNames.Count; ++memberIndex) {
                 string memberName = typeInfo.StaticMemberNames[memberIndex];
 
@@ -106,13 +108,13 @@ namespace DarkConfig.Internal {
 
                 if (typeInfo.IsField(memberIndex, true)) {
                     var fieldInfo = (FieldInfo) typeInfo.StaticMemberInfos[memberIndex];
-                    object newValue = typeInfo.SourceInfoStaticMemberIndex == memberIndex ? doc.SourceInformation
+                    object? newValue = typeInfo.SourceInfoStaticMemberIndex == memberIndex ? doc.SourceInformation
                         : ReadValueOfType(fieldInfo.FieldType, fieldInfo.GetValue(null), memberDoc, options);
                     setMemberHashes.Add(memberName.GetCanonicalHashCode(ignoreCase));
                     fieldInfo.SetValue(null, newValue);
                 } else {
                     var propertyInfo = (PropertyInfo) typeInfo.StaticMemberInfos[memberIndex];
-                    object newValue = typeInfo.SourceInfoStaticMemberIndex == memberIndex ? doc.SourceInformation
+                    object? newValue = typeInfo.SourceInfoStaticMemberIndex == memberIndex ? doc.SourceInformation
                         : ReadValueOfType(propertyInfo.PropertyType, propertyInfo.GetValue(null), memberDoc, options);
                     setMemberHashes.Add(memberName.GetCanonicalHashCode(ignoreCase));
                     propertyInfo.SetValue(null, newValue);
@@ -150,6 +152,8 @@ namespace DarkConfig.Internal {
         /// <exception cref="ExtraFieldsException">If the field does not exist as a member of <typeparamref name="T"/> and extra fields are disallowed</exception>
         /// <exception cref="MissingFieldsException">If the field is marked as mandatory and is missing in the yaml doc</exception>
         public bool SetFieldOnObject<T>(ref T obj, string fieldName, DocNode doc, ReificationOptions? options = null) where T : class {
+            if (doc == null) { throw new ArgumentNullException(nameof(doc)); }
+
             object setRef = obj;
             bool containedMember = SetMember(typeof(T), ref setRef, fieldName, doc, options);
             obj = (T) setRef;
@@ -186,14 +190,14 @@ namespace DarkConfig.Internal {
         /// or a new instance of <paramref name="targetType"/> containing new data from <paramref name="doc"/></returns>
         /// <exception cref="Exception"></exception>
         /// <exception cref="ParseException"></exception>
-        public object ReadValueOfType(Type targetType, object existing, DocNode doc, ReificationOptions? options) {
+        public object? ReadValueOfType(Type targetType, object? existing, DocNode doc, ReificationOptions? options) {
             var result = new ReificationResult();
             existing = ReadValueOfTypeWithoutExtraFieldsValidation(targetType, existing, doc, result, options);
             result.VerifyAllMembersConsumed(targetType, doc, options);
             return existing;
         }
 
-        private object ReadValueOfTypeWithoutExtraFieldsValidation(Type targetType, object existing, DocNode doc, ReificationResult result, ReificationOptions? options) {
+        private object? ReadValueOfTypeWithoutExtraFieldsValidation(Type targetType, object? existing, DocNode doc, ReificationResult result, ReificationOptions? options) {
             try {
                 #region Atomic data types
                 if (targetType == typeof(bool)) { return Convert.ToBoolean(doc.StringValue, System.Globalization.CultureInfo.InvariantCulture); }
@@ -265,8 +269,8 @@ namespace DarkConfig.Internal {
 
                         // Read the array values.
                         for (int a = 0; a < arrayValue.Length; a++) {
-                            var existingElement = arrayValue.GetValue(a);
-                            var updatedElement = ReadValueOfType(elementType, existingElement, doc[a], options);
+                            object? existingElement = arrayValue.GetValue(a);
+                            object? updatedElement = ReadValueOfType(elementType, existingElement, doc[a], options);
                             arrayValue.SetValue(updatedElement, a);
                         }
                     } else { // n-dimensional arrays
@@ -349,6 +353,7 @@ namespace DarkConfig.Internal {
                     // Dictionary<K,V>
                     if (genericTypeDef == typeof(Dictionary<,>)) {
                         existing ??= Activator.CreateInstance(targetType);
+                        if (existing == null) { throw new InvalidOperationException("Cannot instantiate type " + targetType.FullName); }
                         var existingDict = (System.Collections.IDictionary) existing;
 
                         var typeParameters = targetType.GetGenericArguments();
@@ -360,8 +365,9 @@ namespace DarkConfig.Internal {
                         // create/update all pairs in the doc
                         foreach ((string docKey, var docValue) in doc.Pairs) {
                             keyNode.StringValue = docKey;
-                            object readKey = ReadValueOfType(keyType, null, keyNode, options);
-                            object existingValue = existingDict.Contains(readKey) ? existingDict[readKey] : null;
+                            object? readKey = ReadValueOfType(keyType, null, keyNode, options);
+                            if (readKey == null) { throw new ParseException(doc, "Dictionary key cannot be null"); }
+                            object? existingValue = existingDict.Contains(readKey) ? existingDict[readKey] : null;
                             existingDict[readKey] = ReadValueOfType(valueType, existingValue, docValue, options);
                             readKeyHashes.Add(readKey.GetHashCode());
                         }
@@ -385,6 +391,7 @@ namespace DarkConfig.Internal {
                         var listElementType = targetType.GetGenericArguments()[0];
 
                         existing ??= Activator.CreateInstance(targetType);
+                        if (existing == null) { throw new InvalidOperationException("Cannot instantiate type " + targetType.FullName); }
                         var existingList = (System.Collections.IList) existing;
 
                         // Remove any extra existing slots we won't need.
@@ -433,6 +440,7 @@ namespace DarkConfig.Internal {
                             return null;
                         }
                         var innerType = Nullable.GetUnderlyingType(targetType);
+                        if (innerType == null) { throw new InvalidOperationException("Cannot get underlying type for type " + targetType.FullName); }
                         return ReadValueOfType(innerType, existing, doc, options);
                     }
                 }
@@ -505,6 +513,7 @@ namespace DarkConfig.Internal {
                         }
                     } else {
                         existing ??= Activator.CreateInstance(targetType);
+                        if (existing == null) { throw new InvalidOperationException("Cannot instantiate type " + targetType.FullName); }
                         SetFieldsOnObjectWithoutExtraFieldsValidation(targetType, ref existing, doc, result, options);
                     }
                 }
@@ -590,7 +599,7 @@ namespace DarkConfig.Internal {
                 // Allow specifying object types with a single required property or field as a scalar value in configs, or if the property is marked as inline, as any
                 // type.
                 // This is syntactic sugar that lets us wrap values in classes or make simple classes more pleasant to author YAML for.
-                object newValue = ReadValueOfType(typeInfo.GetMemberType(0), typeInfo.GetMemberValue(obj, 0), doc, options);
+                object? newValue = ReadValueOfType(typeInfo.GetMemberType(0), typeInfo.GetMemberValue(obj, 0), doc, options);
                 typeInfo.SetMemberValue(obj, 0, newValue);
 
                 // Don't verify the set member hashes, because that happens inside the `ReadValueOfType` call instead.
@@ -610,13 +619,17 @@ namespace DarkConfig.Internal {
             // Set fields and properties.
             result.SetMemberHashes.EnsureCapacity(result.SetMemberHashes.Count + typeInfo.MemberNames.Count);
 
-            List<string> missingRequiredMembers = null;
+            List<string>? missingRequiredMembers = null;
             for (int memberIndex = 0; memberIndex < typeInfo.MemberNames.Count; ++memberIndex) {
                 var memberOptions = typeInfo.MemberOptions[memberIndex];
 
                 if (memberOptions.HasFlag(ReflectionCache.TypeInfo.MemberOptionFlags.Inline)) {
-                    object inlineValue = ReadValueOfTypeWithoutExtraFieldsValidation(typeInfo.GetMemberType(memberIndex), typeInfo.GetMemberValue(obj, memberIndex),
-                        doc, result, options);
+                    object? inlineValue = ReadValueOfTypeWithoutExtraFieldsValidation(
+                        typeInfo.GetMemberType(memberIndex),
+                        typeInfo.GetMemberValue(obj, memberIndex),
+                        doc,
+                        result,
+                        options);
                     typeInfo.SetMemberValue(obj, memberIndex, inlineValue);
                     continue;
                 }
@@ -631,7 +644,7 @@ namespace DarkConfig.Internal {
                     continue;
                 }
 
-                object newValue = typeInfo.SourceInfoMemberIndex == memberIndex ? doc.SourceInformation
+                object? newValue = typeInfo.SourceInfoMemberIndex == memberIndex ? doc.SourceInformation
                     : ReadValueOfType(typeInfo.GetMemberType(memberIndex), typeInfo.GetMemberValue(obj, memberIndex), memberDoc, options);
                 typeInfo.SetMemberValue(obj, memberIndex, newValue);
 
@@ -658,10 +671,6 @@ namespace DarkConfig.Internal {
         /// <exception cref="ExtraFieldsException">If the field does not exist as a member of <paramref name="type"/> and extra fields are disallowed</exception>
         /// <exception cref="MissingFieldsException">If the field is marked as mandatory and is missing in the yaml doc</exception>
         bool SetMember(Type type, ref object obj, string memberName, DocNode doc, ReificationOptions? options = null) {
-            if (doc == null) {
-                return false;
-            }
-
             // Grab global settings
             bool ignoreCase = ((options ?? Configs.Settings.DefaultReifierOptions) & ReificationOptions.CaseSensitive) == 0;
             bool allowExtra = ((options ?? Configs.Settings.DefaultReifierOptions) & ReificationOptions.AllowExtraFields) != 0;
