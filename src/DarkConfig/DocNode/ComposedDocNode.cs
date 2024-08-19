@@ -33,11 +33,11 @@ namespace DarkConfig {
         /// access the node as if it was a list
         public override DocNode this[int index] {
             get {
-                CheckTypeIs(DocNodeType.List);
+                AssertTypeIs(DocNodeType.List);
                 return list[index];
             }
             set {
-                CheckTypeIs(DocNodeType.List);
+                AssertTypeIs(DocNodeType.List);
                 list[index] = value;
             }
         }
@@ -45,11 +45,11 @@ namespace DarkConfig {
         /// access the node as if it was a Dictionary
         public override DocNode this[string key] {
             get {
-                CheckTypeIs(DocNodeType.Dictionary);
+                AssertTypeIs(DocNodeType.Dictionary);
                 return dictionary[key];
             }
             set {
-                CheckTypeIs(DocNodeType.Dictionary);
+                AssertTypeIs(DocNodeType.Dictionary);
                 dictionary[key] = value;
             }
         }
@@ -58,11 +58,11 @@ namespace DarkConfig {
             Type switch {
                 DocNodeType.Dictionary => dictionary.Count,
                 DocNodeType.List => list.Count,
-                _ => throw new DocNodeAccessException(GenerateAccessExceptionMessage("Countable (Dictionary or List)"))
+                _ => throw new DocNodeAccessException(GenerateAccessExceptionMessage("Countable (Dictionary or List)", Type.ToString()))
             };
 
         public override bool ContainsKey(string key, bool ignoreCase = false) {
-            CheckTypeIs(DocNodeType.Dictionary);
+            AssertTypeIs(DocNodeType.Dictionary);
             foreach (string dictKey in dictionary.Keys) {
                 if (string.Equals(dictKey, key, ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal)) {
                     return true;
@@ -72,7 +72,7 @@ namespace DarkConfig {
         }
 
         public override bool TryGetValue(string key, bool ignoreCase, out DocNode result) {
-            CheckTypeIs(DocNodeType.Dictionary);
+            AssertTypeIs(DocNodeType.Dictionary);
             foreach (var kvp in dictionary) {
                 if (string.Equals(kvp.Key, key, ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal)) {
                     result = kvp.Value;
@@ -86,25 +86,25 @@ namespace DarkConfig {
 
         public override IEnumerable<DocNode> Values {
             get {
-                CheckTypeIs(DocNodeType.List);
+                AssertTypeIs(DocNodeType.List);
                 return list;
             }
         }
 
         public override IEnumerable<KeyValuePair<string, DocNode>> Pairs {
             get {
-                CheckTypeIs(DocNodeType.Dictionary);
+                AssertTypeIs(DocNodeType.Dictionary);
                 return dictionary;
             }
         }
 
         public override string StringValue {
             get {
-                CheckTypeIs(DocNodeType.Scalar);
+                AssertTypeIs(DocNodeType.Scalar);
                 return scalar;
             }
             set {
-                CheckTypeIs(DocNodeType.Scalar);
+                AssertTypeIs(DocNodeType.Scalar);
                 scalar = value;
             }
         }
@@ -119,32 +119,32 @@ namespace DarkConfig {
         #endregion
 
         public void Add(DocNode d) {
-            CheckTypeIs(DocNodeType.List);
+            AssertTypeIs(DocNodeType.List);
             list.Add(d);
         }
 
         public void Add(string key, DocNode value) {
-            CheckTypeIs(DocNodeType.Dictionary);
+            AssertTypeIs(DocNodeType.Dictionary);
             dictionary.Add(key, value);
         }
 
         public void InsertAt(int index, DocNode value) {
-            CheckTypeIs(DocNodeType.List);
+            AssertTypeIs(DocNodeType.List);
             list.Insert(index, value);
         }
 
         public void Remove(DocNode d) {
-            CheckTypeIs(DocNodeType.List);
+            AssertTypeIs(DocNodeType.List);
             list.Remove(d);
         }
 
         public void RemoveAt(int index) {
-            CheckTypeIs(DocNodeType.List);
+            AssertTypeIs(DocNodeType.List);
             list.RemoveAt(index);
         }
 
         public void RemoveKey(string key) {
-            CheckTypeIs(DocNodeType.Dictionary);
+            AssertTypeIs(DocNodeType.Dictionary);
             dictionary.Remove(key);
         }
 
@@ -204,18 +204,6 @@ namespace DarkConfig {
 
         public static ComposedDocNode DeepClone(DocNode doc) {
             return MakeMutable(doc, recursive: true, force: true);
-        }
-
-        /////////////////////////////////////////////////
-
-        void CheckTypeIs(DocNodeType requiredType) {
-            if (Type != requiredType) {
-                throw new DocNodeAccessException(GenerateAccessExceptionMessage(requiredType.ToString()));
-            }
-        }
-
-        string GenerateAccessExceptionMessage(string expectedType) {
-            return $"Accessing ComposedDocNode as {expectedType} but is {Type}. ";
         }
     }
 }

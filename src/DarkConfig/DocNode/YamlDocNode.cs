@@ -164,17 +164,5 @@ namespace DarkConfig {
 
         public override YamlNode SourceNode  { get; }
         public override string SourceFile { get; }
-
-        ////////////////////////////////////////////
-
-        void AssertTypeIs(DocNodeType type) {
-            if (Type != type) {
-                throw new DocNodeAccessException(GenerateAccessExceptionMessage(type.ToString(), Type.ToString()));
-            }
-        }
-
-        string GenerateAccessExceptionMessage(string expectedType, string actualType) {
-            return $"Accessing YamlDocNode as {expectedType} but is {actualType}. {SourceInformation}";
-        }
     }
 }

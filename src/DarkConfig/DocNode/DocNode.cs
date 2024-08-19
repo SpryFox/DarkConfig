@@ -71,9 +71,7 @@ namespace DarkConfig {
         /// <returns>True if the string exists in this list</returns>
         /// <exception cref="DocNodeAccessException">Thrown if this is not a list</exception>
         public bool Contains(string item) {
-            if (Type != DocNodeType.List) {
-                throw new DocNodeAccessException("Expected List, is " + Type);
-            }
+            AssertTypeIs(DocNodeType.List);
 
             for (int i = 0; i < Count; i++) {
                 if (this[i].StringValue == item) {
@@ -207,5 +205,15 @@ namespace DarkConfig {
                 default: throw new ArgumentException($"Can't merge doc nodes of type {lhs.Type}");
             }
         }
+
+        ////////////////////////////////////////////
+
+        protected void AssertTypeIs(DocNodeType type) {
+            if (Type != type) {
+                throw new DocNodeAccessException(GenerateAccessExceptionMessage(type.ToString(), Type.ToString()));
+            }
+        }
+
+        protected string GenerateAccessExceptionMessage(string expectedType, string actualType) => $"Accessing DocNode as {expectedType} but is {actualType}. {SourceInformation}";
     }
 }
