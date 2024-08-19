@@ -1,3 +1,5 @@
+#nullable enable
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -23,15 +25,15 @@ namespace DarkConfig.Internal {
 
         /// True if all sources have been preloaded.
         internal bool IsPreloaded { get; private set; }
-        internal readonly List<ConfigSource> sources = new List<ConfigSource>();
+        internal readonly List<ConfigSource> sources = new();
 
-        /////////////////////////////////////////////////   
+        /////////////////////////////////////////////////
 
         /// <summary>
         /// Start parsing all config files.  Must call
         /// this via Configs.Preload before using anything else
         /// in DarkConfig.
-        /// yield break's when all files are preloaded. 
+        /// ends when all files are preloaded.
         /// </summary>
         /// <returns></returns>
         public IEnumerable StepPreload() {
@@ -76,7 +78,10 @@ namespace DarkConfig.Internal {
             }
 
             if (combiners.TryGetValue(filename, out var combinerData)) {
-                return combinerData.Parsed;
+                if (combinerData.Parsed == null) {
+                    BuildCombinedConfig(combinerData);
+                }
+                return combinerData.Parsed!;
             }
 
             throw new ConfigFileNotFoundException(filename);
@@ -93,12 +98,14 @@ namespace DarkConfig.Internal {
             ThrowIfNotPreloaded();
 
             foreach (var source in sources) {
-                if (source.AllFiles.TryGetValue(filename, out var configInfo)) {
-                    if (callback(configInfo.Parsed)) {
-                        RegisterReloadCallback(filename, callback);
-                    }
-                    return;
+                if (!source.AllFiles.TryGetValue(filename, out var configInfo)) {
+                    continue;
                 }
+
+                if (callback(configInfo.Parsed)) {
+                    RegisterReloadCallback(filename, callback);
+                }
+                return;
             }
 
             if (combiners.TryGetValue(filename, out var combinerData)) {
@@ -112,13 +119,13 @@ namespace DarkConfig.Internal {
         }
 
         /// <summary>
-        /// Create a "combined file", which is made up of the contents of several other files.  
+        /// Create a "combined file", which is made up of the contents of several other files.
         /// It's not actually a real file, it's only in-memory, but you can load this combined
         /// file as though it was a real file in the index.  Useful as a technique to manage a
         /// directory of small config files as though it's one big file, or even more esoteric stuff.
         /// </summary>
         /// <param name="sourceFilenames">List of filenames that are to be combined</param>
-        /// <param name="newFilename">Name of the new combined file.  Once it's registered, 
+        /// <param name="newFilename">Name of the new combined file.  Once it's registered,
         /// you call LoadConfig with this name.  Should be unique -- naming a combined file
         /// the same as another will clobber it.</param>
         /// <param name="combiner">Combines multiple parsed fies into a single file.
@@ -131,17 +138,12 @@ namespace DarkConfig.Internal {
                 UnregisterCombinedFile(newFilename);
             }
 
-            var combinerData = new CombinerData {
-                Filenames = sourceFilenames.ToArray(),
-                Combiner = combiner,
-                CombinedFilename = newFilename
-            };
-
+            var combinerData = new CombinerData(filenames: sourceFilenames.ToArray(), combiner: combiner, combinedFilename: newFilename);
             combiners[newFilename] = combinerData;
 
             foreach (string filename in sourceFilenames) {
                 if (!combinersBySubfile.ContainsKey(filename)) {
-                    combinersBySubfile[filename] = new List<CombinerData>();
+                    combinersBySubfile[filename] = new();
                 }
 
                 var list = combinersBySubfile[filename];
@@ -162,11 +164,9 @@ namespace DarkConfig.Internal {
         public void UnregisterCombinedFile(string combinedFilename) {
             ThrowIfNotPreloaded();
 
-            if (!combiners.ContainsKey(combinedFilename)) {
+            if (!combiners.TryGetValue(combinedFilename, out var combinerData)) {
                 return;
             }
-
-            var combinerData = combiners[combinedFilename];
 
             foreach (string filename in combinerData.Filenames) {
                 var list = combinersBySubfile[filename];
@@ -205,15 +205,13 @@ namespace DarkConfig.Internal {
             ThrowIfNotPreloaded();
 
             var results = new HashSet<string>();
-
             foreach (var source in sources) {
                 RegexUtils.FilterMatching(pattern, source.GetSortedFilenames(), results);
             }
-
-            return new List<string>(results);
+            return new(results);
         }
 
-        public ConfigFileInfo GetFileInfo(string filename) {
+        public ConfigFileInfo? GetFileInfo(string filename) {
             ThrowIfNotPreloaded();
 
             foreach (var source in sources) {
@@ -232,7 +230,7 @@ namespace DarkConfig.Internal {
             nextHotloadTime = Configs.Settings.HotloadCheckFrequencySeconds;
 
             // Hotload from all sources.  Keep a list of the files that were changed.
-            var modifiedFiles = new List<string>();
+            List<string> modifiedFiles = new();
             foreach (var source in sources) {
                 if (!source.CanHotload) {
                     continue;
@@ -244,24 +242,30 @@ namespace DarkConfig.Internal {
             for (int modifiedFileIndex = 0; modifiedFileIndex < modifiedFiles.Count; modifiedFileIndex++) {
                 string filename = modifiedFiles[modifiedFileIndex];
 
-                if (combinersBySubfile.ContainsKey(filename)) {
-                    foreach (var combinerData in combinersBySubfile[filename]) {
-                        BuildCombinedConfig(combinerData);
-                        modifiedFiles.Add(combinerData.CombinedFilename);
-                    }
+                if (!combinersBySubfile.TryGetValue(filename, out var fileCombiners)) {
+                    continue;
+                }
+
+                foreach (var combinerData in fileCombiners) {
+                    BuildCombinedConfig(combinerData);
+                    modifiedFiles.Add(combinerData.CombinedFilename);
                 }
             }
 
             // Log and call callbacks for modified files.
             foreach (string filename in modifiedFiles) {
                 Configs.LogInfo($"Hotloading: {filename}");
-                if (hotloadCallbacks.TryGetValue(filename, out var callbacks)) {
-                    for (int j = 0; j < callbacks.Count; j++) {
-                        if (!callbacks[j](ParseFile(filename))) {
-                            callbacks.RemoveAt(j);
-                            j--;
-                        }
+                if (!hotloadCallbacks.TryGetValue(filename, out var callbacks)) {
+                    continue;
+                }
+
+                for (int j = 0; j < callbacks.Count; j++) {
+                    if (callbacks[j](ParseFile(filename))) {
+                        continue;
                     }
+
+                    callbacks.RemoveAt(j);
+                    j--;
                 }
             }
         }
@@ -273,7 +277,7 @@ namespace DarkConfig.Internal {
         /// <param name="callback">Called whenever the file is loaded.</param>
         public void RegisterReloadCallback(string filename, HotloadCallbackFunc callback) {
             if (!hotloadCallbacks.TryGetValue(filename, out var callbacks)) {
-                hotloadCallbacks[filename] = new List<HotloadCallbackFunc> {callback};
+                hotloadCallbacks[filename] = new() {callback};
                 return;
             }
 
@@ -283,27 +287,35 @@ namespace DarkConfig.Internal {
         }
 
         public void Update(float dt) {
-            if (IsHotloadingFiles) {
-                nextHotloadTime -= dt;
-                if (nextHotloadTime <= 0) {
-                    DoImmediateHotload();
-                }
+            if (!IsHotloadingFiles) {
+                return;
+            }
+
+            nextHotloadTime -= dt;
+            if (nextHotloadTime <= 0) {
+                DoImmediateHotload();
             }
         }
 
         /////////////////////////////////////////////////
 
         float nextHotloadTime;
-        readonly Dictionary<string, List<HotloadCallbackFunc>> hotloadCallbacks = new Dictionary<string, List<HotloadCallbackFunc>>();
+        readonly Dictionary<string, List<HotloadCallbackFunc>> hotloadCallbacks = new();
 
         class CombinerData {
-            public string[] Filenames;
-            public string CombinedFilename;
-            public Func<List<DocNode>, DocNode> Combiner;
-            public DocNode Parsed;
+            public readonly string[] Filenames;
+            public readonly string CombinedFilename;
+            public readonly Func<List<DocNode>, DocNode> Combiner;
+            public DocNode? Parsed;
+
+            public CombinerData(string[] filenames, Func<List<DocNode>, DocNode> combiner, string combinedFilename) {
+                Filenames = filenames;
+                Combiner = combiner;
+                CombinedFilename = combinedFilename;
+            }
         }
-        readonly Dictionary<string, CombinerData> combiners = new Dictionary<string, CombinerData>();
-        readonly Dictionary<string, List<CombinerData>> combinersBySubfile = new Dictionary<string, List<CombinerData>>();
+        readonly Dictionary<string, CombinerData> combiners = new();
+        readonly Dictionary<string, List<CombinerData>> combinersBySubfile = new();
 
         /////////////////////////////////////////////////
 
