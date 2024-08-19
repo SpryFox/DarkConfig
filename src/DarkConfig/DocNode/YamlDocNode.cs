@@ -46,8 +46,8 @@ namespace DarkConfig {
         /// <summary>
         /// Access the node as if it was a Dictionary
         /// </summary>
-        /// <param name="key"></param>
-        /// <exception cref="NotSupportedException"></exception>
+        /// <param name="key">Dictionary key</param>
+        /// <exception cref="NotSupportedException">Thrown when attempting to set a value</exception>
         public override DocNode this[string key] {
             get {
                 AssertTypeIs(DocNodeType.Dictionary);
@@ -88,10 +88,12 @@ namespace DarkConfig {
             var children = ((YamlMappingNode) SourceNode).Children;
             var comparison = ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
             foreach (var kvp in children) {
-                if (kvp.Key is YamlScalarNode scalarKey && string.Equals(scalarKey.Value, key, comparison)) {
-                    result = new YamlDocNode(kvp.Value, SourceFile);
-                    return true;
+                if (kvp.Key is not YamlScalarNode scalarKey || !string.Equals(scalarKey.Value, key, comparison)) {
+                    continue;
                 }
+
+                result = new YamlDocNode(kvp.Value, SourceFile);
+                return true;
             }
 
             result = null;
@@ -133,9 +135,7 @@ namespace DarkConfig {
 
             public IEnumerator<KeyValuePair<string, DocNode>> GetEnumerator() {
                 foreach (var entry in ((YamlMappingNode) node).Children) {
-                    yield return new KeyValuePair<string, DocNode>(
-                        ((YamlScalarNode) entry.Key).Value,
-                        new YamlDocNode(entry.Value, filename));
+                    yield return new(((YamlScalarNode) entry.Key).Value, new YamlDocNode(entry.Value, filename));
                 }
             }
 

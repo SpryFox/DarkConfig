@@ -13,17 +13,17 @@ namespace DarkConfig {
             SourceNode = sourceDocNode?.SourceNode;
             switch (type) {
                 case DocNodeType.Dictionary:
-                    dictionary = size > 0 ? new Dictionary<string, DocNode>(size) : new Dictionary<string, DocNode>();
+                    dictionary = size > 0 ? new(size) : new();
                     break;
                 case DocNodeType.List:
-                    list = size > 0 ? new List<DocNode>(size) : new List<DocNode>();
+                    list = size > 0 ? new(size) : new();
                     break;
                 case DocNodeType.Scalar:
                     scalar = "";
                     break;
                 case DocNodeType.Invalid:
                 default:
-                    throw new Exception($"Can't make a ComposedDocNode instance with Type {type} at {sourceInformation}");
+                    throw new($"Can't make a ComposedDocNode instance with Type {type} at {sourceInformation}");
             }
         }
 
@@ -74,10 +74,12 @@ namespace DarkConfig {
         public override bool TryGetValue(string key, bool ignoreCase, out DocNode result) {
             AssertTypeIs(DocNodeType.Dictionary);
             foreach (var kvp in dictionary) {
-                if (string.Equals(kvp.Key, key, ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal)) {
-                    result = kvp.Value;
-                    return true;
+                if (!string.Equals(kvp.Key, key, ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal)) {
+                    continue;
                 }
+
+                result = kvp.Value;
+                return true;
             }
 
             result = null;
@@ -109,13 +111,11 @@ namespace DarkConfig {
             }
         }
 
-        public override string SourceInformation => sourceInfo ?? "ComposedDocNode " + Type;
+        public override string SourceInformation => sourceInfo ?? $"ComposedDocNode {Type}";
         public override string SourceFile { get; }
         public override YamlNode SourceNode { get; }
 
-        public override string ToString() {
-            return $"ComposedDocNode({Type}, {(Type == DocNodeType.Scalar ? scalar : Count.ToString())})";
-        }
+        public override string ToString() => $"ComposedDocNode({Type}, {(Type == DocNodeType.Scalar ? scalar : Count.ToString())})";
         #endregion
 
         public void Add(DocNode d) {
@@ -165,13 +165,13 @@ namespace DarkConfig {
 
             switch (doc.Type) {
                 case DocNodeType.Scalar: {
-                    return new ComposedDocNode(doc.Type, sourceDocNode: doc) {
+                    return new(doc.Type, sourceDocNode: doc) {
                         StringValue = doc.StringValue
                     };
                 }
 
                 case DocNodeType.List: {
-                    var newDoc = new ComposedDocNode(doc.Type, doc.Count, sourceDocNode: doc);
+                    ComposedDocNode newDoc = new(doc.Type, doc.Count, sourceDocNode: doc);
                     foreach (var value in doc.Values) {
                         newDoc.Add(recursive ? MakeMutable(value, recursive: true, force: force) : value);
                     }
@@ -179,7 +179,7 @@ namespace DarkConfig {
                 }
 
                 case DocNodeType.Dictionary: {
-                    var newDoc = new ComposedDocNode(doc.Type, doc.Count, sourceDocNode: doc);
+                    ComposedDocNode newDoc = new(doc.Type, doc.Count, sourceDocNode: doc);
                     foreach ((string key, var value) in doc.Pairs) {
                         newDoc.Add(key, recursive ? MakeMutable(value, recursive: true, force: force) : value);
                     }

@@ -38,7 +38,6 @@ namespace DarkConfig {
 
         /// <summary>
         /// Only valid for dictionaries.
-        /// s
         /// Try to get the value for the given key.
         /// </summary>
         /// <param name="key">Key of the value to retrieve</param>
@@ -55,6 +54,7 @@ namespace DarkConfig {
 
         /// String describing the position and context in the source format (e.g. line number).
         public abstract string SourceInformation { get; }
+        /// The file that this doc node originated from
         public abstract string? SourceFile { get; }
         public abstract YamlDotNet.RepresentationModel.YamlNode? SourceNode { get; }
 
@@ -157,6 +157,7 @@ namespace DarkConfig {
                     }
                     return mapHash;
 
+                case DocNodeType.Invalid:
                 default:
                     throw new ParseException(this, $"Cannot calculate hash code for DocNode type {Type}");
             }
@@ -182,8 +183,7 @@ namespace DarkConfig {
                 case DocNodeType.List:
                     return Configs.CombineList(new List<DocNode> {lhs, rhs});
                 case DocNodeType.Dictionary: {
-                    var mergedDict = new ComposedDocNode(DocNodeType.Dictionary,
-                        sourceInformation: "Merging of: [" + lhs.SourceInformation + ", " + rhs.SourceInformation + "]");
+                    ComposedDocNode mergedDict = new(DocNodeType.Dictionary, sourceInformation: $"Merging of: [{lhs.SourceInformation}, {rhs.SourceInformation}]");
                     foreach (var lhsPair in lhs.Pairs) {
                         mergedDict[lhsPair.Key] = lhsPair.Value;
                     }
