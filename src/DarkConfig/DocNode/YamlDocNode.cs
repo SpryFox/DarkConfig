@@ -2,6 +2,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using YamlDotNet.RepresentationModel;
 
 namespace DarkConfig {
@@ -34,7 +35,7 @@ namespace DarkConfig {
         /// Access the node as if it was a list
         /// </summary>
         /// <param name="index"></param>
-        /// <exception cref="NotSupportedException"></exception>
+        /// <exception cref="NotSupportedException">Thrown when attempting to set a value</exception>
         public override DocNode this[int index] {
             get {
                 AssertTypeIs(DocNodeType.List);
@@ -83,7 +84,7 @@ namespace DarkConfig {
             return false;
         }
 
-        public override bool TryGetValue(string key, bool ignoreCase, out DocNode? result) {
+        public override bool TryGetValue(string key, bool ignoreCase, [MaybeNullWhen(false)] out DocNode result) {
             AssertTypeIs(DocNodeType.Dictionary);
 
             var children = ((YamlMappingNode) SourceNode).Children;
@@ -156,9 +157,9 @@ namespace DarkConfig {
         public override string StringValue {
             get {
                 AssertTypeIs(DocNodeType.Scalar);
-                return ((YamlScalarNode) SourceNode).Value!;
+                return ((YamlScalarNode) SourceNode).Value ?? "null";
             }
-            set => throw new NotSupportedException();
+            set => throw new NotSupportedException("Can't modify YamlDocNode instances");
         }
 
         ////////////////////////////////////////////

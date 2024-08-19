@@ -1,5 +1,8 @@
+#nullable enable
+
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 namespace DarkConfig {
     public enum DocNodeType {
@@ -44,7 +47,7 @@ namespace DarkConfig {
         /// <param name="ignoreCase">if true, does case-insensitive key comparison</param>
         /// <param name="result">Set to the value if it's found, otherwise null</param>
         /// <returns>True if the value was found, false otherwise.</returns>
-        public abstract bool TryGetValue(string key, bool ignoreCase, out DocNode result);
+        public abstract bool TryGetValue(string key, bool ignoreCase, [MaybeNullWhen(false)] out DocNode result);
 
         /// Iterates over the values of the list
         public abstract IEnumerable<DocNode> Values { get; }
@@ -58,7 +61,7 @@ namespace DarkConfig {
         public abstract string? SourceFile { get; }
         public abstract YamlDotNet.RepresentationModel.YamlNode? SourceNode { get; }
 
-        public T As<T>(ReificationOptions? options = null) {
+        public T? As<T>(ReificationOptions? options = null) {
             var result = default(T);
             Configs.Reify(ref result, this, options);
             return result;
@@ -82,7 +85,7 @@ namespace DarkConfig {
             return false;
         }
 
-        public bool Equals(DocNode other) {
+        public bool Equals(DocNode? other) {
             if (other == null) {
                 return false;
             }
@@ -141,7 +144,7 @@ namespace DarkConfig {
         public int GetDeepHashCode() {
             switch (Type) {
                 case DocNodeType.Scalar:
-                    return StringValue.GetHashCode();
+                    return StringValue!.GetHashCode();
 
                 case DocNodeType.List:
                     int seqHash = 0;
