@@ -73,7 +73,7 @@ namespace DarkConfig {
                     continue;
                 }
 
-                var fileSize = new FileInfo(file).Length;
+                long fileSize = new FileInfo(file).Length;
                 var modified = File.GetLastWriteTimeUtc(file);
 
                 // Timestamp or size need to differ before we bother generating a checksum of the file.
@@ -82,39 +82,38 @@ namespace DarkConfig {
                     continue;
                 }
 
-                using (var fileStream = File.OpenRead(file)) {
-                    int checksum = Internal.ChecksumUtils.Checksum(fileStream);
+                using var fileStream = File.OpenRead(file);
+                int checksum = Internal.ChecksumUtils.Checksum(fileStream);
 
-                    if (checksum == fileInfo.Checksum) {
-                        // The files are identical (according to the checksum)
-                        // Update the file size and modified timestamp
-                        // We didn't early out a few lines above, so we know that at least one of these values is stale.
-                        fileInfo.Size = fileSize;
-                        if (SetModifiedTimeOnChecksumMatch) {
-                            // Update the modified time on disk so we don't re-check this next session
-                            try {
-                                fileStream.Close();
-                                File.SetLastWriteTimeUtc(file, fileInfo.Modified);
-                                Configs.LogInfo($"Set mtime of file with matching checksum {fileInfo}");
-                            } catch (Exception e) {
-                                Configs.LogWarning($"Error setting mtime of file {fileInfo}: {e}"); // Warning cause execution can safely continue
-                                fileInfo.Modified = modified; // At least we won't reload this session
-                            }
-                        } else {
-                            fileInfo.Modified = modified;
-                        }
-                        continue;
-                    }
-
-                    // File has changed. Hotload it.
-                    fileStream.Seek(0, SeekOrigin.Begin);
-                    fileInfo.Parsed = Configs.ParseStream(fileStream, file);
-                    fileInfo.Checksum = checksum;
-                    fileInfo.Modified = modified;
+                if (checksum == fileInfo.Checksum) {
+                    // The files are identical (according to the checksum)
+                    // Update the file size and modified timestamp
+                    // We didn't early out a few lines above, so we know that at least one of these values is stale.
                     fileInfo.Size = fileSize;
-
-                    changedFiles.Add(fileName);
+                    if (SetModifiedTimeOnChecksumMatch) {
+                        // Update the modified time on disk so we don't re-check this next session
+                        try {
+                            fileStream.Close();
+                            File.SetLastWriteTimeUtc(file, fileInfo.Modified);
+                            Configs.LogInfo($"Set mtime of file with matching checksum {fileInfo}");
+                        } catch (Exception e) {
+                            Configs.LogWarning($"Error setting mtime of file {fileInfo}: {e}"); // Warning cause execution can safely continue
+                            fileInfo.Modified = modified; // At least we won't reload this session
+                        }
+                    } else {
+                        fileInfo.Modified = modified;
+                    }
+                    continue;
                 }
+
+                // File has changed. Hotload it.
+                fileStream.Seek(0, SeekOrigin.Begin);
+                fileInfo.Parsed = Configs.ParseStream(fileStream, file);
+                fileInfo.Checksum = checksum;
+                fileInfo.Modified = modified;
+                fileInfo.Size = fileSize;
+
+                changedFiles.Add(fileName);
             }
 
             foreach (string deletedFile in loadedFileNames) {
@@ -137,8 +136,8 @@ namespace DarkConfig {
 
         /// Enumerate all files in the directory with the correct extensions.
         IEnumerable<string> FindConfigsInBaseDir() {
-            foreach (var ext in configFileExtensions) {
-                foreach (var file in Directory.GetFiles(baseDir, "*" + ext, SearchOption.AllDirectories)) {
+            foreach (string extension in configFileExtensions) {
+                foreach (string file in Directory.GetFiles(baseDir, "*" + extension, SearchOption.AllDirectories)) {
                     if (ignorePattern != null && ignorePattern.IsMatch(GetFileNameFromPath(file))) {
                         continue;
                     }
@@ -158,17 +157,18 @@ namespace DarkConfig {
 
         /// Reads and parses a file's contents.
         ConfigFileInfo ReadFile(string filePath) {
-            using (var fileStream = File.OpenRead(filePath)) {
-                int checksum = Internal.ChecksumUtils.Checksum(fileStream);
-                fileStream.Seek(0, SeekOrigin.Begin);
+            using var fileStream = File.OpenRead(filePath);
 
-                return new ConfigFileInfo(
-                    name: GetFileNameFromPath(filePath),
-                    checksum: checksum,
-                    size: new FileInfo(filePath).Length,
-                    modified: File.GetLastWriteTimeUtc(filePath),
-                    parsed: Configs.ParseStream(fileStream, filePath));
-            }
+            int checksum = Internal.ChecksumUtils.Checksum(fileStream);
+            fileStream.Seek(0, SeekOrigin.Begin);
+
+            return new(
+                name: GetFileNameFromPath(filePath),
+                checksum: checksum,
+                size: new FileInfo(filePath).Length,
+                modified: File.GetLastWriteTimeUtc(filePath),
+                parsed: Configs.ParseStream(fileStream, filePath));
+
         }
     }
 }
