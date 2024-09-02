@@ -1,4 +1,3 @@
-using DarkConfig.Internal;
 using System;
 using System.Collections;
 using System.IO;
@@ -40,9 +39,9 @@ namespace DarkConfig {
         /////////////////////////////////////////////////
 
         /// Configuration settings for Dark Config itself.
-        public static Settings Settings = new Settings();
+        public static Settings Settings = new();
 
-        internal static Internal.ConfigFileManager FileManager { get; private set; } = new Internal.ConfigFileManager();
+        internal static Internal.ConfigFileManager FileManager { get; private set; } = new();
 
         public static LogFunc LogCallback;
 
@@ -609,9 +608,8 @@ namespace DarkConfig {
 
         /////////////////////////////////////////////////
 
-        static Internal.TypeReifier typeReifier = new Internal.TypeReifier();
-
-        static List<ConfigProcessor> processors = new List<ConfigProcessor>();
+        static Internal.TypeReifier typeReifier = new();
+        static List<ConfigProcessor> processors = new();
 
         /////////////////////////////////////////////////
 
@@ -654,11 +652,11 @@ namespace DarkConfig {
         }
 
         public static void Document(string documentationRoot, params Type[] rootTypes) {
-            DocumentationGenerator.Document(documentationRoot, new ReflectionCache(), rootTypes);
+            Internal.DocumentationGenerator.Document(documentationRoot, new(), rootTypes);
         }
 
         public static string GetDocumentationPath(string documentationRoot, Type type) {
-            return DocumentationGenerator.GetDocumentationPath(documentationRoot, type);
+            return Internal.DocumentationGenerator.GetDocumentationPath(documentationRoot, type);
         }
     }
 }

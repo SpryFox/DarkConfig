@@ -8,10 +8,10 @@ using System.Reflection;
 namespace DarkConfig.Internal {
     public class TypeReifier {
         /// Manually-registered FromDoc's
-        public readonly Dictionary<Type, FromDocFunc> RegisteredFromDocs = new Dictionary<Type, FromDocFunc>();
+        public readonly Dictionary<Type, FromDocFunc> RegisteredFromDocs = new();
 
         /// Manually-registered PostDoc's
-        public readonly Dictionary<Type, PostDocFunc> RegisteredPostDocs = new Dictionary<Type, PostDocFunc>();
+        public readonly Dictionary<Type, PostDocFunc> RegisteredPostDocs = new();
 
         /////////////////////////////////////////////////
 
@@ -538,7 +538,7 @@ namespace DarkConfig.Internal {
 
                 return existing;
             } catch (Exception e) when (!((e as ParseException)?.HasNode ?? false)) {
-                throw new ParseException(doc, $"Encountered exception", e);
+                throw new ParseException(doc, "Encountered exception", e);
             }
         }
 
