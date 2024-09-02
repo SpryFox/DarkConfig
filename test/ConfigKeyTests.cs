@@ -29,7 +29,9 @@ class ConfigKeyTests {
 
     class NullKeyClass {
         [ConfigKey(null)]
+#pragma warning disable CS0649 // Field is never assigned to, and will always have its default value
         public int fail;
+#pragma warning restore CS0649 // Field is never assigned to, and will always have its default value
     }
 
     [Test]
@@ -45,7 +47,9 @@ class ConfigKeyTests {
 
     class EmptyKeyClass {
         [ConfigKey("")]
+#pragma warning disable CS0649 // Field is never assigned to, and will always have its default value
         public int fail;
+#pragma warning restore CS0649 // Field is never assigned to, and will always have its default value
     }
 
     [Test]
@@ -61,7 +65,9 @@ class ConfigKeyTests {
 
     class WhitespaceKeyClass {
         [ConfigKey("   ")]
+#pragma warning disable CS0649 // Field is never assigned to, and will always have its default value
         public int fail;
+#pragma warning restore CS0649 // Field is never assigned to, and will always have its default value
     }
 
     [Test]
@@ -77,7 +83,9 @@ class ConfigKeyTests {
 
     class PaddedKeyClass {
         [ConfigKey(" after  ")]
+#pragma warning disable CS0649 // Field is never assigned to, and will always have its default value
         public int before;
+#pragma warning restore CS0649 // Field is never assigned to, and will always have its default value
     }
 
     [Test]
