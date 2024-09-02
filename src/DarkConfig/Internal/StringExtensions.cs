@@ -1,5 +1,3 @@
-#nullable enable
-
 namespace DarkConfig.Internal {
     static class StringExtensions {
         /// Returns the lowercase version of the key if <c>ignoreCase</c>, otherwise return the key itself

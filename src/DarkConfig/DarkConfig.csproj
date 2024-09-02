@@ -1,12 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
+		<!-- These need to match what Unity is using! -->
 		<TargetFramework>net6.0</TargetFramework>
-		<ImplicitUsings>disable</ImplicitUsings>
-		<Nullable>disable</Nullable>
+		<LangVersion>9</LangVersion>
 
+		<ImplicitUsings>disable</ImplicitUsings>
+		<Nullable>enable</Nullable>
 		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
 		<OutputPath>..\..\bin\$(Configuration)</OutputPath>
-		<LangVersion>9</LangVersion>
 	</PropertyGroup>
 
 	<ItemGroup>
