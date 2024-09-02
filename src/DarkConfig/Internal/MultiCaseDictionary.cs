@@ -3,6 +3,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 namespace DarkConfig.Internal {
     /// <summary>
@@ -18,7 +19,7 @@ namespace DarkConfig.Internal {
             _dictionary = new Dictionary<string, (string Key, TValueType Value)>(capacity, StringComparer.OrdinalIgnoreCase);
         }
 
-        public bool TryGetValue(string key, out TValueType? value, bool ignoreCase) {
+        public bool TryGetValue(string key, [MaybeNullWhen(false)] out TValueType value, bool ignoreCase) {
             if (_dictionary.TryGetValue(key, out var match)) {
                 if (ignoreCase) {
                     value = match.Value;
