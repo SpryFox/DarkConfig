@@ -19,9 +19,9 @@ namespace DarkConfig {
         public DateTime Modified;
 
         /// Parsed file contents.
-        public DocNode? Parsed;
+        public DocNode Parsed;
 
-        public ConfigFileInfo(string name, int checksum, long size, DateTime modified, DocNode? parsed) {
+        public ConfigFileInfo(string name, int checksum, long size, DateTime modified, DocNode parsed) {
             Name = name;
             Checksum = checksum;
             Size = size;
@@ -30,7 +30,7 @@ namespace DarkConfig {
         }
 
         public override string ToString() {
-            return $"[{Name} {Checksum:X16} {(Parsed == null ? "unparsed" : "parsed")}]";
+            return $"[{Name} {Checksum:X16}]";
         }
     }
 }
