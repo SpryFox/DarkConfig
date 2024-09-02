@@ -1,3 +1,5 @@
+#nullable enable
+
 using System;
 using System.Collections;
 using System.IO;
@@ -26,7 +28,7 @@ namespace DarkConfig {
         /// <param name="hotload">Allow file hotloading</param>
         /// <param name="ignorePattern">Ignore any paths that match this regex</param>
         /// <exception cref="ArgumentException">If <paramref name="dir"/> is null</exception>
-        public FileSource(string dir, string fileExtension = ".yaml", bool hotload = false, Regex ignorePattern = null) {
+        public FileSource(string dir, string fileExtension = ".yaml", bool hotload = false, Regex? ignorePattern = null) {
             baseDir = Path.GetFullPath(dir).Replace('\\', '/'); // Always use forward slashes in paths, even on windows.
             CanHotload = hotload;
             this.ignorePattern = ignorePattern;
@@ -44,7 +46,7 @@ namespace DarkConfig {
         /// <param name="hotload">Allow file hotloading</param>
         /// <param name="ignorePattern">Ignore any paths that match this regex</param>
         /// <exception cref="ArgumentException">If <paramref name="dir"/> is null</exception>
-        public FileSource(string dir, string[] fileExtensions, bool hotload = false, Regex ignorePattern = null) {
+        public FileSource(string dir, string[] fileExtensions, bool hotload = false, Regex? ignorePattern = null) {
             baseDir = Path.GetFullPath(dir).Replace('\\', '/'); // Always use forward slashes in paths, even on windows.
             CanHotload = hotload;
             this.ignorePattern = ignorePattern;
@@ -130,7 +132,7 @@ namespace DarkConfig {
 
         readonly string baseDir;
         readonly string[] configFileExtensions;
-        readonly Regex ignorePattern;
+        readonly Regex? ignorePattern;
 
         ////////////////////////////////////////////
 
