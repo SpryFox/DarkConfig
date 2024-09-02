@@ -1,3 +1,5 @@
+#nullable enable
+
 using System;
 using System.Collections;
 using System.IO;
@@ -18,9 +20,9 @@ namespace DarkConfig {
     /// <param name="obj">the existing object (if any)</param>
     /// <param name="doc">the DocNode that is meant to update the object</param>
     /// <returns>The updated/created object</returns>
-    public delegate object FromDocFunc(object obj, DocNode doc);
+    public delegate object FromDocFunc(object? obj, DocNode doc);
 
-    public delegate object PostDocFunc(object obj);
+    public delegate object PostDocFunc(object? obj);
 
     /// <summary>
     /// A callback to be called when a file is hotloaded.
@@ -43,7 +45,7 @@ namespace DarkConfig {
 
         internal static Internal.ConfigFileManager FileManager { get; private set; } = new();
 
-        public static LogFunc LogCallback;
+        public static LogFunc? LogCallback;
 
         /// True if config file preloading is complete, false otherwise.
         public static bool IsPreloaded => FileManager.IsPreloaded;
@@ -198,7 +200,7 @@ namespace DarkConfig {
             return FileManager.GetFilenamesMatchingRegex(pattern);
         }
 
-        public static ConfigFileInfo GetFileInfo(string filename) {
+        public static ConfigFileInfo? GetFileInfo(string filename) {
             return FileManager.GetFileInfo(filename);
         }
         #endregion
@@ -360,11 +362,11 @@ namespace DarkConfig {
 
             var weakReference = new WeakReference(obj);
             FileManager.RegisterReloadCallback(filename, doc => {
-                var t = (T) weakReference.Target;
-                if (t == null) {
-                    // The object was GC'd
+                if (!weakReference.IsAlive || weakReference.Target == null) {
+                    // The object was de-allocated by the garbage collector.
                     return false;
                 }
+                var t = (T) weakReference.Target;
                 Reify(ref t, doc);
                 return true;
             });
@@ -457,7 +459,7 @@ namespace DarkConfig {
         /// </code>
         /// </example>
         public static void Reify<T>(ref T obj, Type objType, DocNode doc, ReificationOptions? options = null) {
-            obj = (T) typeReifier.ReadValueOfType(objType, obj, doc, options);
+            obj = (T) typeReifier.ReadValueOfType(objType, obj, doc, options)!; // TODO (graham): should T be restricted to INullable implementors?
         }
 
         /// <summary>
@@ -622,7 +624,8 @@ namespace DarkConfig {
             } catch (Exception e) {
                 throw new Exception($"Error loading file '{filename}': {e.Message}");
             }
-            DocNode docNode = yaml.Documents.Count <= 0 ? new YamlDocNode(null, filename)
+
+            DocNode docNode = yaml.Documents.Count <= 0 ? new YamlDocNode(null!, filename) // TODO (Graham): passing null to a non-nullable parameter.
                 : new YamlDocNode(yaml.Documents[0].RootNode, filename);
             if (!ignoreProcessors) {
                 ProcessWithConfigProcessors(filename, ref docNode);

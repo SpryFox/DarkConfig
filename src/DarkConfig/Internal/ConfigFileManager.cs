@@ -109,7 +109,7 @@ namespace DarkConfig.Internal {
             }
 
             if (combiners.TryGetValue(filename, out var combinerData)) {
-                if (callback(combinerData.Parsed)) {
+                if (callback(combinerData.Parsed!)) { // TODO (graham): Nullable parsed data conversion.
                     RegisterReloadCallback(filename, callback);
                 }
                 return;
