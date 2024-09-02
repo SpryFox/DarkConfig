@@ -162,13 +162,12 @@ namespace DarkConfig {
                 int checksum = Internal.ChecksumUtils.Checksum(fileStream);
                 fileStream.Seek(0, SeekOrigin.Begin);
 
-                return new ConfigFileInfo {
-                    Name = GetFileNameFromPath(filePath),
-                    Checksum = checksum,
-                    Size = new FileInfo(filePath).Length,
-                    Modified = File.GetLastWriteTimeUtc(filePath),
-                    Parsed = Configs.ParseStream(fileStream, filePath)
-                };
+                return new ConfigFileInfo(
+                    name: GetFileNameFromPath(filePath),
+                    checksum: checksum,
+                    size: new FileInfo(filePath).Length,
+                    modified: File.GetLastWriteTimeUtc(filePath),
+                    parsed: Configs.ParseStream(fileStream, filePath));
             }
         }
     }
