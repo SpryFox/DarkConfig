@@ -276,11 +276,11 @@ namespace DarkConfig.Internal {
 
             // if type is a union, register it with its base type
             if (typeUnionKey != null) {
-                if (type.BaseType == typeof(Object) || type.BaseType == null) {
+                if (type.BaseType == typeof(object) || type.BaseType == null) {
                     throw new Exception($"Type {type.Name} has ConfigUnion but is not a child type");
                 }
-                TypeInfo parentInfo = GetTypeInfo(type.BaseType);
-                parentInfo.UnionKeys ??= new MultiCaseDictionary<Type>();
+                var parentInfo = GetTypeInfo(type.BaseType);
+                parentInfo.UnionKeys ??= new();
 
                 if (!parentInfo.UnionKeys.TryAdd(typeUnionKey, type)) {
                     throw new Exception($"Type {type.Name} has ConfigUnion with duplicate key {typeUnionKey}");

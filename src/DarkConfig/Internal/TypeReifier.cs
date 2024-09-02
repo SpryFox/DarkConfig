@@ -20,7 +20,7 @@ namespace DarkConfig.Internal {
             RegisteredFromDocs[typeof(TimeSpan)] = BuiltInTypeReifiers.FromTimeSpan;
         }
 
-        internal class ReificationResult {
+        class ReificationResult {
             internal bool ShouldVerifyMemberHashes;
             internal readonly List<int> SetMemberHashes = new List<int>();
 
@@ -122,7 +122,7 @@ namespace DarkConfig.Internal {
             }
 
             // Check whether any required members in the type were not set.
-            if (missingRequiredMemberNames != null && missingRequiredMemberNames.Count > 0) {
+            if (missingRequiredMemberNames is {Count: > 0}) {
                 throw new MissingFieldsException(type, doc, $"Missing doc fields: {JoinList(missingRequiredMemberNames, ", ")}");
             }
 
@@ -280,7 +280,7 @@ namespace DarkConfig.Internal {
                         }
 
                         // Figure out the size of each dimension the array.
-                        var lengths = new int[rank];
+                        int[] lengths = new int[rank];
                         var currentArray = doc;
                         for (int dimensionIndex = 0; dimensionIndex < rank; ++dimensionIndex) {
                             lengths[dimensionIndex] = currentArray.Count;
@@ -327,8 +327,8 @@ namespace DarkConfig.Internal {
                             for (int i = 0; i < current.Count; ++i) {
                                 currentIndex[currentRank] = i;
                                 if (currentRank == rank - 1) {
-                                    var existingElement = arrayValue.GetValue(currentIndex);
-                                    var updatedElement = ReadValueOfType(elementType, existingElement, current[i], options);
+                                    object? existingElement = arrayValue.GetValue(currentIndex);
+                                    object? updatedElement = ReadValueOfType(elementType, existingElement, current[i], options);
                                     arrayValue.SetValue(updatedElement, currentIndex);
                                 } else {
                                     ReadArray(current[i], currentRank + 1);
