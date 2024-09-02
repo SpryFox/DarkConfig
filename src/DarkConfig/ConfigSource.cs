@@ -1,4 +1,5 @@
-using System;
+#nullable enable
+
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -31,6 +32,6 @@ namespace DarkConfig {
         /////////////////////////////////////////////////
 
         /// All the currently loaded config file data.
-        public Dictionary<string, ConfigFileInfo> AllFiles = new Dictionary<string, ConfigFileInfo>();
+        public Dictionary<string, ConfigFileInfo> AllFiles = new();
     }
 }
