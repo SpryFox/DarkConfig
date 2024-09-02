@@ -1,3 +1,5 @@
+#nullable enable
+
 using System;
 
 namespace DarkConfig {
@@ -95,27 +97,27 @@ namespace DarkConfig {
 
     /// Name of this type in documentation. For generic types, "&lt;0&gt;" indicates the first template parameter, "&lt;1&gt;" the second, and so on.
     [AttributeUsage(AttributeTargets.Class)]
-    public class ConfigDocumentationNameAttribute : Attribute { 
+    public class ConfigDocumentationNameAttribute : Attribute {
         public readonly string Value;
 
         public ConfigDocumentationNameAttribute(string value) {
             Value = value;
         }
     }
-    
+
     /// Description of this type or field
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Field | AttributeTargets.Property, Inherited = false)]
-    public class ConfigDocumentationDescriptionAttribute : Attribute { 
+    public class ConfigDocumentationDescriptionAttribute : Attribute {
         public readonly string Value;
 
         public ConfigDocumentationDescriptionAttribute(string value) {
             Value = value;
         }
     }
-    
+
     /// Example yaml of this type
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = true, Inherited = false)]
-    public class ConfigDocumentationExampleAttribute : Attribute { 
+    public class ConfigDocumentationExampleAttribute : Attribute {
         public readonly string Value;
 
         public ConfigDocumentationExampleAttribute(string value) {
