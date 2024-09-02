@@ -93,7 +93,7 @@ namespace DarkConfig {
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
     public class ConfigInlineAttribute : Attribute { }
 
-    /// Name of this type in documentation, for generic types "<0>" indicates the first template parameter, "<1>" the second, and so on
+    /// Name of this type in documentation. For generic types, "&lt;0&gt;" indicates the first template parameter, "&lt;1&gt;" the second, and so on.
     [AttributeUsage(AttributeTargets.Class)]
     public class ConfigDocumentationNameAttribute : Attribute { 
         public readonly string Value;
