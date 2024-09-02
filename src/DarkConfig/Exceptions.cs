@@ -1,3 +1,5 @@
+#nullable enable
+
 using System;
 using System.IO;
 
@@ -23,20 +25,18 @@ namespace DarkConfig {
     /// bottom.  It's a bit more readable, and most importantly the line
     /// numbers in the config files are much more prominent.
     public class ParseException : Exception {
-        public ParseException(DocNode exceptionNode, string message, Exception inner = null) : base((inner != null ? inner.Message + "\n" : "") + message) {
+        public ParseException(DocNode? exceptionNode, string message, Exception? inner = null) : base((inner != null ? inner.Message + "\n" : "") + message) {
             Node = exceptionNode;
-            _wrappedException = inner;
+            wrappedException = inner;
         }
 
-        public override string StackTrace => _wrappedException == null ? base.StackTrace : _wrappedException.StackTrace + "\n-----\n" + base.StackTrace;
-        public override string Message => base.Message + (HasNode ? $" from {Node.SourceInformation}" : "");
+        public override string? StackTrace => wrappedException == null ? base.StackTrace : wrappedException.StackTrace + "\n-----\n" + base.StackTrace;
+        public override string Message => base.Message + (Node != null ? $" from {Node.SourceInformation}" : "");
         public string RawMessage => base.Message;
-        public bool HasNode {
-            get { return Node != null; }
-        }
+        public bool HasNode => Node != null;
 
-        public readonly DocNode Node;
-        readonly Exception _wrappedException;
+        public readonly DocNode? Node;
+        readonly Exception? wrappedException;
     }
 
     public class TypedParseException : ParseException {
