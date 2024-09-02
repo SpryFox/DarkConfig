@@ -47,7 +47,7 @@ namespace DarkConfig.Internal {
                     : ((PropertyInfo) member).GetValue(obj);
             }
 
-            public void SetMemberValue(object obj, int memberIndex, object value) {
+            public void SetMemberValue(object obj, int memberIndex, object? value) {
                 var member = MemberInfos[memberIndex];
                 if (IsField(memberIndex, false)) {
                     ((FieldInfo) member).SetValue(obj, value);

@@ -685,7 +685,7 @@ namespace DarkConfig.Internal {
                     continue;
                 }
 
-                if (!docHasKey) {
+                if (!docHasKey || valueDoc == null) {
                     if (typeInfo.IsRequired(memberIndex, false) || (options != null && (options & ReificationOptions.AllowMissingFields) == 0)) {
                         throw new MissingFieldsException(type, doc, $"Missing doc field: {memberName}");
                     }
@@ -709,7 +709,7 @@ namespace DarkConfig.Internal {
                     continue;
                 }
 
-                if (!docHasKey) {
+                if (!docHasKey || valueDoc == null) {
                     if (typeInfo.IsRequired(memberIndex, true)) {
                         throw new MissingFieldsException(type, doc, $"Missing doc field: {memberName}");
                     }
