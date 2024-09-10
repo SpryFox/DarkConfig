@@ -10,7 +10,7 @@ jobs:
 
     strategy:
       matrix:
-        dotnet-version: ['6.0']
+        dotnet-version: ['8.0']
         configuration:
           - Debug
           - Release
