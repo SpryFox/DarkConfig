@@ -13,12 +13,18 @@ public class PlayerController : MonoBehaviour {
     ////////////////////////////////////////////
 
     void Start() {
-        // Get keyboard bindings from the config, and also automatically 
+        // TODO (graham): temp fix for demo.
+        var reifierOptions = Configs.Settings.DefaultReifierOptions;
+        Configs.Settings.DefaultReifierOptions = reifierOptions | ReificationOptions.AllowExtraFields;
+
+        // Get keyboard bindings from the config, and also automatically
         // hotload them.
         Configs.ApplyThis("player", this);
         // The previous call to ApplyThis won't have touched the StartingCard
         // field, so for that we call ApplyStatic.
         Configs.ApplyStatic<PlayerController>("player");
+
+        Configs.Settings.DefaultReifierOptions = reifierOptions;
 
         Controller.Setup(PlaneCard.Cards[StartingCard]);
     }
