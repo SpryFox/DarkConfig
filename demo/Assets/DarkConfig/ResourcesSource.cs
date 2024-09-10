@@ -25,8 +25,7 @@ namespace DarkConfig {
             // Load the index file.
             indexFile = ReadFile(INDEX_FILENAME);
             if (indexFile == null) {
-                Configs.LogError($"Index file is missing at Resources path {INDEX_FILENAME}.");
-                yield break;
+                throw new($"Index file is missing at Resources path {INDEX_FILENAME}.");
             }
 
             // Load all the files.
@@ -44,8 +43,7 @@ namespace DarkConfig {
             // First try to load the index in case any files were added or removed.
             var newIndex = ReadFile(INDEX_FILENAME);
             if (newIndex == null) {
-                Configs.LogError($"Index file is missing at Resources path {INDEX_FILENAME}.");
-                return;
+                throw new($"Index file is missing at Resources path {INDEX_FILENAME}.");
             }
 
             if (newIndex.Checksum != indexFile.Checksum) {
@@ -90,16 +88,14 @@ namespace DarkConfig {
                 return null;
             }
 
-            return new ConfigFileInfo {
-                Name = filename,
-                Checksum = Internal.ChecksumUtils.Checksum(asset.text),
-                
+            return new(
+                name: filename,
+                checksum: Internal.ChecksumUtils.Checksum(asset.text),
+                size: asset.text.Length,
                 // It's not easy to get a modified timestamp on a resources file, so just set it to the
                 // default DateTime value. We'll instead rely on checksums to detect differences that need hotloading.
-                Modified = new DateTime(),
-                Size = asset.text.Length,
-                Parsed = Configs.ParseString(asset.text, filename)
-            };
+                modified: new(),
+                parsed: Configs.ParseString(asset.text, filename));
         }
     }
 }

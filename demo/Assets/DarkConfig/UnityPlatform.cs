@@ -1,11 +1,11 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 namespace DarkConfig {
     public static class UnityPlatform {
         public static void Setup(bool hotloading = false) {
             UnityTypeReifiers.RegisterAll();
             Configs.LogCallback = Log;
-            Configs.AssertCallback = (test, message) => Debug.Assert(test, message);
 
             if (hotloading) {
                 SetupHotloadingManager();
@@ -14,9 +14,9 @@ namespace DarkConfig {
 
         static void Log(LogVerbosity verbosity, string message) {
             switch (verbosity) {
-                case LogVerbosity.Error: Debug.LogError(message); break;
                 case LogVerbosity.Warn: Debug.LogWarning(message); break;
                 case LogVerbosity.Info: Debug.Log(message); break;
+                default: throw new ArgumentOutOfRangeException(nameof(verbosity), verbosity, null);
             }
         }
 

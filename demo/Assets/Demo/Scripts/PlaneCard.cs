@@ -66,7 +66,7 @@ public class PlaneCard {
 
     public static void LoadConfigs() {
         // loads all config files in the Planes directory
-        Configs.LoadFilesAsMergedDict("Planes/**", doc => {
+        Configs.ParseFilesAsMergedDict("Planes/**", doc => {
             Configs.Reify(ref _Cards, doc);
             return true;
         });
