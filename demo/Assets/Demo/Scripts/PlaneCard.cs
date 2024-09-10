@@ -6,18 +6,18 @@ public class GunMount {
     public string Name;
     public Location Location;
 
-    // Note that this is assuming that GunCard.Cards is loaded by the 
+    // Note that this is assuming that GunCard.Cards is loaded by the
     // time we get into this property accessor.
     public GunCard Card => GunCard.Cards[Name];
 }
 
 public class LootTableEntry {
-    // Don't permit this field to be missing in the config, even if DarkConfig 
+    // Don't permit this field to be missing in the config, even if DarkConfig
     // isn't being strict.
     [ConfigMandatory]
     public float Weight;
 
-    // Permit this field to be missing in the config, even if DarkConfig is 
+    // Permit this field to be missing in the config, even if DarkConfig is
     // being strict.
     [ConfigAllowMissing]
     public int Health;
@@ -27,7 +27,7 @@ public class LootTableEntry {
 }
 
 public class PlaneCard {
-    // Fields that are expected to be set in configs. 
+    // Fields that are expected to be set in configs.
     public Location Fuselage = new Location(new Vector2(0, 0), new Vector2(1, 1));
     public Location Wing = new Location(new Vector2(0, 0), new Vector2(1, 1));
     public Location Stabilizer = new Location(new Vector2(0, -1), new Vector2(1, 1));
@@ -45,7 +45,7 @@ public class PlaneCard {
 
     /////////////////////////////////////////////////////////
 
-    // this field can't be set by DarkConfig because it's a function; it's 
+    // this field can't be set by DarkConfig because it's a function; it's
     // also ignored for clarity
     [ConfigIgnore]
     public System.Action<PlaneCard> OnChanged;
@@ -73,11 +73,11 @@ public class PlaneCard {
     }
 
     // We have a few places in the code which need to be notified when their
-    // PlaneCard is modified.  These are places where we had no choice but to 
-    // copy some of the values from the PlaneCard into some other object, and 
+    // PlaneCard is modified.  These are places where we had no choice but to
+    // copy some of the values from the PlaneCard into some other object, and
     // therefore need to re-copy the values when the PlaneCard gets hotloaded.
-    // 
-    // To see those use cases, look for usage of OnChanged in PlaneView.cs. 
+    //
+    // To see those use cases, look for usage of OnChanged in PlaneView.cs.
     // See hotloading.md for more information on hotloading in general.
     public static PlaneCard PostDoc(PlaneCard existing) {
         existing.OnChanged?.Invoke(existing);

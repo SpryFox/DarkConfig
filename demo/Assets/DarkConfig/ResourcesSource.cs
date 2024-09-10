@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace DarkConfig {
     /// loads configs from a Unity Resources directory
-    /// 
+    ///
     /// since we can't check the timestamp on the files, it has to read them in in their
     /// entirety to see whether to hotload them
     public class ResourcesSource : ConfigSource {
@@ -21,14 +21,14 @@ namespace DarkConfig {
         public override IEnumerable StepPreload() {
             AllFiles.Clear();
             filesList.Clear();
-            
+
             // Load the index file.
             indexFile = ReadFile(INDEX_FILENAME);
             if (indexFile == null) {
                 Configs.LogError($"Index file is missing at Resources path {INDEX_FILENAME}.");
                 yield break;
             }
-            
+
             // Load all the files.
             foreach (var nameNode in indexFile.Parsed.Values) {
                 string filename = nameNode.StringValue;
@@ -47,7 +47,7 @@ namespace DarkConfig {
                 Configs.LogError($"Index file is missing at Resources path {INDEX_FILENAME}.");
                 return;
             }
-            
+
             if (newIndex.Checksum != indexFile.Checksum) {
                 // Index has changed, possibly have added or removed files from the index.
                 // TODO Smart update, don't just toss the whole list and start from scratch.
@@ -69,7 +69,7 @@ namespace DarkConfig {
         public override string ToString() {
             return $"ResourcesSource({baseDir})";
         }
-        
+
         /////////////////////////////////////////////////
 
         ConfigFileInfo indexFile;
@@ -77,14 +77,14 @@ namespace DarkConfig {
         readonly string baseDir;
 
         /////////////////////////////////////////////////
-        
+
         ConfigFileInfo ReadFile(string filename) {
             // Get the full resources path for the file.
             string path = baseDir + "/" + filename;
-            
-            // Remove extension if one is specified.  
+
+            // Remove extension if one is specified.
             path = System.IO.Path.ChangeExtension(path, null);
-            
+
             var asset = Resources.Load<TextAsset>(path);
             if (asset == null) {
                 return null;
