@@ -471,7 +471,7 @@ namespace DarkConfig.Internal {
                         throw;
                     }
                 } else {
-                    result.ShouldVerifyMemberHashes = true;
+                    result.ShouldVerifyMemberHashes = (options & ReificationOptions.AllowExtraFields) == 0;
                     if (typeInfo.UnionKeys != null) {
                         if (doc.Type == DocNodeType.Scalar) {
                             if (typeInfo.UnionKeys.TryGetValue(doc.StringValue, out var subType, ignoreCase)) {
@@ -575,7 +575,7 @@ namespace DarkConfig.Internal {
         /// <exception cref="ExtraFieldsException"></exception>
         /// <exception cref="MissingFieldsException"></exception>
         void SetFieldsOnObject(Type type, ref object obj, DocNode doc, ReificationOptions? options = null) {
-            var result = new ReificationResult {ShouldVerifyMemberHashes = true};
+            var result = new ReificationResult {ShouldVerifyMemberHashes = (options & ReificationOptions.AllowExtraFields) == 0};
             SetFieldsOnObjectWithoutExtraFieldsValidation(type, ref obj, doc, result, options);
             result.VerifyAllMembersConsumed(type, doc, options);
         }
