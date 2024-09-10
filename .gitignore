@@ -8,6 +8,8 @@ packages/
 # demo Unity files
 demo/Library
 demo/Temp
+demo/UserSettings
+demo/Logs
 demo/**/*.sln
 demo/**/*.csproj
 demo/**/*.unityproj
