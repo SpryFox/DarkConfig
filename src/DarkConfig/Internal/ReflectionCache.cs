@@ -232,8 +232,8 @@ namespace DarkConfig.Internal {
             }
 
             var info = new TypeInfo {
-                FromDoc = type.GetMethod("FromDoc", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static, new[] {type, typeof(DocNode)}),
-                FromDocString = type.GetMethod("FromDoc", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static, new[] {type, typeof(string)}),
+                FromDoc = type.GetMethod("FromDoc", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static, null, new[] {type, typeof(DocNode)}, Array.Empty<ParameterModifier>()),
+                FromDocString = type.GetMethod("FromDoc", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static, null, new[] {type, typeof(string)}, Array.Empty<ParameterModifier>()),
                 PostDoc = type.GetMethod("PostDoc", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static)
             };
 

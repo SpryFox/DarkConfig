@@ -672,7 +672,7 @@ namespace DarkConfig.Internal {
 
         private static string FormatTabs(int depth) => new(' ', depth * 2);
         private static string FormatHeader(int depth) => new('#', depth);
-        private static string FormatName(string name) => name.Length >= 1 ? string.Concat(name[..1].ToLower(), name.AsSpan(1, name.Length - 1)) : "";
+        private static string FormatName(string name) => name.Length >= 1 ? string.Concat(name[..1].ToLower(), name[1..]) : "";
 
         private static string FormatTypeName(Type type, HashSet<Type>? types, bool linkify, bool isIndex = false) {
             if (type == typeof(float)) {

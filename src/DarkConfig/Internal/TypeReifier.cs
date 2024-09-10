@@ -615,7 +615,7 @@ namespace DarkConfig.Internal {
             bool ignoreCase = (options & ReificationOptions.CaseSensitive) == 0;
 
             // Set fields and properties.
-            result.SetMemberHashes.EnsureCapacity(result.SetMemberHashes.Count + typeInfo.MemberNames.Count);
+            result.SetMemberHashes.Capacity = Math.Max(result.SetMemberHashes.Capacity, result.SetMemberHashes.Count + typeInfo.MemberNames.Count);
 
             List<string>? missingRequiredMembers = null;
             for (int memberIndex = 0; memberIndex < typeInfo.MemberNames.Count; ++memberIndex) {
