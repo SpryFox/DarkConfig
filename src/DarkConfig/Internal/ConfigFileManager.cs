@@ -24,6 +24,8 @@ namespace DarkConfig.Internal {
         /// True if all sources have been preloaded.
         internal bool IsPreloaded { get; private set; }
         internal readonly List<ConfigSource> sources = new();
+        /// List of all filenames that have been requested, to see if there are any orphaned files
+        internal readonly HashSet<string> inspectedFileNames = new HashSet<string>();
 
         /////////////////////////////////////////////////
 
@@ -31,7 +33,7 @@ namespace DarkConfig.Internal {
         /// Start parsing all config files.  Must call
         /// this via Configs.Preload before using anything else
         /// in DarkConfig.
-        /// ends when all files are preloaded.
+        /// yield break's when all files are preloaded.
         /// </summary>
         /// <returns></returns>
         public IEnumerable StepPreload() {
@@ -71,15 +73,14 @@ namespace DarkConfig.Internal {
 
             foreach (var source in sources) {
                 if (source.AllFiles.TryGetValue(filename, out var configInfo)) {
+                    inspectedFileNames.Add(filename);
                     return configInfo.Parsed;
                 }
             }
 
             if (combiners.TryGetValue(filename, out var combinerData)) {
-                if (combinerData.Parsed == null) {
-                    BuildCombinedConfig(combinerData);
-                }
-                return combinerData.Parsed!;
+                inspectedFileNames.Add(filename);
+                return combinerData.Parsed;
             }
 
             throw new ConfigFileNotFoundException(filename);
@@ -203,13 +204,14 @@ namespace DarkConfig.Internal {
             ThrowIfNotPreloaded();
 
             var results = new HashSet<string>();
+
             foreach (var source in sources) {
                 RegexUtils.FilterMatching(pattern, source.GetSortedFilenames(), results);
             }
             return new(results);
         }
 
-        public ConfigFileInfo? GetFileInfo(string filename) {
+        public ConfigFileInfo GetFileInfo(string filename) {
             ThrowIfNotPreloaded();
 
             foreach (var source in sources) {
@@ -218,6 +220,22 @@ namespace DarkConfig.Internal {
                 }
             }
             return null;
+        }
+
+        /// Get the list of files that have not been retrieved by `GetFileInfo`.
+        public List<string> GetUninspectedFilenames() {
+            ThrowIfNotPreloaded();
+
+            List<string> uninspectedFilenames = new();
+            foreach (var source in sources) {
+                foreach (string file in source.AllFiles.Keys) {
+                    if (!inspectedFileNames.Contains(file)) {
+                        uninspectedFilenames.Add(file);
+                    }
+                }
+            }
+
+            return uninspectedFilenames;
         }
 
         /// If hotloading is enabled, triggers an immediate hotload.
@@ -304,7 +322,7 @@ namespace DarkConfig.Internal {
             public readonly string[] Filenames;
             public readonly string CombinedFilename;
             public readonly Func<List<DocNode>, DocNode> Combiner;
-            public DocNode? Parsed;
+            public DocNode Parsed;
 
             public CombinerData(string[] filenames, Func<List<DocNode>, DocNode> combiner, string combinedFilename) {
                 Filenames = filenames;

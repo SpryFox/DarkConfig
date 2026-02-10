@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -8,7 +7,7 @@ using System.Text;
 
 namespace DarkConfig.Internal {
     internal static class DocumentationGenerator {
-        const string FILE_FOOTER = @"
+        const string FileFooter = @"
 <style>
     table {
         width: 100%;
@@ -56,35 +55,51 @@ namespace DarkConfig.Internal {
         padding-left: 1em;
         padding-right: 1em;
     }
+    h1.nocount:before {
+        content: none;
+    }
+    h2.nocount:before {
+        content: none;
+    }
+    h3.nocount:before {
+        content: none;
+    }
+    h4.nocount:before {
+        content: none;
+    }
 </style>
-<!-- Markdeep: --><script src=""https://casual-effects.com/markdeep/latest/markdeep.min.js?"" charset=""utf-8""></script>
+<!-- Markdeep: -->
+<script>markdeepOptions = { tocStyle: ""none""};</script>
+<script src=""https://casual-effects.com/markdeep/latest/markdeep.min.js"" charset=""utf-8""></script>
 ";
 
-        internal static void Document(string documentationRoot, ReflectionCache cache, Type[] rootTypes) {
-            if (documentationRoot == null) { throw new ArgumentNullException(nameof(documentationRoot)); }
 
-            // ensure the folder exists and is empty
-            if (Directory.Exists(documentationRoot)) {
-                Directory.Delete(documentationRoot, true);
+        internal static bool Document(string documentationRoot, ReflectionCache cache, Type[] rootTypes) {
+            try {
+                // ensure the folder exists and is empty
+                if (Directory.Exists(documentationRoot)) {
+                    Directory.Delete(documentationRoot, true);
+                }
+                Directory.CreateDirectory(documentationRoot);
+                Directory.CreateDirectory(Path.Combine(documentationRoot, "Types"));
+            } catch (UnauthorizedAccessException) {
+                return false; // cannot generate documentation, one or more of the files are open in another application
             }
-            Directory.CreateDirectory(documentationRoot);
-            Directory.CreateDirectory(Path.Combine(documentationRoot, "Types"));
 
             // find all types and how they relate to each other
             HashSet<Type> types = new();
             HashSet<Type> allTypes = new();
             Dictionary<Type, HashSet<Type>> relatedTypes = new();
-
-            foreach (var rootType in rootTypes) {
+            for (int rootTypeIndex = 0; rootTypeIndex < rootTypes.Length; rootTypeIndex++) {
                 types.Clear();
-                CollectTypes(cache, rootType, null, rootType, types, relatedTypes);
+                CollectTypes(cache, rootTypes[rootTypeIndex], null, rootTypes[rootTypeIndex], types, relatedTypes);
                 allTypes.UnionWith(types);
             }
 
             // write out index file
             {
                 StringBuilder builder = new();
-                GenerateIndex(builder, rootTypes, allTypes, 1);
+                GenerateIndex(builder, cache, rootTypes, allTypes, 1);
                 WriteToFile(Path.Combine(documentationRoot, $"Index.md.html"), builder);
             }
 
@@ -94,17 +109,18 @@ namespace DarkConfig.Internal {
                 DocumentType(cache, type, builder, allTypes, relatedTypes, 1);
                 WriteToFile(GetDocumentationPath(documentationRoot, type), builder);
             }
+            return true;
         }
 
         private static void WriteToFile(string filePath, StringBuilder builder) {
-            builder.AppendLine(FILE_FOOTER);
+            builder.AppendLine(FileFooter);
 
             // HACK: squash double newlines
             string document = builder.ToString()
-                .Replace("\r\n", "\n")
-                .Replace("\n\n\n\n", "\n")
-                .Replace("\n\n\n", "\n")
-                .Replace("\n\n", "\n");
+               .Replace("\r\n", "\n")
+               .Replace("\n\n\n\n", "\n")
+               .Replace("\n\n\n", "\n")
+               .Replace("\n\n", "\n");
 
             File.WriteAllText(filePath, document);
         }
@@ -116,14 +132,10 @@ namespace DarkConfig.Internal {
 
         private static void CollectTypes(ReflectionCache cache,
             Type rootType,
-            Type? parentType,
-            Type? currentType,
+            Type parentType,
+            Type currentType,
             HashSet<Type> types,
-            Dictionary<Type, HashSet<Type>> relatedTypes)
-        {
-            if (currentType == null) {
-                return;
-            }
+            Dictionary<Type, HashSet<Type>> relatedTypes) {
             if (types.Contains(currentType)) {
                 return;
             }
@@ -178,7 +190,7 @@ namespace DarkConfig.Internal {
             relatedTypeList.Add(relatedType);
         }
 
-        private static void GenerateIndex(StringBuilder builder, Type[] rootTypes, HashSet<Type> allTypes, int headerDepth) {
+        private static void GenerateIndex(StringBuilder builder, ReflectionCache cache, Type[] rootTypes, HashSet<Type> allTypes, int headerDepth) {
             builder.AppendLine($"{FormatHeader(headerDepth)} Spry Fox Yaml Config Documentation");
 
             builder.AppendLine($"{FormatHeader(headerDepth + 1)} Top Level Types");
@@ -194,6 +206,59 @@ namespace DarkConfig.Internal {
                 string typeFriendlyName = FormatTypeName(type, allTypes, true, true);
                 builder.AppendLine($"- {typeFriendlyName}");
             }
+
+            Dictionary<string, List<YamlTagIndexTypeData>> typesByYamlTag = new();
+            foreach (var type in typesList) {
+                GatherYamlTags(cache, type, typesByYamlTag);
+            }
+
+            builder.AppendLine($"{FormatHeader(headerDepth + 1)} Index by Yaml Key");
+            var tagList = typesByYamlTag.Keys.ToList();
+            tagList.Sort();
+            foreach (var tag in tagList) {
+                builder.AppendLine($"<h{headerDepth + 2} class=nocount>{tag}</h{headerDepth + 2}>");
+                builder.AppendLine(" ");
+                var list = typesByYamlTag[tag];
+                list.Sort((A, B) => String.CompareOrdinal(A.Type.Name, B.Type.Name));
+                foreach (var typeInfo in list) {
+                    string typeFriendlyName = FormatTypeName(typeInfo.Type, allTypes, true, true);
+                    string parentFriendlyName = FormatTypeName(typeInfo.ParentType, allTypes, true, true);
+                    builder.AppendLine($"- {typeFriendlyName} (In: {parentFriendlyName})");
+                }
+            }
+        }
+
+        struct YamlTagIndexTypeData {
+            public Type Type;
+            public Type ParentType;
+        }
+        static void RecordYamlTag(Dictionary<string, List<YamlTagIndexTypeData>> typesByTag, string tag, Type type, Type parentType) {
+
+            List<YamlTagIndexTypeData> typeList;
+            if (!typesByTag.TryGetValue(tag, out typeList)) {
+                typeList = new();
+                typesByTag.Add(tag, typeList);
+            }
+            typeList.Add(new YamlTagIndexTypeData {
+                Type = type, ParentType = parentType
+            });
+        }
+
+        static void GatherYamlTags(ReflectionCache cache, Type type, Dictionary<string, List<YamlTagIndexTypeData>> typesByTag) {
+
+            var typeInfo = cache.GetTypeInfo(type);
+            if (typeInfo != null) {
+                if (typeInfo.UnionKeys != null) {
+                    foreach (var unionChild in typeInfo.UnionKeys) {
+                        RecordYamlTag(typesByTag, unionChild.Item1, unionChild.Item2, type);
+                    }
+                }
+                for (int memberIndex = 0; memberIndex < typeInfo.MemberNames.Count; memberIndex++) {
+                    Type memberType = typeInfo.GetMemberType(memberIndex);
+                    string memberName = FormatName(typeInfo.MemberNames[memberIndex]);
+                    RecordYamlTag(typesByTag, memberName, memberType, type);
+                }
+            }
         }
 
         private static void DocumentType(ReflectionCache cache,
@@ -201,15 +266,12 @@ namespace DarkConfig.Internal {
             StringBuilder builder,
             HashSet<Type> allTypes,
             Dictionary<Type, HashSet<Type>> relatedTypes,
-            int headerDepth)
-        {
+            int headerDepth) {
+
             string typeFriendlyName = FormatTypeName(type, allTypes, false);
             builder.AppendLine($"{FormatHeader(headerDepth)} {typeFriendlyName}");
 
-            var descriptionAttribute = type.GetCustomAttribute<ConfigDocumentationDescriptionAttribute>();
-            if (descriptionAttribute != null) {
-                builder.AppendLine(descriptionAttribute.Value);
-            }
+            builder.AppendLine(GetTypeDescription(type));
 
             var typeInfo = allTypes.Contains(type) ? cache.GetTypeInfo(type) : null;
 
@@ -253,9 +315,9 @@ namespace DarkConfig.Internal {
                         TableEnd(builder);
                     }
 
-                    if (typeInfo.FromDocString != null) {
+                    if (typeInfo.FromDocString != null || typeInfo.FromDocStringEx != null) {
                         Note(builder, $"This type supports being authored as a single string in addition to as an object. " +
-                            "If the above description does not cover how this works (or is missing) talk to your local gameplay engineer and ask them to add one.");
+                             "If the above description does not cover how this works (or is missing) talk to your local gameplay engineer and ask them to add one.");
                     }
 
                     if (singleProperty) {
@@ -320,18 +382,17 @@ namespace DarkConfig.Internal {
             ReflectionCache cache,
             HashSet<Type> allTypes,
             ReflectionCache.TypeInfo typeInfo,
-            int singlePropertyPropertyIndex)
-        {
+            int singlePropertyPropertyIndex) {
             StringBuilder attributesStringBuilder = new();
             for (int memberIndex = 0; memberIndex < typeInfo.MemberNames.Count; memberIndex++) {
-                var memberType = typeInfo.GetMemberType(memberIndex);
+                Type memberType = typeInfo.GetMemberType(memberIndex);
                 string memberName = FormatName(typeInfo.MemberNames[memberIndex]);
                 string memberTypeName = FormatTypeName(memberType, allTypes, true);
 
                 bool isInline = (typeInfo.MemberOptions[memberIndex] & ReflectionCache.TypeInfo.MemberOptionFlags.Inline) != 0;
                 if (isInline && singlePropertyPropertyIndex != memberIndex) {
                     var memberTypeInfo = allTypes.Contains(memberType) ? cache.GetTypeInfo(memberType) : null;
-                    if (memberTypeInfo is {MemberNames: {Count: > 0}, UnionKeys: null}) {
+                    if (memberTypeInfo != null && memberTypeInfo.MemberNames.Count > 0 && memberTypeInfo.UnionKeys == null) {
                         FieldTableRows(builder, cache, allTypes, memberTypeInfo, -1);
                         continue;
                     }
@@ -368,17 +429,21 @@ namespace DarkConfig.Internal {
         }
 
         #region EXAMPLE GENERATION
+        const int MaxExampleDepth = 10; // infinite recursion protection
         private static void GenerateExampleForType(ReflectionCache cache,
             Type type,
-            MemberInfo? memberInfo,
+            MemberInfo memberInfo,
             StringBuilder builder,
             HashSet<Type> loopProtection,
             int depth,
             bool drawMinimal,
             bool isOptional,
-            bool isList)
-        {
+            bool isList) {
             bool hasNote = false;
+            if (depth > MaxExampleDepth) {
+                GenerateNote(builder, "clipped", ref hasNote);
+                return;
+            }
             if (loopProtection.Contains(type)) {
                 if (isOptional) {
                     if (isList) {
@@ -408,20 +473,20 @@ namespace DarkConfig.Internal {
             }
 
             if (type == typeof(string)) {
-                GenerateExampleForString(builder, depth, isOptional, isList);
+                GenerateExampleForString(builder, depth, drawMinimal, isOptional, isList);
             } else if (type == typeof(int)) {
-                GenerateExampleForInt(builder, depth, isOptional, isList);
+                GenerateExampleForInt(builder, depth, drawMinimal, isOptional, isList);
             } else if (type == typeof(float)) {
-                GenerateExampleForFloat(builder, depth, isOptional, isList);
+                GenerateExampleForFloat(builder, depth, drawMinimal, isOptional, isList);
             } else if (type == typeof(bool)) {
-                GenerateExampleForBool(builder, depth, isOptional, isList);
+                GenerateExampleForBool(builder, depth, drawMinimal, isOptional, isList);
             } else if (type.IsEnum) {
-                GenerateExampleForEnum(type, builder, depth, isOptional, isList);
+                GenerateExampleForEnum(type, builder, depth, drawMinimal, isOptional, isList);
             } else if (type.IsArray) {
-                GenerateExampleForList(cache, type.GetElementType()!, builder, loopProtection, depth, drawMinimal, isOptional);
+                GenerateExampleForList(cache, type.GetElementType(), builder, loopProtection, depth, drawMinimal, isOptional, isList);
             } else if (type.IsGenericType) {
                 if (TypeIsOrExtendsGeneric(type, typeof(List<>), out var listType)) {
-                    GenerateExampleForList(cache, listType.GetGenericArguments()[0], builder, loopProtection, depth, drawMinimal, isOptional);
+                    GenerateExampleForList(cache, listType.GetGenericArguments()[0], builder, loopProtection, depth, drawMinimal, isOptional, isList);
                 } else if (TypeIsOrExtendsGeneric(type, typeof(Dictionary<,>), out var dictionaryType)) {
                     GenerateExampleForDictionary(cache, dictionaryType.GetGenericArguments()[1], builder, loopProtection, depth, drawMinimal, isOptional, isList);
                 } else if (TypeIsOrExtendsGeneric(type, typeof(Nullable<>), out var nullableType)) {
@@ -441,18 +506,23 @@ namespace DarkConfig.Internal {
                         bool isSinglePropertyWrapper = TypeIsSingleProperty(typeInfo, out int singlePropertyIndex);
                         int numOptionalMembers = typeInfo.NumOptionalFields;
                         if (isSinglePropertyWrapper && (numOptionalMembers == 0 || drawMinimal)) {
-                            Type memberType = typeInfo.GetMemberType(singlePropertyIndex);
-                            GenerateExampleForType(cache, memberType, typeInfo.MemberInfos[singlePropertyIndex], builder, loopProtection, depth + 1, drawMinimal,
-                                false, false);
+                            GenerateExampleForType(
+                                cache: cache,
+                                type: typeInfo.GetMemberType(singlePropertyIndex),
+                                memberInfo: typeInfo.MemberInfos[singlePropertyIndex],
+                                builder: builder,
+                                loopProtection: loopProtection,
+                                depth: depth + 1,
+                                drawMinimal: drawMinimal,
+                                isOptional: false,
+                                isList: false);
                         } else {
                             int childDepth = depth;
                             for (int memberIndex = 0; memberIndex < typeInfo.MemberNames.Count; memberIndex++) {
 
-                                Type memberType = typeInfo.GetMemberType(memberIndex);
+                                var memberType = typeInfo.GetMemberType(memberIndex);
                                 string memberName = FormatName(typeInfo.MemberNames[memberIndex]);
                                 if ((typeInfo.MemberOptions[memberIndex] & ReflectionCache.TypeInfo.MemberOptionFlags.Inline) != 0) {
-                                    // While we don't use the info here, it's good to cache the type info it if necessary.
-                                    cache.GetTypeInfo(memberType);
                                     GenerateExampleForType(cache, memberType, memberInfo, builder, loopProtection, depth, drawMinimal, false, false);
                                     continue;
                                 }
@@ -470,8 +540,16 @@ namespace DarkConfig.Internal {
                                 } else {
                                     builder.Append($"{FormatTabs(childDepth)}{memberName}: ");
                                 }
-                                GenerateExampleForType(cache, memberType, typeInfo.MemberInfos[memberIndex], builder, loopProtection, childDepth + 1, drawMinimal,
-                                    isMemberOptional, false);
+                                GenerateExampleForType(
+                                    cache: cache,
+                                    type: memberType,
+                                    memberInfo: typeInfo.MemberInfos[memberIndex],
+                                    builder: builder,
+                                    loopProtection: loopProtection,
+                                    depth: childDepth + 1,
+                                    drawMinimal: drawMinimal,
+                                    isOptional: isMemberOptional,
+                                    isList: false);
                             }
                         }
                     }
@@ -493,13 +571,8 @@ namespace DarkConfig.Internal {
             bool isOptional,
             bool isList,
             ReflectionCache.TypeInfo typeInfo,
-            MemberInfo? memberInfo)
-        {
-            if (typeInfo.UnionKeys == null) {
-                return;
-            }
-
-            foreach ((string childKey, var childType) in typeInfo.UnionKeys) {
+            MemberInfo memberInfo) {
+            foreach ((string childKey, Type childType) in typeInfo.UnionKeys) {
                 if (drawMinimal) {
                     if (isList) {
                         builder.AppendLine($"{FormatTabs(depth)}- {childKey} # clipped");
@@ -517,14 +590,15 @@ namespace DarkConfig.Internal {
                     }
                     continue;
                 }
-
                 int childDepth = depth;
+
                 var childTypeInfo = cache.GetTypeInfo(childType);
 
                 builder.AppendLine();
 
+
                 if (childTypeInfo.FromDoc == null && (childTypeInfo.IsUnionInline || childTypeInfo.MemberNames.Count == 1)) {
-                    GenerateExampleForType(cache, childType, memberInfo, builder, loopProtection, childDepth, false, isOptional, isList);
+                    GenerateExampleForType(cache, childType, memberInfo, builder, loopProtection, childDepth, drawMinimal, isOptional, isList);
                 } else {
                     if (isList) {
                         builder.Append($"{FormatTabs(childDepth)}- {childKey}");
@@ -535,11 +609,11 @@ namespace DarkConfig.Internal {
 
                     bool hasMembers = childTypeInfo.MemberNames.Count > 0;
                     if (hasMembers) {
-                        builder.Append(':');
+                        builder.Append(":");
                     }
 
                     if (hasMembers) {
-                        GenerateExampleForType(cache, childType, memberInfo, builder, loopProtection, childDepth + 1, false, false, false);
+                        GenerateExampleForType(cache, childType, memberInfo, builder, loopProtection, childDepth + 1, drawMinimal, false, false);
                     }
                 }
             }
@@ -551,8 +625,8 @@ namespace DarkConfig.Internal {
             HashSet<Type> loopProtection,
             int depth,
             bool drawMinimal,
-            bool isOptional)
-        {
+            bool isOptional,
+            bool isList) {
             if (isOptional) {
                 builder.AppendLine(" # Optional");
             } else {
@@ -569,8 +643,7 @@ namespace DarkConfig.Internal {
             int depth,
             bool drawMinimal,
             bool isOptional,
-            bool isList)
-        {
+            bool isList) {
             if (isOptional) {
                 builder.Append(" # Optional");
                 builder.AppendLine();
@@ -587,7 +660,7 @@ namespace DarkConfig.Internal {
             }
         }
 
-        static void GenerateExampleForEnum(Type type, StringBuilder builder, int depth, bool isOptional, bool isList) {
+        static void GenerateExampleForEnum(Type type, StringBuilder builder, int depth, bool drawMinimal, bool isOptional, bool isList) {
             foreach (string EnumName in Enum.GetNames(type)) {
                 if (isList) {
                     builder.Append($"{FormatTabs(depth)}- ");
@@ -607,7 +680,7 @@ namespace DarkConfig.Internal {
             }
         }
 
-        static void GenerateExampleForBool(StringBuilder builder, int depth, bool isOptional, bool isList) {
+        static void GenerateExampleForBool(StringBuilder builder, int depth, bool drawMinimal, bool isOptional, bool isList) {
             for (int counter = 0; counter < (isList ? 3 : 1); counter++) {
                 if (isList) {
                     builder.Append($"{FormatTabs(depth)}- ");
@@ -623,7 +696,7 @@ namespace DarkConfig.Internal {
             }
         }
 
-        static void GenerateExampleForFloat(StringBuilder builder, int depth, bool isOptional, bool isList) {
+        static void GenerateExampleForFloat(StringBuilder builder, int depth, bool drawMinimal, bool isOptional, bool isList) {
             for (int counter = 0; counter < (isList ? 3 : 1); counter++) {
                 if (isList) {
                     builder.Append($"{FormatTabs(depth)}- ");
@@ -639,7 +712,7 @@ namespace DarkConfig.Internal {
             }
         }
 
-        static void GenerateExampleForInt(StringBuilder builder, int depth, bool isOptional, bool isList) {
+        static void GenerateExampleForInt(StringBuilder builder, int depth, bool drawMinimal, bool isOptional, bool isList) {
             for (int counter = 0; counter < (isList ? 3 : 1); counter++) {
                 if (isList) {
                     builder.Append($"{FormatTabs(depth)}- ");
@@ -654,7 +727,7 @@ namespace DarkConfig.Internal {
             }
         }
 
-        static void GenerateExampleForString(StringBuilder builder, int depth, bool isOptional, bool isList) {
+        static void GenerateExampleForString(StringBuilder builder, int depth, bool drawMinimal, bool isOptional, bool isList) {
             for (int counter = 0; counter < (isList ? 3 : 1); counter++) {
                 if (isList) {
                     builder.Append($"{FormatTabs(depth)}- ");
@@ -674,7 +747,7 @@ namespace DarkConfig.Internal {
         private static string FormatHeader(int depth) => new('#', depth);
         private static string FormatName(string name) => name.Length >= 1 ? string.Concat(name[..1].ToLower(), name[1..]) : "";
 
-        private static string FormatTypeName(Type type, HashSet<Type>? types, bool linkify, bool isIndex = false) {
+        private static string FormatTypeName(Type type, HashSet<Type> types, bool linkify, bool isIndex = false) {
             if (type == typeof(float)) {
                 return "Number";
             }
@@ -716,7 +789,7 @@ namespace DarkConfig.Internal {
                 return linkify ? MakeLinkString(type.Name, isIndex) : type.Name;
             }
             if (type.IsArray) {
-                return $"(List) {FormatTypeName(type.GetElementType()!, types, linkify)}";
+                return $"(List) {FormatTypeName(type.GetElementType(), types, linkify)}";
             }
             return type.Name.ToLower().Replace("`", "");
         }
@@ -733,8 +806,10 @@ namespace DarkConfig.Internal {
                 }
             }
 
-            var descriptionAttribute = type.GetCustomAttribute<ConfigDocumentationDescriptionAttribute>();
-            return descriptionAttribute != null ? descriptionAttribute.Value : "";
+            return (string) type.GetMethod("DocumentationDescription")?.Invoke(null, null) ??
+                type.GetCustomAttribute<ConfigDocumentationDescriptionAttribute>()?.Value ??
+                "";
+
         }
 
         private static string GetMemberDescription(MemberInfo member, Type memberType) {
@@ -773,7 +848,7 @@ namespace DarkConfig.Internal {
             builder.AppendLine($"<div class=\"note\"><div class=\"noteText\">{note}</div></div>");
         }
 
-        private static bool TypeIsOrExtendsGeneric(Type? testType, Type baseType, [MaybeNullWhen(false)] out Type outInstanceType) {
+        private static bool TypeIsOrExtendsGeneric(Type testType, Type baseType, out Type outInstanceType) {
             outInstanceType = null;
             while (testType is {IsGenericType: true}) {
                 if (testType.GetGenericTypeDefinition() == baseType) {
@@ -788,7 +863,7 @@ namespace DarkConfig.Internal {
         private static bool TypeIsSingleProperty(ReflectionCache.TypeInfo typeInfo, out int outRequiredMemberIndex) {
             outRequiredMemberIndex = -1;
             int numRequiredMembers = typeInfo.NumRequiredFields + typeInfo.NumRequiredProperties;
-            if (numRequiredMembers is > 1 or 0) {
+            if (numRequiredMembers > 1 || numRequiredMembers == 0) {
                 return false;
             }
 

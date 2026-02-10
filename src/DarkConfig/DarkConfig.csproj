@@ -5,7 +5,6 @@
 		<LangVersion>9</LangVersion>
 
 		<ImplicitUsings>disable</ImplicitUsings>
-		<Nullable>enable</Nullable>
 		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
 		<OutputPath>..\..\bin\$(Configuration)</OutputPath>
 	</PropertyGroup>

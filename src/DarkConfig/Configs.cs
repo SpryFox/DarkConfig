@@ -18,9 +18,9 @@ namespace DarkConfig {
     /// <param name="obj">the existing object (if any)</param>
     /// <param name="doc">the DocNode that is meant to update the object</param>
     /// <returns>The updated/created object</returns>
-    public delegate object FromDocFunc(object? obj, DocNode doc);
+    public delegate object FromDocFunc(object obj, DocNode doc);
 
-    public delegate object PostDocFunc(object? obj);
+    public delegate object PostDocFunc(object obj);
 
     /// <summary>
     /// A callback to be called when a file is hotloaded.
@@ -31,6 +31,13 @@ namespace DarkConfig {
 
     /// A callback when DarkConfig logs a message, warning or error.
     public delegate void LogFunc(LogVerbosity verbosity, string message);
+
+    /// <summary>
+    /// A callback to be called whenever an object is read and reified
+    /// </summary>
+    /// <param name="value">the object that was just read</param>
+    /// <param name="doc">the DocNode that was used to read the value</param>
+    public delegate void ObjectReifiedFunc(Object value, DocNode doc);
 
     public static class Configs {
         const string LOG_GUARD = "DC_LOGGING_ENABLED";
@@ -43,7 +50,7 @@ namespace DarkConfig {
 
         internal static Internal.ConfigFileManager FileManager { get; private set; } = new();
 
-        public static LogFunc? LogCallback;
+        public static LogFunc LogCallback;
 
         /// True if config file preloading is complete, false otherwise.
         public static bool IsPreloaded => FileManager.IsPreloaded;
@@ -198,8 +205,12 @@ namespace DarkConfig {
             return FileManager.GetFilenamesMatchingRegex(pattern);
         }
 
-        public static ConfigFileInfo? GetFileInfo(string filename) {
+        public static ConfigFileInfo GetFileInfo(string filename) {
             return FileManager.GetFileInfo(filename);
+        }
+
+        public static List<string> GetUninspectedFilenames() {
+            return FileManager.GetUninspectedFilenames();
         }
         #endregion
 
@@ -339,6 +350,21 @@ namespace DarkConfig {
         }
         #endregion
 
+        #region ValueRead
+        /// <summary>
+        /// Register an object reified callback
+        ///
+        /// Is called for every object that is reified, with its corresponding type and DocNode
+        ///
+        /// Useful for registering source locations for later error logging
+        /// </summary>
+        /// <remarks>This is called for EVERY value, it should be quick.</remarks>
+        /// <param name="objectReified">The post-value read callback to invoke</param>
+        public static void RegisterObjectReified(ObjectReifiedFunc objectReified) {
+            typeReifier.RegisteredObjectReified = objectReified;
+        }
+        #endregion
+
         #region Reify, Apply, SetFields
         /// <summary>
         /// Use a config file to update an object.
@@ -360,11 +386,11 @@ namespace DarkConfig {
 
             var weakReference = new WeakReference(obj);
             FileManager.RegisterReloadCallback(filename, doc => {
-                if (!weakReference.IsAlive || weakReference.Target == null) {
-                    // The object was de-allocated by the garbage collector.
+                var t = (T) weakReference.Target;
+                if (t == null) {
+                    // The object was GC'd
                     return false;
                 }
-                var t = (T) weakReference.Target;
                 Reify(ref t, doc);
                 return true;
             });
@@ -652,8 +678,8 @@ namespace DarkConfig {
             }
         }
 
-        public static void Document(string documentationRoot, params Type[] rootTypes) {
-            Internal.DocumentationGenerator.Document(documentationRoot, new(), rootTypes);
+        public static bool Document(string documentationRoot, params Type[] rootTypes) {
+            return Internal.DocumentationGenerator.Document(documentationRoot, new(), rootTypes);
         }
 
         public static string GetDocumentationPath(string documentationRoot, Type type) {

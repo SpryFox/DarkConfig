@@ -28,7 +28,7 @@ namespace DarkConfig {
         }
 
         public override string ToString() {
-            return $"[{Name} {Checksum:X16}]";
+            return $"[{Name} {Checksum:X16} {(Parsed == null ? "unparsed" : "parsed")}]";
         }
     }
 }

@@ -23,18 +23,18 @@ namespace DarkConfig {
     /// bottom.  It's a bit more readable, and most importantly the line
     /// numbers in the config files are much more prominent.
     public class ParseException : Exception {
-        public ParseException(DocNode? exceptionNode, string message, Exception? inner = null) : base((inner != null ? inner.Message + "\n" : "") + message) {
+        public ParseException(DocNode exceptionNode, string message, Exception inner = null) : base((inner != null ? inner.Message + "\n" : "") + message) {
             Node = exceptionNode;
             wrappedException = inner;
         }
 
-        public override string? StackTrace => wrappedException == null ? base.StackTrace : wrappedException.StackTrace + "\n-----\n" + base.StackTrace;
-        public override string Message => base.Message + (Node != null ? $" from {Node.SourceInformation}" : "");
+        public override string StackTrace => wrappedException == null ? base.StackTrace : wrappedException.StackTrace + "\n-----\n" + base.StackTrace;
+        public override string Message => base.Message + (HasNode ? $" from {Node.SourceInformation}" : "");
         public string RawMessage => base.Message;
         public bool HasNode => Node != null;
 
-        public readonly DocNode? Node;
-        readonly Exception? wrappedException;
+        public readonly DocNode Node;
+        readonly Exception wrappedException;
     }
 
     public class TypedParseException : ParseException {
@@ -45,7 +45,13 @@ namespace DarkConfig {
     }
 
     public class MissingFieldsException : TypedParseException {
-        public MissingFieldsException(Type type, DocNode node, string message) : base(type, node, message) { }
+        public readonly int RequiredFieldsCount = 0;
+        public readonly int MissingFieldsCount = 0;
+
+        public MissingFieldsException(Type type, DocNode node, string message, int requiredFieldsCount, int missingFieldsCount) : base(type, node, message) {
+            RequiredFieldsCount = requiredFieldsCount;
+            MissingFieldsCount = missingFieldsCount;
+        }
     }
 
     public class ExtraFieldsException : TypedParseException {

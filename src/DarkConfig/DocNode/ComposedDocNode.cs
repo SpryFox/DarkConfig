@@ -1,17 +1,21 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using YamlDotNet.RepresentationModel;
 
 namespace DarkConfig {
     /// ComposedDocNode is a mutable DocNode implementation, intended to be used to
     /// help compiling multiple source documents into one meta-document.
     public class ComposedDocNode : DocNode {
-        public ComposedDocNode(DocNodeType type, int size = -1, string? sourceInformation = null, DocNode? sourceDocNode = null) {
+        public ComposedDocNode(DocNodeType type, int size = -1, string sourceInformation = null, DocNode sourceDocNode = null, DocNode templateDocNode = null) {
             Type = type;
             sourceInfo = sourceInformation ?? sourceDocNode?.SourceInformation;
             SourceFile = sourceDocNode?.SourceFile;
             SourceNode = sourceDocNode?.SourceNode;
+            TemplateDocNode = templateDocNode;
+            if (TemplateDocNode == null && sourceDocNode is ComposedDocNode cdnSource) {
+                TemplateDocNode = cdnSource.TemplateDocNode;
+            }
+
             switch (type) {
                 case DocNodeType.Dictionary:
                     dictionary = size > 0 ? new(size) : new();
@@ -34,37 +38,37 @@ namespace DarkConfig {
         /// access the node as if it was a list
         public override DocNode this[int index] {
             get {
-                AssertTypeIs(DocNodeType.List);
-                return list![index];
+                CheckTypeIs(DocNodeType.List);
+                return list[index];
             }
             set {
-                AssertTypeIs(DocNodeType.List);
-                list![index] = value;
+                CheckTypeIs(DocNodeType.List);
+                list[index] = value;
             }
         }
 
         /// access the node as if it was a Dictionary
         public override DocNode this[string key] {
             get {
-                AssertTypeIs(DocNodeType.Dictionary);
-                return dictionary![key];
+                CheckTypeIs(DocNodeType.Dictionary);
+                return dictionary[key];
             }
             set {
-                AssertTypeIs(DocNodeType.Dictionary);
-                dictionary![key] = value;
+                CheckTypeIs(DocNodeType.Dictionary);
+                dictionary[key] = value;
             }
         }
 
         public override int Count =>
             Type switch {
-                DocNodeType.Dictionary => dictionary!.Count,
-                DocNodeType.List => list!.Count,
-                _ => throw new DocNodeAccessException(GenerateAccessExceptionMessage("Countable (Dictionary or List)", Type.ToString()))
+                DocNodeType.Dictionary => dictionary.Count,
+                DocNodeType.List => list.Count,
+                _ => throw new DocNodeAccessException(this, GenerateAccessExceptionMessage("Countable (Dictionary or List)"))
             };
 
         public override bool ContainsKey(string key, bool ignoreCase = false) {
-            AssertTypeIs(DocNodeType.Dictionary);
-            foreach (string dictKey in dictionary!.Keys) {
+            CheckTypeIs(DocNodeType.Dictionary);
+            foreach (string dictKey in dictionary.Keys) {
                 if (string.Equals(dictKey, key, ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal)) {
                     return true;
                 }
@@ -72,15 +76,13 @@ namespace DarkConfig {
             return false;
         }
 
-        public override bool TryGetValue(string key, bool ignoreCase, [MaybeNullWhen(false)] out DocNode result) {
-            AssertTypeIs(DocNodeType.Dictionary);
-            foreach (var kvp in dictionary!) {
-                if (!string.Equals(kvp.Key, key, ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal)) {
-                    continue;
+        public override bool TryGetValue(string key, bool ignoreCase, out DocNode result) {
+            CheckTypeIs(DocNodeType.Dictionary);
+            foreach (var kvp in dictionary) {
+                if (string.Equals(kvp.Key, key, ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal)) {
+                    result = kvp.Value;
+                    return true;
                 }
-
-                result = kvp.Value;
-                return true;
             }
 
             result = null;
@@ -89,90 +91,91 @@ namespace DarkConfig {
 
         public override IEnumerable<DocNode> Values {
             get {
-                AssertTypeIs(DocNodeType.List);
-                return list!;
+                CheckTypeIs(DocNodeType.List);
+                return list;
             }
         }
 
         public override IEnumerable<KeyValuePair<string, DocNode>> Pairs {
             get {
-                AssertTypeIs(DocNodeType.Dictionary);
-                return dictionary!;
+                CheckTypeIs(DocNodeType.Dictionary);
+                return dictionary;
             }
         }
 
         public override string StringValue {
             get {
-                AssertTypeIs(DocNodeType.Scalar);
-                return scalar ?? "null";
+                CheckTypeIs(DocNodeType.Scalar);
+                return scalar;
             }
             set {
-                AssertTypeIs(DocNodeType.Scalar);
+                CheckTypeIs(DocNodeType.Scalar);
                 scalar = value;
             }
         }
 
-        public override string SourceInformation => sourceInfo ?? $"ComposedDocNode {Type}";
-        public override string? SourceFile { get; }
-        public override YamlNode? SourceNode { get; }
+        public override string SourceInformation => sourceInfo ?? "ComposedDocNode " + Type;
+        public override string SourceFile { get; }
+        public override YamlNode SourceNode { get; }
+        public DocNode TemplateDocNode { get; }
 
         public override string ToString() => $"ComposedDocNode({Type}, {(Type == DocNodeType.Scalar ? scalar : Count.ToString())})";
         #endregion
 
         public void Add(DocNode d) {
-            AssertTypeIs(DocNodeType.List);
-            list!.Add(d);
+            CheckTypeIs(DocNodeType.List);
+            list.Add(d);
         }
 
         public void Add(string key, DocNode value) {
-            AssertTypeIs(DocNodeType.Dictionary);
-            dictionary!.Add(key, value);
+            CheckTypeIs(DocNodeType.Dictionary);
+            dictionary.Add(key, value);
         }
 
         public void InsertAt(int index, DocNode value) {
-            AssertTypeIs(DocNodeType.List);
-            list!.Insert(index, value);
+            CheckTypeIs(DocNodeType.List);
+            list.Insert(index, value);
         }
 
         public void Remove(DocNode d) {
-            AssertTypeIs(DocNodeType.List);
-            list!.Remove(d);
+            CheckTypeIs(DocNodeType.List);
+            list.Remove(d);
         }
 
         public void RemoveAt(int index) {
-            AssertTypeIs(DocNodeType.List);
-            list!.RemoveAt(index);
+            CheckTypeIs(DocNodeType.List);
+            list.RemoveAt(index);
         }
 
         public void RemoveKey(string key) {
-            AssertTypeIs(DocNodeType.Dictionary);
-            dictionary!.Remove(key);
+            CheckTypeIs(DocNodeType.Dictionary);
+            dictionary.Remove(key);
         }
 
         /////////////////////////////////////////////////
 
-        readonly string? sourceInfo;
+        readonly string sourceInfo;
 
-        readonly Dictionary<string, DocNode>? dictionary;
-        readonly List<DocNode>? list;
-        string? scalar;
+        readonly Dictionary<string, DocNode> dictionary;
+        readonly List<DocNode> list;
+        string scalar;
 
         /////////////////////////////////////////////////
 
-        public static ComposedDocNode MakeMutable(DocNode doc, bool recursive = true, bool force = false) {
-            if (!force && doc is ComposedDocNode cdn) {
+        public static ComposedDocNode MakeMutable(DocNode doc, bool recursive = true, bool force = false, DocNode templateDocNode = null) {
+            if (!force && doc is ComposedDocNode cdn && templateDocNode == cdn.TemplateDocNode) {
                 return cdn;
             }
 
             switch (doc.Type) {
                 case DocNodeType.Scalar: {
-                    return new(doc.Type, sourceDocNode: doc) {
+                    return new(doc.Type, sourceDocNode: doc, templateDocNode: templateDocNode) {
                         StringValue = doc.StringValue
                     };
                 }
 
                 case DocNodeType.List: {
-                    ComposedDocNode newDoc = new(doc.Type, doc.Count, sourceDocNode: doc);
+                    ComposedDocNode newDoc = new(doc.Type, doc.Count, sourceDocNode: doc, templateDocNode: templateDocNode);
                     foreach (var value in doc.Values) {
                         newDoc.Add(recursive ? MakeMutable(value, recursive: true, force: force) : value);
                     }
@@ -180,9 +183,9 @@ namespace DarkConfig {
                 }
 
                 case DocNodeType.Dictionary: {
-                    ComposedDocNode newDoc = new(doc.Type, doc.Count, sourceDocNode: doc);
+                    ComposedDocNode newDoc = new(doc.Type, doc.Count, sourceDocNode: doc, templateDocNode: templateDocNode);
                     foreach ((string key, var value) in doc.Pairs) {
-                        newDoc.Add(key, recursive ? MakeMutable(value, recursive: true, force: force) : value);
+                        newDoc.Add(key, recursive ? MakeMutable(value, recursive: true, force: force, templateDocNode: templateDocNode) : value);
                     }
                     return newDoc;
                 }
@@ -203,8 +206,20 @@ namespace DarkConfig {
             return mutableDoc;
         }
 
-        public static ComposedDocNode DeepClone(DocNode doc) {
-            return MakeMutable(doc, recursive: true, force: true);
+        public static ComposedDocNode DeepClone(DocNode doc, DocNode templateDocNode = null) {
+            return MakeMutable(doc, recursive: true, force: true, templateDocNode: templateDocNode);
+        }
+
+        /////////////////////////////////////////////////
+
+        void CheckTypeIs(DocNodeType requiredType) {
+            if (Type != requiredType) {
+                throw new DocNodeAccessException(this, GenerateAccessExceptionMessage(requiredType.ToUserFriendly()));
+            }
+        }
+
+        string GenerateAccessExceptionMessage(string expectedType) {
+            return $"Should have been {expectedType}, but was {Type.ToUserFriendly()}.";
         }
     }
 }

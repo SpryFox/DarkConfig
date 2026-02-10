@@ -1,7 +1,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using YamlDotNet.RepresentationModel;
 
 namespace DarkConfig {
@@ -37,7 +36,7 @@ namespace DarkConfig {
         /// <exception cref="NotSupportedException">Thrown when attempting to set a value</exception>
         public override DocNode this[int index] {
             get {
-                AssertTypeIs(DocNodeType.List);
+                CheckTypeIs(DocNodeType.List);
                 var seqNode = (YamlSequenceNode) SourceNode;
                 return new YamlDocNode(seqNode.Children[index], SourceFile);
             }
@@ -51,7 +50,7 @@ namespace DarkConfig {
         /// <exception cref="NotSupportedException">Thrown when attempting to set a value</exception>
         public override DocNode this[string key] {
             get {
-                AssertTypeIs(DocNodeType.Dictionary);
+                CheckTypeIs(DocNodeType.Dictionary);
                 var mapNode = (YamlMappingNode) SourceNode;
                 var scalarAccessor = new YamlScalarNode(key);
                 return new YamlDocNode(mapNode.Children[scalarAccessor], SourceFile);
@@ -64,13 +63,13 @@ namespace DarkConfig {
                 return Type switch {
                     DocNodeType.Dictionary => ((YamlMappingNode) SourceNode).Children.Count,
                     DocNodeType.List => ((YamlSequenceNode) SourceNode).Children.Count,
-                    _ => throw new DocNodeAccessException(GenerateAccessExceptionMessage("Countable (Dictionary or List)", Type.ToString()))
+                    _ => throw new DocNodeAccessException(this, GenerateAccessExceptionMessage("Countable (Dictionary or List)", Type.ToString()))
                 };
             }
         }
 
         public override bool ContainsKey(string key, bool ignoreCase = false) {
-            AssertTypeIs(DocNodeType.Dictionary);
+            CheckTypeIs(DocNodeType.Dictionary);
 
             var children = ((YamlMappingNode) SourceNode).Children;
             var comparison = ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
@@ -83,18 +82,16 @@ namespace DarkConfig {
             return false;
         }
 
-        public override bool TryGetValue(string key, bool ignoreCase, [MaybeNullWhen(false)] out DocNode result) {
-            AssertTypeIs(DocNodeType.Dictionary);
+        public override bool TryGetValue(string key, bool ignoreCase, out DocNode result) {
+            CheckTypeIs(DocNodeType.Dictionary);
 
             var children = ((YamlMappingNode) SourceNode).Children;
             var comparison = ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
             foreach (var kvp in children) {
-                if (kvp.Key is not YamlScalarNode scalarKey || !string.Equals(scalarKey.Value, key, comparison)) {
-                    continue;
+                if (kvp.Key is YamlScalarNode scalarKey && string.Equals(scalarKey.Value, key, comparison)) {
+                    result = new YamlDocNode(kvp.Value, SourceFile);
+                    return true;
                 }
-
-                result = new YamlDocNode(kvp.Value, SourceFile);
-                return true;
             }
 
             result = null;
@@ -123,7 +120,7 @@ namespace DarkConfig {
 
         public override IEnumerable<DocNode> Values {
             get {
-                AssertTypeIs(DocNodeType.List);
+                CheckTypeIs(DocNodeType.List);
                 return new ValuesIterator(SourceNode, SourceFile);
             }
         }
@@ -148,15 +145,15 @@ namespace DarkConfig {
 
         public override IEnumerable<KeyValuePair<string, DocNode>> Pairs {
             get {
-                AssertTypeIs(DocNodeType.Dictionary);
+                CheckTypeIs(DocNodeType.Dictionary);
                 return new PairsIterator(SourceNode, SourceFile);
             }
         }
 
         public override string StringValue {
             get {
-                AssertTypeIs(DocNodeType.Scalar);
-                return ((YamlScalarNode) SourceNode).Value ?? "null";
+                CheckTypeIs(DocNodeType.Scalar);
+                return ((YamlScalarNode) SourceNode).Value!;
             }
             set => throw new NotSupportedException("Can't modify YamlDocNode instances");
         }
@@ -165,5 +162,17 @@ namespace DarkConfig {
 
         public override YamlNode SourceNode  { get; }
         public override string SourceFile { get; }
+
+        ////////////////////////////////////////////
+
+        void CheckTypeIs(DocNodeType type) {
+            if (Type != type) {
+                throw new DocNodeAccessException(this, GenerateAccessExceptionMessage(type.ToString(), Type.ToString()));
+            }
+        }
+
+        string GenerateAccessExceptionMessage(string expectedType, string actualType) {
+            return $"Accessing YamlDocNode as {expectedType} but is {actualType}. {SourceInformation}";
+        }
     }
 }

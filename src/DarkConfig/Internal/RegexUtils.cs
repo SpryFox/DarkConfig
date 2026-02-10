@@ -28,15 +28,19 @@ namespace DarkConfig.Internal {
             FilterMatching(GlobToRegex(glob), strings, results);
         }
 
+        public static string GlobPatternToRegexPattern(string glob) {
+            return Regex.Escape(glob)
+                .Replace(@"\*\*", @".*")
+                .Replace(@"\*", @"[^/]*")
+                .Replace(@"\?", @"[^/]");
+        }
+
         /// Converts a glob-style expression into a file path regex
         ///  '*' matches any sequence of characters, but stops at slashes
         ///  '?' matches a single character, except a slash
         ///  '**' matches any sequence of characters, including slashes
         public static Regex GlobToRegex(string glob) {
-            var regexString = Regex.Escape(glob)
-                .Replace(@"\*\*", @".*")
-                .Replace(@"\*", @"[^/]*")
-                .Replace(@"\?", @"[^/]");
+            var regexString = GlobPatternToRegexPattern(glob);
             var regex = new Regex("^" + regexString + "$", RegexOptions.IgnoreCase | RegexOptions.Singleline);
             return regex;
         }

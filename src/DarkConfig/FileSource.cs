@@ -26,7 +26,7 @@ namespace DarkConfig {
         /// <param name="hotload">Allow file hotloading</param>
         /// <param name="ignorePattern">Ignore any paths that match this regex</param>
         /// <exception cref="ArgumentException">If <paramref name="dir"/> is null</exception>
-        public FileSource(string dir, string fileExtension = ".yaml", bool hotload = false, Regex? ignorePattern = null) {
+        public FileSource(string dir, string fileExtension = ".yaml", bool hotload = false, Regex ignorePattern = null) {
             baseDir = Path.GetFullPath(dir).Replace('\\', '/'); // Always use forward slashes in paths, even on windows.
             CanHotload = hotload;
             this.ignorePattern = ignorePattern;
@@ -44,7 +44,7 @@ namespace DarkConfig {
         /// <param name="hotload">Allow file hotloading</param>
         /// <param name="ignorePattern">Ignore any paths that match this regex</param>
         /// <exception cref="ArgumentException">If <paramref name="dir"/> is null</exception>
-        public FileSource(string dir, string[] fileExtensions, bool hotload = false, Regex? ignorePattern = null) {
+        public FileSource(string dir, string[] fileExtensions, bool hotload = false, Regex ignorePattern = null) {
             baseDir = Path.GetFullPath(dir).Replace('\\', '/'); // Always use forward slashes in paths, even on windows.
             CanHotload = hotload;
             this.ignorePattern = ignorePattern;
@@ -130,7 +130,7 @@ namespace DarkConfig {
 
         readonly string baseDir;
         readonly string[] configFileExtensions;
-        readonly Regex? ignorePattern;
+        readonly Regex ignorePattern;
 
         ////////////////////////////////////////////
 
@@ -158,7 +158,6 @@ namespace DarkConfig {
         /// Reads and parses a file's contents.
         ConfigFileInfo ReadFile(string filePath) {
             using var fileStream = File.OpenRead(filePath);
-
             int checksum = Internal.ChecksumUtils.Checksum(fileStream);
             fileStream.Seek(0, SeekOrigin.Begin);
 
@@ -168,7 +167,6 @@ namespace DarkConfig {
                 size: new FileInfo(filePath).Length,
                 modified: File.GetLastWriteTimeUtc(filePath),
                 parsed: Configs.ParseStream(fileStream, filePath));
-
         }
     }
 }

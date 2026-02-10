@@ -37,16 +37,15 @@ class MissingFilesTests {
         Configs.Preload();
 
         // check the index after preload
-        var filenames = Configs.GetFilenamesMatchingRegex(new Regex(".*"));
-        Assert.Greater(filenames.Count, 0);
-
-        Assert.IsTrue(filenames.Contains("spinner"));
+        var filenames = Configs.GetFilenamesMatchingRegex(new(".*"));
+        Assert.That(filenames, Is.Not.Empty);
+        Assert.That(filenames, Contains.Item("spinner"));
 
         // check that we can load existing files
         var spinnerDoc = Configs.ParseFile("spinner");
 
         // this file should be present so this should pass
-        Assert.IsTrue(spinnerDoc.ContainsKey("key"));
+        Assert.That(spinnerDoc.ContainsKey("key"), Is.True);
 
         Assert.Throws<ConfigFileNotFoundException>(() => {
             Configs.ParseFile("nonexistent", (d) => {

@@ -11,6 +11,9 @@ namespace DarkConfig.Internal {
         /// Manually-registered PostDoc's
         public readonly Dictionary<Type, PostDocFunc> RegisteredPostDocs = new();
 
+        /// Globally-registered ValueRead
+        public ObjectReifiedFunc RegisteredObjectReified;
+
         /////////////////////////////////////////////////
 
         public TypeReifier() {
@@ -18,7 +21,7 @@ namespace DarkConfig.Internal {
             RegisteredFromDocs[typeof(TimeSpan)] = BuiltInTypeReifiers.FromTimeSpan;
         }
 
-        class ReificationResult {
+        internal class ReificationResult {
             internal bool ShouldVerifyMemberHashes;
             internal readonly List<int> SetMemberHashes = new List<int>();
 
@@ -38,6 +41,10 @@ namespace DarkConfig.Internal {
                     }
                     throw new ExtraFieldsException(targetType, doc, $"Extra doc fields: {JoinList(extraDocFields, ", ")}");
                 }
+            }
+
+            internal void MergeIn(ReificationResult InlineResult) {
+                SetMemberHashes.AddRange(InlineResult.SetMemberHashes);
             }
         }
 
@@ -92,7 +99,7 @@ namespace DarkConfig.Internal {
             // Set static fields and properties
             var typeInfo = reflectionCache.GetTypeInfo(type);
             var setMemberHashes = new List<int>();
-            List<string>? missingRequiredMemberNames = null;
+            List<string> missingRequiredMemberNames = null;
             for (int memberIndex = 0; memberIndex < typeInfo.StaticMemberNames.Count; ++memberIndex) {
                 string memberName = typeInfo.StaticMemberNames[memberIndex];
 
@@ -106,13 +113,13 @@ namespace DarkConfig.Internal {
 
                 if (typeInfo.IsField(memberIndex, true)) {
                     var fieldInfo = (FieldInfo) typeInfo.StaticMemberInfos[memberIndex];
-                    object? newValue = typeInfo.SourceInfoStaticMemberIndex == memberIndex ? doc.SourceInformation
+                    object newValue = typeInfo.SourceInfoStaticMemberIndex == memberIndex ? doc.SourceInformation
                         : ReadValueOfType(fieldInfo.FieldType, fieldInfo.GetValue(null), memberDoc, options);
                     setMemberHashes.Add(memberName.GetCanonicalHashCode(ignoreCase));
                     fieldInfo.SetValue(null, newValue);
                 } else {
                     var propertyInfo = (PropertyInfo) typeInfo.StaticMemberInfos[memberIndex];
-                    object? newValue = typeInfo.SourceInfoStaticMemberIndex == memberIndex ? doc.SourceInformation
+                    object newValue = typeInfo.SourceInfoStaticMemberIndex == memberIndex ? doc.SourceInformation
                         : ReadValueOfType(propertyInfo.PropertyType, propertyInfo.GetValue(null), memberDoc, options);
                     setMemberHashes.Add(memberName.GetCanonicalHashCode(ignoreCase));
                     propertyInfo.SetValue(null, newValue);
@@ -121,7 +128,12 @@ namespace DarkConfig.Internal {
 
             // Check whether any required members in the type were not set.
             if (missingRequiredMemberNames is {Count: > 0}) {
-                throw new MissingFieldsException(type, doc, $"Missing doc fields: {JoinList(missingRequiredMemberNames, ", ")}");
+                throw new MissingFieldsException(
+                    type: type,
+                    node: doc,
+                    message: $"Missing doc fields: {JoinList(missingRequiredMemberNames, ", ")}",
+                    requiredFieldsCount: typeInfo.NumRequiredFields,
+                    missingFieldsCount: missingRequiredMemberNames.Count);
             }
 
             // Check whether any fields in the doc were unused.
@@ -150,8 +162,6 @@ namespace DarkConfig.Internal {
         /// <exception cref="ExtraFieldsException">If the field does not exist as a member of <typeparamref name="T"/> and extra fields are disallowed</exception>
         /// <exception cref="MissingFieldsException">If the field is marked as mandatory and is missing in the yaml doc</exception>
         public bool SetFieldOnObject<T>(ref T obj, string fieldName, DocNode doc, ReificationOptions? options = null) where T : class {
-            if (doc == null) { throw new ArgumentNullException(nameof(doc)); }
-
             object setRef = obj;
             bool containedMember = SetMember(typeof(T), ref setRef, fieldName, doc, options);
             obj = (T) setRef;
@@ -184,18 +194,24 @@ namespace DarkConfig.Internal {
         /// <param name="existing">An existing instance of that type to update, or null.</param>
         /// <param name="doc">The DocNode containing the value's data</param>
         /// <param name="options">Reification options</param>
+        /// <param name="verifyAllMembersConsumed">true to perform validation that all members are consumed, false to allow extra fields</param>
         /// <returns>An updated version of <paramref name="existing"/> if it was not null,
         /// or a new instance of <paramref name="targetType"/> containing new data from <paramref name="doc"/></returns>
         /// <exception cref="Exception"></exception>
         /// <exception cref="ParseException"></exception>
-        public object? ReadValueOfType(Type targetType, object? existing, DocNode doc, ReificationOptions? options) {
+        public object ReadValueOfType(Type targetType, object existing, DocNode doc, ReificationOptions? options, bool verifyAllMembersConsumed = true) {
             var result = new ReificationResult();
             existing = ReadValueOfTypeWithoutExtraFieldsValidation(targetType, existing, doc, result, options);
-            result.VerifyAllMembersConsumed(targetType, doc, options);
+            if (verifyAllMembersConsumed) {
+                result.VerifyAllMembersConsumed(targetType, doc, options);
+            }
+            if (RegisteredObjectReified != null && existing != null) {
+                RegisteredObjectReified.Invoke(existing, doc);
+            }
             return existing;
         }
 
-        private object? ReadValueOfTypeWithoutExtraFieldsValidation(Type targetType, object? existing, DocNode doc, ReificationResult result, ReificationOptions? options) {
+        private object ReadValueOfTypeWithoutExtraFieldsValidation(Type targetType, object existing, DocNode doc, ReificationResult result, ReificationOptions? options) {
             try {
                 #region Atomic data types
                 if (targetType == typeof(bool)) { return Convert.ToBoolean(doc.StringValue, System.Globalization.CultureInfo.InvariantCulture); }
@@ -224,7 +240,12 @@ namespace DarkConfig.Internal {
 
                 // Enums
                 if (targetType.IsEnum) {
-                    return Enum.Parse(targetType, doc.StringValue, ignoreCase);
+                    try {
+                        return Enum.Parse(targetType, doc.StringValue, ignoreCase);
+                    } catch (ArgumentException) {
+                        string[] enumNames = Enum.GetNames(targetType);
+                        throw new Exception($"Failed to parse '{doc.StringValue}' as {targetType}. Options are: {String.Join(", ", enumNames)}");
+                    }
                 }
 
                 // DocNode
@@ -267,8 +288,8 @@ namespace DarkConfig.Internal {
 
                         // Read the array values.
                         for (int a = 0; a < arrayValue.Length; a++) {
-                            object? existingElement = arrayValue.GetValue(a);
-                            object? updatedElement = ReadValueOfType(elementType, existingElement, doc[a], options);
+                            var existingElement = arrayValue.GetValue(a);
+                            var updatedElement = ReadValueOfType(elementType, existingElement, doc[a], options);
                             arrayValue.SetValue(updatedElement, a);
                         }
                     } else { // n-dimensional arrays
@@ -278,7 +299,7 @@ namespace DarkConfig.Internal {
                         }
 
                         // Figure out the size of each dimension the array.
-                        int[] lengths = new int[rank];
+                        var lengths = new int[rank];
                         var currentArray = doc;
                         for (int dimensionIndex = 0; dimensionIndex < rank; ++dimensionIndex) {
                             lengths[dimensionIndex] = currentArray.Count;
@@ -325,8 +346,8 @@ namespace DarkConfig.Internal {
                             for (int i = 0; i < current.Count; ++i) {
                                 currentIndex[currentRank] = i;
                                 if (currentRank == rank - 1) {
-                                    object? existingElement = arrayValue.GetValue(currentIndex);
-                                    object? updatedElement = ReadValueOfType(elementType, existingElement, current[i], options);
+                                    var existingElement = arrayValue.GetValue(currentIndex);
+                                    var updatedElement = ReadValueOfType(elementType, existingElement, current[i], options);
                                     arrayValue.SetValue(updatedElement, currentIndex);
                                 } else {
                                     ReadArray(current[i], currentRank + 1);
@@ -350,8 +371,8 @@ namespace DarkConfig.Internal {
 
                     // Dictionary<K,V>
                     if (genericTypeDef == typeof(Dictionary<,>)) {
+                        ExpectDictionary(doc, false);
                         existing ??= Activator.CreateInstance(targetType);
-                        if (existing == null) { throw new InvalidOperationException("Cannot instantiate type " + targetType.FullName); }
                         var existingDict = (System.Collections.IDictionary) existing;
 
                         var typeParameters = targetType.GetGenericArguments();
@@ -363,11 +384,12 @@ namespace DarkConfig.Internal {
                         // create/update all pairs in the doc
                         foreach ((string docKey, var docValue) in doc.Pairs) {
                             keyNode.StringValue = docKey;
-                            object? readKey = ReadValueOfType(keyType, null, keyNode, options);
-                            if (readKey == null) { throw new ParseException(doc, "Dictionary key cannot be null"); }
-                            object? existingValue = existingDict.Contains(readKey) ? existingDict[readKey] : null;
+                            object readKey = ReadValueOfType(keyType, null, keyNode, options);
+                            object existingValue = existingDict.Contains(readKey) ? existingDict[readKey] : null;
                             existingDict[readKey] = ReadValueOfType(valueType, existingValue, docValue, options);
                             readKeyHashes.Add(readKey.GetHashCode());
+
+                            result.SetMemberHashes.Add(docKey.GetCanonicalHashCode(ignoreCase));
                         }
 
                         // remove any key value pairs not in the doc
@@ -386,10 +408,10 @@ namespace DarkConfig.Internal {
 
                     // List<T>
                     if (genericTypeDef == typeof(List<>)) {
+                        ExpectList(doc, false);
                         var listElementType = targetType.GetGenericArguments()[0];
 
                         existing ??= Activator.CreateInstance(targetType);
-                        if (existing == null) { throw new InvalidOperationException("Cannot instantiate type " + targetType.FullName); }
                         var existingList = (System.Collections.IList) existing;
 
                         // Remove any extra existing slots we won't need.
@@ -412,6 +434,8 @@ namespace DarkConfig.Internal {
 
                     // HashSet<T>
                     if (genericTypeDef == typeof(HashSet<>)) {
+                        ExpectList(doc, false);
+
                         var setEntryType = targetType.GetGenericArguments()[0];
 
                         if (existing != null) {
@@ -425,7 +449,9 @@ namespace DarkConfig.Internal {
                         // HashSet<> has no generic-less object interface we can use, so use reflection to add elements
                         var addMethod = targetType.GetMethod("Add");
                         foreach (var value in doc.Values) {
-                            addMethod?.Invoke(existing, new[] {ReadValueOfType(setEntryType, null, value, options)});
+                            addMethod?.Invoke(existing, new[] {
+                                ReadValueOfType(setEntryType, null, value, options)
+                            });
                         }
 
                         return existing;
@@ -438,7 +464,6 @@ namespace DarkConfig.Internal {
                             return null;
                         }
                         var innerType = Nullable.GetUnderlyingType(targetType);
-                        if (innerType == null) { throw new InvalidOperationException("Cannot get underlying type for type " + targetType.FullName); }
                         return ReadValueOfType(innerType, existing, doc, options);
                     }
                 }
@@ -447,8 +472,7 @@ namespace DarkConfig.Internal {
                 var typeInfo = reflectionCache.GetTypeInfo(targetType);
 
                 // Call a FromDoc method if one exists in the type
-                if (typeInfo.FromDocString != null && doc.Type == DocNodeType.Scalar)
-                {
+                if (typeInfo.FromDocString != null && doc.Type == DocNodeType.Scalar) {
                     try {
                         existing = typeInfo.FromDocString.Invoke(null, new[] {existing, doc.StringValue});
                     } catch (TargetInvocationException e) {
@@ -457,8 +481,16 @@ namespace DarkConfig.Internal {
                         }
                         throw;
                     }
-                }
-                else if (typeInfo.FromDoc != null) {
+                } else if (typeInfo.FromDocStringEx != null && doc.Type == DocNodeType.Scalar) {
+                    try {
+                        existing = typeInfo.FromDocStringEx.Invoke(null, new[] {existing, doc.StringValue, doc.SourceFile, doc.SourceNode});
+                    } catch (TargetInvocationException e) {
+                        if (e.InnerException != null) {
+                            throw e.InnerException;
+                        }
+                        throw;
+                    }
+                } else if (typeInfo.FromDoc != null) {
                     // if there's a custom parser method on the class, delegate all work to that
                     // TODO: this doesn't do inherited FromDoc methods properly, but it should
                     try {
@@ -471,14 +503,22 @@ namespace DarkConfig.Internal {
                         throw;
                     }
                 } else {
-                    result.ShouldVerifyMemberHashes = (options & ReificationOptions.AllowExtraFields) == 0;
+                    result.ShouldVerifyMemberHashes = true;
                     if (typeInfo.UnionKeys != null) {
+                        if (doc.Type == DocNodeType.List) {
+                            throw new ParseException(doc, $"Encountered a list when trying to parse {targetType}");
+                        }
+
                         if (doc.Type == DocNodeType.Scalar) {
                             if (typeInfo.UnionKeys.TryGetValue(doc.StringValue, out var subType, ignoreCase)) {
                                 // support empty object without needing {}
                                 if (typeInfo.NumRequiredFields != 0) {
-                                    throw new MissingFieldsException(targetType, doc,
-                                        $"Type {subType} has multiple required fields and so cannot be specified without a body.");
+                                    throw new MissingFieldsException(
+                                        targetType,
+                                        doc,
+                                        $"Type {subType} has multiple required fields and so cannot be specified without a body.",
+                                        typeInfo.NumRequiredFields,
+                                        typeInfo.NumRequiredFields);
                                 }
 
                                 existing = Activator.CreateInstance(subType);
@@ -486,32 +526,54 @@ namespace DarkConfig.Internal {
                                 throw new ParseException(doc, $"Could not parse {targetType} -- {doc.StringValue} is not a valid type");
                             }
                         } else {
-                            bool isFirstKey = true;
+                            int pairIndex = 0;
+                            object parsedValue = null;
                             foreach (var pair in doc.Pairs) {
                                 if (typeInfo.UnionKeys.TryGetValue(pair.Key, out var subType, ignoreCase)) {
                                     var subTypeInfo = reflectionCache.GetTypeInfo(subType);
                                     if (subTypeInfo.IsUnionInline) {
+                                        // ensure this is the first key of the keys in this type (because we may be inline in something else)
+                                        bool isFirstKey = true;
+                                        int testPairIndex = 0;
+                                        foreach (var testPair in doc.Pairs) {
+
+                                            // only need to test the pairs above us
+                                            if (!isFirstKey || testPairIndex >= pairIndex) {
+                                                break;
+                                            }
+
+                                            // make sure the pairs above us are not one of our's
+                                            foreach (var ourMemberName in subTypeInfo.MemberNames) {
+                                                if (testPair.Key == ourMemberName) {
+                                                    isFirstKey = false;
+                                                    break;
+                                                }
+                                            }
+                                            testPairIndex++;
+                                        }
                                         if (isFirstKey) {
-                                            existing = ReadValueOfTypeWithoutExtraFieldsValidation(subType, null, doc, result, options);
+                                            parsedValue = ReadValueOfTypeWithoutExtraFieldsValidation(subType, null, doc, result, options);
                                             break;
                                         }
                                     } else {
                                         result.SetMemberHashes.Add(pair.Key.GetCanonicalHashCode(ignoreCase));
-                                        existing = ReadValueOfType(subType, null, pair.Value, options);
+                                        parsedValue = ReadValueOfType(subType, null, pair.Value, options);
                                         break;
                                     }
                                 }
-                                isFirstKey = false;
+                                pairIndex++;
                             }
-                            if (existing == null) {
+                            if (parsedValue == null) {
                                 throw new ParseException(doc,
-                                    $"Could not parse {targetType} -- none of the keys are a valid type: {JoinList(doc.Pairs.Select(pair => pair.Key).ToList(), ", ")}\n" +
-									$"Expected keys are: {JoinList(typeInfo.UnionKeys.Select(pair => pair.Item1).ToList(), ", ")}");
+                                                         $"Could not parse {targetType} -- none of the keys are a valid type: {JoinList(doc.Pairs.Select(pair => pair.Key).ToList(), ", ")}\n"
+                                                        +
+                                                         $"Expected keys are: {JoinList(typeInfo.UnionKeys.Select(pair => pair.Item1).ToList(), ", ")}");
+                            } else {
+                                existing = parsedValue;
                             }
                         }
                     } else {
                         existing ??= Activator.CreateInstance(targetType);
-                        if (existing == null) { throw new InvalidOperationException("Cannot instantiate type " + targetType.FullName); }
                         SetFieldsOnObjectWithoutExtraFieldsValidation(targetType, ref existing, doc, result, options);
                     }
                 }
@@ -520,17 +582,21 @@ namespace DarkConfig.Internal {
                 if (existing != null) {
                     try {
                         if (typeInfo.PostDoc != null) {
-                            existing = typeInfo.PostDoc.Invoke(null, new[] {existing});
+                            existing = typeInfo.PostDoc.Invoke(null, new[] {
+                                existing
+                            });
                         }
                         // Call a manually-registered PostDoc if it exists
                         else if (RegisteredPostDocs.TryGetValue(targetType, out var postDocFunc)) {
                             existing = postDocFunc.Invoke(existing);
                         }
-                    } catch (TargetInvocationException e) {
-                        if (e.InnerException == null) {
-                            throw;
+                        if (typeInfo.ApplySourceInfo != null) {
+                            typeInfo.ApplySourceInfo.Invoke(existing, new[] {
+                                doc
+                            });
                         }
-                        throw e.InnerException;
+                    } catch (TargetInvocationException e) {
+                        System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(e.InnerException ?? e).Throw();
                     }
                 }
 
@@ -551,11 +617,9 @@ namespace DarkConfig.Internal {
             var sb = new System.Text.StringBuilder();
 
             int i = 0;
-            foreach (string arg in args)
-            {
+            foreach (string arg in args) {
                 sb.Append(arg);
-                if (i < args.Count - 1)
-                {
+                if (i < args.Count - 1) {
                     sb.Append(joinStr);
                 }
 
@@ -575,9 +639,33 @@ namespace DarkConfig.Internal {
         /// <exception cref="ExtraFieldsException"></exception>
         /// <exception cref="MissingFieldsException"></exception>
         void SetFieldsOnObject(Type type, ref object obj, DocNode doc, ReificationOptions? options = null) {
-            var result = new ReificationResult {ShouldVerifyMemberHashes = (options & ReificationOptions.AllowExtraFields) == 0};
+            var result = new ReificationResult {ShouldVerifyMemberHashes = true};
             SetFieldsOnObjectWithoutExtraFieldsValidation(type, ref obj, doc, result, options);
             result.VerifyAllMembersConsumed(type, doc, options);
+        }
+
+        void ExpectList(DocNode doc, bool strict) {
+            if (doc.Type == DocNodeType.Scalar) {
+                if (string.IsNullOrWhiteSpace(doc.StringValue)) {
+                    throw new ParseException(doc, "Nothing specified where a list (\"[value1, value2]\" or multiple lines each prefixed with a \"-\") was expected.");
+                }
+                throw new ParseException(doc, $"Expected a list (\"[value1, value2]\" or multiple lines each prefixed with a \"-\") but got the string \"{doc.StringValue}\" instead.");
+            }
+            if (doc.Type == DocNodeType.Dictionary && (strict || doc.Count > 0)) {
+                throw new ParseException(doc, "Expected a list (\"[value1, value2]\" or multiple lines each prefixed with a \"-\") but got a dictionary (\"key: value\") instead.");
+            }
+        }
+
+        void ExpectDictionary(DocNode doc, bool strict) {
+            if (doc.Type == DocNodeType.Scalar) {
+                if (String.IsNullOrWhiteSpace(doc.StringValue)) {
+                    throw new ParseException(doc, "Nothing specified where a dictionary (\"key: value\") was expected.");
+                }
+                throw new ParseException(doc, $"Expected a dictionary (\"key: value\") but got the string \"{doc.StringValue}\" instead.");
+            }
+            if (doc.Type == DocNodeType.List && (strict || doc.Count > 0)) {
+                throw new ParseException(doc, "Expected a dictionary  (\"key: value\") but got a list (\"[value1, value2]\" or multiple lines each prefixed with a \"-\") instead.");
+            }
         }
 
         /// <exception cref="MissingFieldsException"></exception>
@@ -590,45 +678,66 @@ namespace DarkConfig.Internal {
 
             var typeInfo = reflectionCache.GetTypeInfo(type);
 
+            bool ignoreCase = (options & ReificationOptions.CaseSensitive) == 0;
+
             int numRequiredMembers = typeInfo.NumRequiredFields + typeInfo.NumRequiredProperties;
             bool singleProperty = numRequiredMembers == 1;
-            if (singleProperty && (doc.Type != DocNodeType.Dictionary || (typeInfo.MemberOptions[0] & ReflectionCache.TypeInfo.MemberOptionFlags.Inline) != 0)) {
-                // ==== Special Case ====
-                // Allow specifying object types with a single required property or field as a scalar value in configs, or if the property is marked as inline, as any
-                // type.
-                // This is syntactic sugar that lets us wrap values in classes or make simple classes more pleasant to author YAML for.
-                object? newValue = ReadValueOfType(typeInfo.GetMemberType(0), typeInfo.GetMemberValue(obj, 0), doc, options);
-                typeInfo.SetMemberValue(obj, 0, newValue);
+            bool isInline = typeInfo.MemberOptions.Count > 0 && (typeInfo.MemberOptions[0] & ReflectionCache.TypeInfo.MemberOptionFlags.Inline) != 0;
+            if (singleProperty && (doc.Type != DocNodeType.Dictionary || isInline)) {
+                // check if any optional members are specified and don't do this if they are
+                bool containsOptionalValue = false;
+                if (doc.Type == DocNodeType.Dictionary && typeInfo.NumOptionalFields > 0) {
+                    for (int memberIndex = 0; memberIndex < typeInfo.MemberNames.Count; ++memberIndex) {
+                        if (!typeInfo.IsRequired(memberIndex, false)) {
+                            string memberName = typeInfo.MemberNames[memberIndex];
+                            if (doc.ContainsKey(memberName, ignoreCase)) {
+                                containsOptionalValue = true;
+                                break;
+                            }
+                        }
+                    }
+                }
 
-                // Don't verify the set member hashes, because that happens inside the `ReadValueOfType` call instead.
-                result.ShouldVerifyMemberHashes = false;
+                if (!containsOptionalValue) {
+                    // ==== Special Case ====
+                    // Allow specifying object types with a single required property or field as a scalar value in configs, or if the property is marked as inline, as any
+                    // type.
+                    // This is syntactic sugar that lets us wrap values in classes or make simple classes more pleasant to author YAML for.
+                    object newValue = ReadValueOfType(typeInfo.GetMemberType(0), typeInfo.GetMemberValue(obj, 0), doc, options, !isInline);
+                    typeInfo.SetMemberValue(obj, 0, newValue);
 
-                return;
+                    // Don't verify the set member hashes, because that happens inside the `ReadValueOfType` call instead.
+                    result.ShouldVerifyMemberHashes = false;
+
+                    return;
+                }
             }
 
-            if (doc.Type != DocNodeType.Dictionary) {
-                string details = doc.Type == DocNodeType.Scalar ? $" (\"{doc.StringValue}\")" : "";
-                throw new ParseException(doc,
-                    $"Trying to set a value of type: {type} (with {numRequiredMembers} required members) from value of wrong type {doc.Type}{details}");
-            }
-
-            bool ignoreCase = (options & ReificationOptions.CaseSensitive) == 0;
+            ExpectDictionary(doc, true);
 
             // Set fields and properties.
             result.SetMemberHashes.Capacity = Math.Max(result.SetMemberHashes.Capacity, result.SetMemberHashes.Count + typeInfo.MemberNames.Count);
 
-            List<string>? missingRequiredMembers = null;
+            List<string> missingRequiredMembers = null;
             for (int memberIndex = 0; memberIndex < typeInfo.MemberNames.Count; ++memberIndex) {
                 var memberOptions = typeInfo.MemberOptions[memberIndex];
 
                 if (memberOptions.HasFlag(ReflectionCache.TypeInfo.MemberOptionFlags.Inline)) {
-                    object? inlineValue = ReadValueOfTypeWithoutExtraFieldsValidation(
-                        typeInfo.GetMemberType(memberIndex),
-                        typeInfo.GetMemberValue(obj, memberIndex),
-                        doc,
-                        result,
-                        options);
-                    typeInfo.SetMemberValue(obj, memberIndex, inlineValue);
+                    ReificationResult inlineResult = new();
+                    object inlineValue = null;
+                    var MemberType = typeInfo.GetMemberType(memberIndex);
+                    try {
+                        inlineValue = ReadValueOfTypeWithoutExtraFieldsValidation(MemberType, typeInfo.GetMemberValue(obj, memberIndex), doc, inlineResult, options);
+                    } catch (MissingFieldsException missingFieldsException) {
+                        // if the inline type is optional, allow the error just don't write the field if every required field is not set
+                        if (typeInfo.IsRequired(memberIndex, false)) throw;
+                        if (missingFieldsException.RequiredFieldsCount != missingFieldsException.MissingFieldsCount) throw;
+                        if (missingFieldsException.ParsedType != MemberType) throw;
+                    }
+                    if (inlineValue != null) {
+                        typeInfo.SetMemberValue(obj, memberIndex, inlineValue);
+                        result.MergeIn(inlineResult);
+                    }
                     continue;
                 }
 
@@ -642,7 +751,7 @@ namespace DarkConfig.Internal {
                     continue;
                 }
 
-                object? newValue = typeInfo.SourceInfoMemberIndex == memberIndex ? doc.SourceInformation
+                object newValue = typeInfo.SourceInfoMemberIndex == memberIndex ? doc.SourceInformation
                     : ReadValueOfType(typeInfo.GetMemberType(memberIndex), typeInfo.GetMemberValue(obj, memberIndex), memberDoc, options);
                 typeInfo.SetMemberValue(obj, memberIndex, newValue);
 
@@ -651,7 +760,12 @@ namespace DarkConfig.Internal {
 
             // Throw an error if any required fields in the class were unset
             if (missingRequiredMembers != null) {
-                throw new MissingFieldsException(type, doc, $"Missing doc fields: {JoinList(missingRequiredMembers, ", ")}");
+                throw new MissingFieldsException(
+                    type: type,
+                    node: doc,
+                    message: $"Missing doc fields: {JoinList(missingRequiredMembers, ", ")}",
+                    requiredFieldsCount: typeInfo.NumRequiredFields,
+                    missingFieldsCount: missingRequiredMembers.Count);
             }
         }
 
@@ -669,6 +783,10 @@ namespace DarkConfig.Internal {
         /// <exception cref="ExtraFieldsException">If the field does not exist as a member of <paramref name="type"/> and extra fields are disallowed</exception>
         /// <exception cref="MissingFieldsException">If the field is marked as mandatory and is missing in the yaml doc</exception>
         bool SetMember(Type type, ref object obj, string memberName, DocNode doc, ReificationOptions? options = null) {
+            if (doc == null) {
+                return false;
+            }
+
             // Grab global settings
             bool ignoreCase = ((options ?? Configs.Settings.DefaultReifierOptions) & ReificationOptions.CaseSensitive) == 0;
             bool allowExtra = ((options ?? Configs.Settings.DefaultReifierOptions) & ReificationOptions.AllowExtraFields) != 0;
@@ -683,9 +801,14 @@ namespace DarkConfig.Internal {
                     continue;
                 }
 
-                if (!docHasKey || valueDoc == null) {
+                if (!docHasKey) {
                     if (typeInfo.IsRequired(memberIndex, false) || (options != null && (options & ReificationOptions.AllowMissingFields) == 0)) {
-                        throw new MissingFieldsException(type, doc, $"Missing doc field: {memberName}");
+                        throw new MissingFieldsException(
+                            type: type,
+                            node: doc,
+                            message: $"Missing doc field: {memberName}",
+                            requiredFieldsCount: typeInfo.NumRequiredFields,
+                            missingFieldsCount: 1);
                     }
                     return false;
                 }
@@ -707,9 +830,14 @@ namespace DarkConfig.Internal {
                     continue;
                 }
 
-                if (!docHasKey || valueDoc == null) {
+                if (!docHasKey) {
                     if (typeInfo.IsRequired(memberIndex, true)) {
-                        throw new MissingFieldsException(type, doc, $"Missing doc field: {memberName}");
+                        throw new MissingFieldsException(
+                            type: type,
+                            node: doc,
+                            message: $"Missing doc field: {memberName}",
+                            requiredFieldsCount: typeInfo.NumRequiredFields,
+                            missingFieldsCount: 1);
                     }
                     return false;
                 }

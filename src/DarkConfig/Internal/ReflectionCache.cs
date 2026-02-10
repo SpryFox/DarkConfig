@@ -8,12 +8,14 @@ namespace DarkConfig.Internal {
     /// so it's worth trying to reduce how much we need to do it as much as possible.
     internal class ReflectionCache {
         internal class TypeInfo {
-            public MethodInfo? FromDoc;
-            public MethodInfo? FromDocString;
-            public MethodInfo? PostDoc;
+            public MethodInfo ApplySourceInfo;
+            public MethodInfo FromDoc;
+            public MethodInfo FromDocString;
+            public MethodInfo FromDocStringEx;
+            public MethodInfo PostDoc;
 
             // A mapping of union type identifiers to concrete types
-            public MultiCaseDictionary<Type>? UnionKeys;
+            public MultiCaseDictionary<Type> UnionKeys;
             public bool IsUnionInline;
 
             // Source Info
@@ -27,25 +29,20 @@ namespace DarkConfig.Internal {
             // NumOptionalProperties is implicitly defined as the length of the arrays minus the three other counts.
             // These arrays contain sorted data:
             // Required fields, then required properties, then optional fields, then optional properties
-            public readonly List<string> MemberNames = new List<string>();
-            public readonly List<MemberInfo> MemberInfos = new List<MemberInfo>();
+            public readonly List<string> MemberNames = new();
+            public readonly List<MemberInfo> MemberInfos = new();
 
             public Type GetMemberType(int memberIndex) {
-                MemberInfo member = MemberInfos[memberIndex];
-                if (IsField(memberIndex, false)) {
-                    return ((FieldInfo) member).FieldType;
-                } else {
-                    return ((PropertyInfo) member).PropertyType;
-                }
-            }
-
-            public object? GetMemberValue(object obj, int memberIndex) {
                 var member = MemberInfos[memberIndex];
-                return IsField(memberIndex, false) ? ((FieldInfo) member).GetValue(obj)
-                    : ((PropertyInfo) member).GetValue(obj);
+                return IsField(memberIndex, false) ? ((FieldInfo) member).FieldType : ((PropertyInfo) member).PropertyType;
             }
 
-            public void SetMemberValue(object obj, int memberIndex, object? value) {
+            public object GetMemberValue(object obj, int memberIndex) {
+                var member = MemberInfos[memberIndex];
+                return IsField(memberIndex, false) ? ((FieldInfo) member).GetValue(obj) : ((PropertyInfo) member).GetValue(obj);
+            }
+
+            public void SetMemberValue(object obj, int memberIndex, object value) {
                 var member = MemberInfos[memberIndex];
                 if (IsField(memberIndex, false)) {
                     ((FieldInfo) member).SetValue(obj, value);
@@ -177,7 +174,7 @@ namespace DarkConfig.Internal {
                     MemberNames.Insert(insertionIndex, memberName);
                     MemberInfos.Insert(insertionIndex, memberInfo);
 
-                    MemberOptionFlags optionFlags = default(MemberOptionFlags);
+                    MemberOptionFlags optionFlags = default;
                     foreach (object attribute in memberInfo.GetCustomAttributes(true)) {
                         switch (attribute) {
                             case ConfigInlineAttribute _:
@@ -193,36 +190,32 @@ namespace DarkConfig.Internal {
         ////////////////////////////////////////////
 
         internal TypeInfo GetTypeInfo(Type type) {
+            if (type.GetCustomAttribute<ConfigIgnoreAttribute>() != null) {
+                throw new("Attempting to parse a type that is marked as [ConfigIgnore]. This indicates a logic error.");
+            }
             return cachedTypeInfo.TryGetValue(type, out var info) ? info : CacheTypeInfo(type);
         }
 
         ////////////////////////////////////////////
 
         readonly Dictionary<Type, TypeInfo> cachedTypeInfo = new Dictionary<Type, TypeInfo>();
-        readonly HashSet<Assembly> precachedAssemblies = new HashSet<Assembly>();
+        readonly HashSet<Assembly> prechachedAssemblies = new();
 
         ////////////////////////////////////////////
 
         // Precache everything in this assembly that requires iterating all types to resolve
         bool PrecacheAssembly(Assembly sourceAssembly) {
-            if (!precachedAssemblies.Contains(sourceAssembly)) {
-                precachedAssemblies.Add(sourceAssembly);
-                foreach (Type type in sourceAssembly.GetTypes()) {
-                    foreach (object attribute in type.GetCustomAttributes(false)) {
-                        switch (attribute) {
-                            case ConfigUnionAttribute _:
-                                GetTypeInfo(type);
-                                break;
-                            case ConfigUnionInlineAttribute _:
-                                GetTypeInfo(type);
-                                break;
-                        }
+            if (!prechachedAssemblies.Add(sourceAssembly)) {
+                return false;
+            }
+            foreach (var type in sourceAssembly.GetTypes()) {
+                foreach (object attribute in type.GetCustomAttributes(false)) {
+                    if (attribute is ConfigUnionAttribute or ConfigUnionInlineAttribute) {
+                        GetTypeInfo(type);
                     }
                 }
-                return true;
             }
-
-            return false;
+            return true;
         }
 
         TypeInfo CacheTypeInfo(Type type) {
@@ -232,9 +225,37 @@ namespace DarkConfig.Internal {
             }
 
             var info = new TypeInfo {
-                FromDoc = type.GetMethod("FromDoc", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static, null, new[] {type, typeof(DocNode)}, Array.Empty<ParameterModifier>()),
-                FromDocString = type.GetMethod("FromDoc", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static, null, new[] {type, typeof(string)}, Array.Empty<ParameterModifier>()),
-                PostDoc = type.GetMethod("PostDoc", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static)
+                FromDoc = type.GetMethod(
+                    name: "FromDoc",
+                    bindingAttr: BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static,
+                    binder: null,
+                    types: new[] { type, typeof(DocNode) },
+                    modifiers: Array.Empty<ParameterModifier>()),
+
+                FromDocString = type.GetMethod(
+                    name: "FromDoc",
+                    bindingAttr: BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static,
+                    binder: null,
+                    types: new[] {type, typeof(string)},
+                    modifiers: Array.Empty<ParameterModifier>()),
+
+                FromDocStringEx = type.GetMethod(
+                    name: "FromDoc",
+                    bindingAttr: BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static,
+                    binder: null,
+                    types: new[] {type, typeof(string), typeof(string), typeof(YamlDotNet.RepresentationModel.YamlNode)},
+                    modifiers: Array.Empty<ParameterModifier>()),
+
+                ApplySourceInfo = type.GetMethod(
+                    name: "ApplySourceInfo",
+                    bindingAttr: BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance,
+                    binder: null,
+                    types: new[] {typeof(DocNode)},
+                    modifiers: Array.Empty<ParameterModifier>()),
+
+                PostDoc = type.GetMethod(
+                    name: "PostDoc",
+                    bindingAttr: BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static)
             };
 
             var defaultOptions = Configs.Settings.DefaultReifierOptions;
@@ -243,7 +264,7 @@ namespace DarkConfig.Internal {
             bool typeHasMandatoryAttribute = false;
             bool typeHasOptionalAttribute = false;
             bool typeHasUnionInlineAttribute = false;
-            string? typeUnionKey = null;
+            List<string> typeUnionKeys = new();
             foreach (object attribute in type.GetCustomAttributes(true)) {
                 switch (attribute) {
                     case ConfigMandatoryAttribute _:
@@ -258,10 +279,10 @@ namespace DarkConfig.Internal {
             foreach (object attribute in type.GetCustomAttributes(false)) {
                 switch (attribute) {
                     case ConfigUnionAttribute unionAttribute:
-                        typeUnionKey = unionAttribute.Key;
+                        typeUnionKeys.Add(unionAttribute.Key);
                         break;
                     case ConfigUnionInlineAttribute unionInlineAttribute:
-                        typeUnionKey = unionInlineAttribute.Key;
+                        typeUnionKeys.Add(unionInlineAttribute.Key);
                         typeHasUnionInlineAttribute = true;
                         break;
                 }
@@ -272,16 +293,26 @@ namespace DarkConfig.Internal {
                 throw new Exception($"Type {type.Name} has both ConfigAllowMissing and ConfigMandatory attributes.");
             }
 
-            // if type is a union, register it with its base type
-            if (typeUnionKey != null) {
-                if (type.BaseType == typeof(object) || type.BaseType == null) {
+            // if type is a union, register it with all its base types
+            if (typeUnionKeys.Count > 0)
+            {
+                Type baseType = type.BaseType;
+                if (baseType == typeof(Object) || baseType == null) {
                     throw new Exception($"Type {type.Name} has ConfigUnion but is not a child type");
                 }
-                var parentInfo = GetTypeInfo(type.BaseType);
-                parentInfo.UnionKeys ??= new();
+                while (baseType != typeof(Object) && baseType != null && baseType.GetCustomAttribute<ConfigIgnoreAttribute>() == null) {
+                    TypeInfo parentInfo = GetTypeInfo(baseType);
+                    parentInfo.UnionKeys ??= new MultiCaseDictionary<Type>();
 
-                if (!parentInfo.UnionKeys.TryAdd(typeUnionKey, type)) {
-                    throw new Exception($"Type {type.Name} has ConfigUnion with duplicate key {typeUnionKey}");
+                    foreach (var key in typeUnionKeys)
+                    {
+                        if (!parentInfo.UnionKeys.TryAdd(key, type))
+                        {
+                            throw new Exception($"Type {type.Name} has ConfigUnion with duplicate key {key}");
+                        }
+                    }
+
+                    baseType = baseType.BaseType;
                 }
             }
 
@@ -328,6 +359,10 @@ namespace DarkConfig.Internal {
                     } else if (attribute is ConfigKeyAttribute keyAttribute) {
                         propertyName = keyAttribute.Key;
                     }
+                }
+
+                if (propertyInfo.PropertyType.GetCustomAttribute<ConfigIgnoreAttribute>() != null) {
+                    ignored = true;
                 }
 
                 if (numRequirementAttributes == 2) {

@@ -16,7 +16,7 @@ namespace DarkConfig {
     /// If a field has the Ignore attribute, it will be completely ignored by
     /// DarkConfig; not set, not checked, it's as if it wasn't on the class in the
     /// first place.
-    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Class | AttributeTargets.Struct, Inherited = false)]
     public class ConfigIgnoreAttribute : Attribute { }
 
     /// If a field has the SourceInformation attribute then the field is
@@ -51,7 +51,7 @@ namespace DarkConfig {
     /// <summary>
     /// Marks this type as a polymorphic union of its parent type and indicates the key whose presence implies this type
     /// </summary>
-    [AttributeUsage(AttributeTargets.Class)]
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
     public class ConfigUnionAttribute : Attribute {
         public readonly string Key;
 
@@ -93,7 +93,7 @@ namespace DarkConfig {
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
     public class ConfigInlineAttribute : Attribute { }
 
-    /// Name of this type in documentation. For generic types, "&lt;0&gt;" indicates the first template parameter, "&lt;1&gt;" the second, and so on.
+    /// Name of this type in documentation, for generic types "<0>" indicates the first template parameter, "<1>" the second, and so on
     [AttributeUsage(AttributeTargets.Class)]
     public class ConfigDocumentationNameAttribute : Attribute {
         public readonly string Value;

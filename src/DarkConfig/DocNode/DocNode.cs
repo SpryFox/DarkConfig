@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 
 namespace DarkConfig {
     public enum DocNodeType {
@@ -10,8 +9,24 @@ namespace DarkConfig {
         Scalar
     }
 
-    public class DocNodeAccessException : Exception {
-        public DocNodeAccessException(string message) : base(message) { }
+    public static class DocNodeTypeExtensions {
+        public static string ToUserFriendly(this DocNodeType nodeType) {
+            switch (nodeType) {
+                case DocNodeType.Invalid:
+                    break;
+                case DocNodeType.Dictionary:
+                    return "keys and values (dictionary)";
+                case DocNodeType.List:
+                    return "a list";
+                case DocNodeType.Scalar:
+                    return "a single value";
+            }
+            return "an invalid type";
+        }
+    }
+
+    public class DocNodeAccessException : ParseException {
+        public DocNodeAccessException(DocNode node, string message) : base(node, message) { }
     }
 
     /// DocNode represents a node of a parsed document.
@@ -45,7 +60,7 @@ namespace DarkConfig {
         /// <param name="ignoreCase">if true, does case-insensitive key comparison</param>
         /// <param name="result">Set to the value if it's found, otherwise null</param>
         /// <returns>True if the value was found, false otherwise.</returns>
-        public abstract bool TryGetValue(string key, bool ignoreCase, [MaybeNullWhen(false)] out DocNode result);
+        public abstract bool TryGetValue(string key, bool ignoreCase, out DocNode result);
 
         /// Iterates over the values of the list
         public abstract IEnumerable<DocNode> Values { get; }
@@ -56,10 +71,9 @@ namespace DarkConfig {
         /// String describing the position and context in the source format (e.g. line number).
         public abstract string SourceInformation { get; }
         /// The file that this doc node originated from
-        public abstract string? SourceFile { get; }
-        public abstract YamlDotNet.RepresentationModel.YamlNode? SourceNode { get; }
-
-        public T? As<T>(ReificationOptions? options = null) {
+        public abstract string SourceFile { get; }
+        public abstract YamlDotNet.RepresentationModel.YamlNode SourceNode { get; }
+        public T As<T>(ReificationOptions? options = null) {
             var result = default(T);
             Configs.Reify(ref result, this, options);
             return result;
@@ -72,7 +86,9 @@ namespace DarkConfig {
         /// <returns>True if the string exists in this list</returns>
         /// <exception cref="DocNodeAccessException">Thrown if this is not a list</exception>
         public bool Contains(string item) {
-            AssertTypeIs(DocNodeType.List);
+            if (Type != DocNodeType.List) {
+                throw new DocNodeAccessException(this, $"Expected List, is {Type}");
+            }
 
             for (int i = 0; i < Count; i++) {
                 if (this[i].StringValue == item) {
@@ -83,7 +99,7 @@ namespace DarkConfig {
             return false;
         }
 
-        public bool Equals(DocNode? other) {
+        public bool Equals(DocNode other) {
             if (other == null) {
                 return false;
             }
@@ -142,7 +158,7 @@ namespace DarkConfig {
         public int GetDeepHashCode() {
             switch (Type) {
                 case DocNodeType.Scalar:
-                    return StringValue!.GetHashCode();
+                    return StringValue.GetHashCode();
 
                 case DocNodeType.List:
                     int seqHash = 0;
@@ -206,15 +222,5 @@ namespace DarkConfig {
                 default: throw new ArgumentException($"Can't merge doc nodes of type {lhs.Type}");
             }
         }
-
-        ////////////////////////////////////////////
-
-        protected void AssertTypeIs(DocNodeType type) {
-            if (Type != type) {
-                throw new DocNodeAccessException(GenerateAccessExceptionMessage(type.ToString(), Type.ToString()));
-            }
-        }
-
-        protected string GenerateAccessExceptionMessage(string expectedType, string actualType) => $"Accessing DocNode as {expectedType} but is {actualType}. {SourceInformation}";
     }
 }
